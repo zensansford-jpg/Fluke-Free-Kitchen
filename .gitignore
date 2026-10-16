@@ -1,0 +1,19 @@
+# Godot 4+ generated files
+.godot/
+*.import
+*.translation
+
+# Local export output
+build/
+
+# Editor/local backups and scratch output
+*.bak
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# export_presets.cfg IS tracked on purpose: it holds the four export presets
+# (Windows, Web, Android, iOS) and contains no secrets (no keystore passwords,
+# no absolute paths), so it is needed to reproduce the builds.

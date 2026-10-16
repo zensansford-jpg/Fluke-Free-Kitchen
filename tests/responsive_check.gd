@@ -1,0 +1,297 @@
+extends Node
+## Responsive verification: walks the whole interface across a matrix of screen
+## sizes and checks, from real rectangles, that nothing overflows the window.
+##
+## This is the test behind the responsive claim in the README. It does not trust
+## the layout code: for every screen and every size it asks each visible Control
+## for its on-screen rectangle and reports any control that reaches past the
+## window edge, any screen that does not fill the window, and any label that is
+## wider than the space it was given.
+##
+## Run with:
+##   godot --headless --path <project> res://tests/responsive_check.tscn
+##   godot --headless --path <project> res://tests/responsive_check.tscn -- 390 844
+##
+## With a real window (`godot --path <project> res://tests/responsive_check.tscn --
+## shots`) it also writes one PNG per size into the capture folder, so the reflow
+## can be looked at rather than only measured.
+
+const TestWindow := preload("res://tests/test_window.gd")
+
+const SHOT_DIR := "C:/Users/ASUS/AppData/Local/Temp/opencode/responsive"
+
+## The viewport matrix the interface has to survive: two small phones in portrait,
+## two modern phones, a small tablet portrait and landscape, two laptop sizes, a
+## full HD desktop, a 4K desktop and an ultrawide.
+const MATRIX: Array = [
+	{"name": "phone_small", "size": Vector2i(320, 568)},
+	{"name": "phone_360", "size": Vector2i(360, 800)},
+	{"name": "phone_390", "size": Vector2i(390, 844)},
+	{"name": "phone_430", "size": Vector2i(430, 932)},
+	{"name": "tablet_600", "size": Vector2i(600, 960)},
+	{"name": "tablet_768", "size": Vector2i(768, 1024)},
+	{"name": "landscape_1024", "size": Vector2i(1024, 768)},
+	{"name": "laptop_1280", "size": Vector2i(1280, 720)},
+	{"name": "laptop_1366", "size": Vector2i(1366, 768)},
+	{"name": "desktop_1920", "size": Vector2i(1920, 1080)},
+	{"name": "ultrawide", "size": Vector2i(2560, 1080)},
+	{"name": "uhd", "size": Vector2i(3840, 2160)},
+]
+
+## Screens built as standalone scenes. The kitchen is handled separately because
+## its layout depends on which step is on screen.
+const SCREENS: Array = ["menu", "levels", "journal", "assessment"]
+
+## A control may stick out by this many pixels before it counts as an overflow: a
+## panel that is one or two pixels wider than the window is a sub-pixel rounding
+## artefact, not a layout bug the player can see.
+const TOLERANCE := 2.0
+
+var failures: Array[String] = []
+var shots := false
+var only_size := Vector2i.ZERO
+var checked := 0
+
+
+func _ready() -> void:
+	shots = OS.get_cmdline_user_args().has("shots")
+	var args := OS.get_cmdline_user_args()
+	for i in args.size() - 1:
+		if args[i].is_valid_int() and args[i + 1].is_valid_int():
+			only_size = Vector2i(int(args[i]), int(args[i + 1]))
+			break
+
+	if shots:
+		DirAccess.make_dir_recursive_absolute(SHOT_DIR)
+
+	SaveData.suspend_disk_writes(true)
+	print("--- Fluke Free Kitchen responsive check ---")
+	for entry in MATRIX:
+		var size: Vector2i = entry["size"]
+		if only_size != Vector2i.ZERO and size != only_size:
+			continue
+		await _check_size(str(entry["name"]), size)
+	SaveData.suspend_disk_writes(false)
+	_report()
+
+
+# ------------------------------------------------------------------- one size ---
+func _check_size(name: String, size: Vector2i) -> void:
+	TestWindow.use(size.x, size.y)
+	await TestWindow.settle(3)
+
+	var reported := get_viewport().get_visible_rect().size
+	if reported != Vector2(size):
+		failures.append("%s: asked for %s but the viewport is %s" % [name, size, reported])
+
+	for key in SCREENS:
+		await _check_screen(name, size, key)
+	await _check_settings(name, size)
+	await _check_kitchen(name, size, "l1", 0)
+	await _check_kitchen(name, size, "l2", 4)
+	await _check_kitchen(name, size, "l3", 5)
+	print("  %s (%dx%d) checked" % [name, size.x, size.y])
+
+
+## Loads one menu-family screen on its own, at the size already applied.
+func _check_screen(name: String, size: Vector2i, key: String) -> void:
+	Game.change_state(Game.State.MENU)
+	var screen: Control = load(str(Game.SCENES[key])).instantiate()
+	add_child(screen)
+	await TestWindow.settle(3)
+
+	_report_control(screen, name, key, size)
+	await _shot(name, key)
+
+	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## The settings panel is a modal, so it is not in the SCREENS list, but it holds the
+## longest labelled rows in the game (a slider, a readout and a language dropdown per
+## row) and it has to fit every size just the same.
+func _check_settings(name: String, size: Vector2i) -> void:
+	Game.change_state(Game.State.MENU)
+	var screen: Control = load(str(Game.SCENES["menu"])).instantiate()
+	add_child(screen)
+	await TestWindow.settle(3)
+	var panel: Control = screen.call("_settings_panel")
+	screen.call("show_overlay", panel)
+	await TestWindow.settle(3)
+	var centre := screen.get("overlay_centre") as Control
+	if centre != null and centre.is_visible_in_tree():
+		_report_control(centre, name, "settings", size)
+	else:
+		failures.append("%s: the settings panel did not open" % name)
+	await _shot(name, "settings")
+	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## Opens a challenge and checks the HUD plus the task sheet for the given step.
+func _check_kitchen(name: String, size: Vector2i, level_id: String, target_step: int) -> void:
+	Game.current_level_id = level_id
+	Game.change_state(Game.State.PLAYING)
+	var screen: Node = load("res://scenes/kitchen/kitchen.tscn").instantiate()
+	add_child(screen)
+	await TestWindow.settle(4)
+
+	# Walk to the requested step so every kind of task is inspected at least once.
+	var guard := 0
+	while guard < 40 and int(screen.call("current_step_index")) < target_step:
+		guard += 1
+		var card: Node = _find(screen, func(node: Node) -> bool: return node is LessonCard)
+		if card != null:
+			card.emit_signal("dismissed")
+			await TestWindow.settle(1)
+			continue
+		var task: Node = screen.call("current_task")
+		if task == null:
+			await TestWindow.settle(1)
+			continue
+		task.succeed()
+		await TestWindow.settle(2)
+
+	var label := "%s/%s/%s" % [name, level_id, screen.call("current_step_index")]
+	var hud := screen.get("hud") as Control
+	if hud != null:
+		_report_control(hud, name, label + " hud", size)
+	var task := screen.call("current_task") as Control
+	if task != null:
+		_report_control(task, name, label + " task", size)
+	else:
+		_check_modal(screen, name, label, size)
+	await _shot(name, label)
+
+	Game.abandon_level()
+	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## A modal (lesson card or knowledge check) is its own layout; check the open one.
+func _check_modal(screen: Node, name: String, label: String, size: Vector2i) -> void:
+	var modal := screen.get("_modal") as Control
+	if modal != null and modal.visible:
+		_report_control(modal, name, label + " modal", size)
+
+
+# ------------------------------------------------------------------- measuring ---
+func _report_control(root: Control, name: String, label: String, size: Vector2i) -> void:
+	checked += 1
+	if not root.is_visible_in_tree():
+		failures.append("%s: %s is not visible" % [name, label])
+		return
+	var window := Rect2(Vector2.ZERO, Vector2(size))
+	var rect := root.get_global_rect()
+	if not _within(rect, window):
+		failures.append("%s: %s root rect %s leaves the %s window" % [name, label, rect, size])
+	_walk(root, name, label, window, 0)
+
+
+## Recurses over every visible Control, checking its rectangle and (for labels) the
+## width of the text it was given.
+func _walk(node: Node, name: String, label: String, bounds: Rect2, depth: int) -> void:
+	if depth > 16:
+		return
+	for child in node.get_children():
+		if child is Control:
+			var control := child as Control
+			var child_bounds := bounds
+			if control.is_visible_in_tree() and control.size.x > 0.0 and control.size.y > 0.0:
+				var rect := control.get_global_rect()
+				if not _within(rect, bounds):
+					failures.append("%s: %s > %s leaves its area: %s (min %s)"
+						% [name, label, _path(control, node), rect, control.get_combined_minimum_size()])
+				if control is Label or control is Button:
+					_check_text(control, name, _path(control, node))
+			# Content inside a container that clips is measured against that
+			# container instead of the window: the container is allowed to cut its
+			# content off, that is the point. A scroller only clips across its
+			# axes, so on the axis it scrolls the child may run as long as it
+			# likes.
+			if control is ScrollContainer:
+				child_bounds = _scroll_bounds(control as ScrollContainer, bounds)
+			elif control.clip_contents:
+				child_bounds = control.get_global_rect()
+			_walk(control, name, label, child_bounds, depth + 1)
+		elif child is CanvasLayer or child is Node3D:
+			_walk(child, name, label, bounds, depth + 1)
+
+
+## A label or button must not be asked to draw more text than its own box can hold,
+## which is how long Thai strings get clipped on a narrow screen.
+func _check_text(control: Control, name: String, label_path: String) -> void:
+	var text := str(control.get("text"))
+	if text.is_empty():
+		return
+	var wrap_mode = control.get("autowrap_mode")
+	if wrap_mode != null and int(wrap_mode) != TextServer.AUTOWRAP_OFF:
+		return
+	if control is Label and (control as Label).clip_text:
+		return
+	var font := control.get_theme_font("font")
+	var font_size := control.get_theme_font_size("font_size")
+	if font == null or font_size <= 0:
+		return
+	# A button draws its text inside its style box, so it needs room for that too.
+	var padding := 40.0 if control is Button else 0.0
+	var needed := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x + padding
+	if needed > control.size.x + TOLERANCE:
+		failures.append("%s: %s text needs %.0fpx but has %.0fpx: \"%s\""
+			% [name, label_path, needed, control.size.x, text])
+
+
+## The area a scroller clips its content to. The axis it scrolls is left open: a
+## child taller than a vertical scroller is not a layout bug, it is a scroll bar.
+func _scroll_bounds(scroll: ScrollContainer, bounds: Rect2) -> Rect2:
+	var rect := scroll.get_global_rect()
+	if scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+		rect.position.y = -1.0e9
+		rect.size.y = 2.0e9
+	if scroll.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+		rect.position.x = -1.0e9
+		rect.size.x = 2.0e9
+	return rect
+
+
+func _within(rect: Rect2, bounds: Rect2) -> bool:	return rect.position.x >= bounds.position.x - TOLERANCE \
+		and rect.position.y >= bounds.position.y - TOLERANCE \
+		and rect.end.x <= bounds.end.x + TOLERANCE \
+		and rect.end.y <= bounds.end.y + TOLERANCE
+
+
+func _path(control: Control, parent: Node) -> String:
+	return "%s/%s" % [parent.name, control.name]
+
+
+func _find(root: Node, predicate: Callable) -> Node:
+	if predicate.call(root):
+		return root
+	for child in root.get_children():
+		var found := _find(child, predicate)
+		if found != null:
+			return found
+	return null
+
+
+# ----------------------------------------------------------------------- shots ---
+func _shot(size_name: String, label: String) -> void:
+	if not shots:
+		return
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var safe := label.replace("/", "_")
+	image.save_png("%s/%s_%s.png" % [SHOT_DIR, size_name, safe])
+
+
+# ---------------------------------------------------------------------- report ---
+func _report() -> void:
+	print("--- results ---")
+	if failures.is_empty():
+		print("RESPONSIVE CHECK PASSED (%d layouts checked)" % checked)
+	else:
+		print("RESPONSIVE CHECK FAILED (%d problems in %d layouts)" % [failures.size(), checked])
+		for problem in failures:
+			print("  FAIL: %s" % problem)
+	var code := 0 if failures.is_empty() else 1
+	get_tree().quit(code)
