@@ -129,8 +129,11 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
    plainly that no learning result has been measured.
 
 ### Competition deliverables
-5. Chapters 1–5 of the report (A4, Thai SarabunPSK 16 pt), the ≤ 7-minute video, the display
-   board, and the logbook. See the checklist in `docs/RUBRIC_TRACEABILITY.md` §3.
+5. ~~Chapters 1–5 of the report~~ — **drafted 2026-10-16** in `docs/report/` (chapters 1–5 in
+   Thai, abstract/proposal/summary, a numbered reference list, a ≤ 7-minute video script, a
+   display-board plan and a logbook template). What still needs a person rather than the code:
+   typeset to A4 / TH SarabunPSK 16 pt, insert real screenshots, record the video, build the
+   board, and keep the logbook with real dates.
 
 ---
 

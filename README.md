@@ -130,13 +130,14 @@ start quietly if a lesson cites an unknown or disallowed source.
 | `docs/RESPONSIVE.md` | how the interface reflows, the 12 sizes it was checked at, the results, and what is still untested |
 | `docs/EXPORTS.md` | what was exported to each platform, how it was verified, what was *not* verified, and how to rebuild |
 | `docs/SCIENTIFIC_CONTENT.md` | every health claim, its lesson, its source, and what the game deliberately does *not* claim |
-| `docs/REFERENCES.md` | full citations with verification status and what still has to be re-checked |
+| `docs/REFERENCES.md` | full citations, each with its verification status and the log of when and how it was checked |
 | `docs/LEARNING_OBJECTIVES.md` | what each challenge teaches and how the game records it |
 | `docs/RESEARCH_PLAN.md` | the (not yet run) plan to measure the game's educational value |
 | `docs/STUDY_PROTOCOL.md` | how to actually run that study, step by step, and what the ethics gates are |
 | `docs/study/` | the paper materials: information sheet, parental consent, student assent, questionnaire, data record |
 | `tools/study/README.md` | how to turn exported results into the report's tables, and what the statistics are pinned against |
 | `docs/RUBRIC_TRACEABILITY.md` | each competition scoring criterion mapped to evidence, including the gaps |
+| `docs/report/` | the competition report set: chapters 1–5 (Thai), abstract/proposal/summary, references, video script, display-board plan, logbook |
 | `docs/archive/` | the superseded endless-runner prototype's documents, kept for history |
 
 ## The health rules the game follows

@@ -120,9 +120,13 @@ were corrected.
   audience.
 * A documented build/run/test path (`README.md`) and screen captures produced by
   `tests/visual_capture.tscn`.
+* The written report set is drafted in `docs/report/`: chapters 1–5 in Thai, abstract/proposal/
+  summary, a numbered reference list, a ≤ 7-minute video script, a display-board plan and a
+  logbook template, written to the announcement's format (A4, TH SarabunPSK 16 pt, ≤ 20 pages).
 
-**Status:** ❌ The report (chapters 1–5) and the ≤ 7-minute video are **not yet produced**. This
-is a submission deliverable, not a software one.
+**Status:** ⚠️ The text is drafted and the video/board are scripted; **typesetting, real
+screenshots, the recording and the board build remain to be done**, and Chapter 4's learning
+section is a marked placeholder until a study is run.
 
 ---
 
@@ -145,13 +149,13 @@ is a submission deliverable, not a software one.
 | Item | Requirement | Status |
 |------|-------------|--------|
 | Registration form | via the competition Google Form | ❌ to do by the team |
-| Abstract + proposal | — | ❌ to write |
-| Project summary | — | ❌ to write |
-| Full report, chapters 1–5 | A4, Thai SarabunPSK 16 pt, ≤ 20 pages, references/appendices within the stated limits | ❌ to write; content and evidence are ready |
-| Presentation video | ≤ 7 minutes, YouTube/Drive, "anyone with the link can view" | ❌ to record |
-| Display board | provided 150 cm foam board; logbook, model/props | ❌ to prepare |
+| Abstract + proposal | — | 🟡 drafted (`docs/report/00_abstract_and_proposal.md`) |
+| Project summary | — | 🟡 drafted (same file) |
+| Full report, chapters 1–5 | A4, Thai SarabunPSK 16 pt, ≤ 20 pages, references/appendices within the stated limits | 🟡 drafted (`docs/report/ch1…ch5`, `references.md`); typesetting to the font/page limit and real screenshots remain |
+| Presentation video | ≤ 7 minutes, YouTube/Drive, "anyone with the link can view" | 🟡 scripted (`docs/report/video_script.md`); not recorded |
+| Display board | provided 150 cm foam board; logbook, model/props | 🟡 planned (`docs/report/board_layout.md`); not built |
 | Oral presentation | ≤ 5 minutes + ≤ 10 minutes Q&A | ❌ to rehearse |
-| Logbook | kept honestly from the start | ❌ start immediately and back-fill only what is true |
+| Logbook | kept honestly from the start | 🟡 template started (`docs/report/logbook.md`); the team must keep it and fill in real dates |
 
 ---
 
