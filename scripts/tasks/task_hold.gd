@@ -33,6 +33,11 @@ var _warned_early := false
 var _browning := 0.0
 var _burnt := false
 var _burnt_sheet: PanelContainer = null
+## Outcome B. True once the player has chosen to serve a fish whose inside is not
+## proven safe. Like the burnt outcome it can only happen by a deliberate choice:
+## there is no path through the cook that serves undercooked fish by accident.
+var _served_unsafe := false
+var _serve_sheet: PanelContainer = null
 ## The temperature panel, kept so the burnt outcome can take the screen and give it
 ## back: two panels on top of each other would hide the explanation behind meters
 ## that no longer mean anything.
@@ -56,6 +61,7 @@ func begin() -> void:
 	_temperature = GameConfig.COOK_START_TEMP_C
 	_browning = 0.0
 	_burnt = false
+	_served_unsafe = false
 
 	build_prompt_bar(gesture_hint_for(_kind))
 	if _kind == KIND_COOK:
@@ -89,6 +95,7 @@ func abort() -> void:
 	_active = false
 	_holding = false
 	_burnt = false
+	_served_unsafe = false
 
 
 # --------------------------------------------------------------------- panels ---
@@ -114,8 +121,8 @@ func _build_hold_panel() -> void:
 func _build_cook_panel() -> void:
 	var panel := UIFactory.panel(UIFactory.CARD_COLOR)
 	_cook_panel = panel
-	UIFactory.bottom_box(panel, 470.0, 268.0, -310.0)
-	remember_box(panel, 470.0, 268.0, -310.0)
+	UIFactory.bottom_box(panel, 470.0, 300.0, -310.0)
+	remember_box(panel, 470.0, 300.0, -310.0)
 
 	var v := UIFactory.vbox(8)
 	panel.add_child(v)
@@ -140,7 +147,20 @@ func _build_cook_panel() -> void:
 	UIFactory.style_progress(_temperature_bar, UIFactory.ACCENT)
 	v.add_child(_temperature_bar)
 
-	v.add_child(UIFactory.label(Loc.t("task.keep_holding"), 18, UIFactory.TEXT_DIM))
+	# The "keep holding" hint shares its row with the one deliberate way out of the
+	# step: serving the fish before it is safe. Putting it here keeps the panel the
+	# same height as before on a wide screen while still making the choice available,
+	# and the choice is what outcome B exists to teach.
+	var hold_row := UIFactory.hbox(10)
+	var keep_hint := UIFactory.label(Loc.t("task.keep_holding"), 18, UIFactory.TEXT_DIM)
+	keep_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	keep_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hold_row.add_child(keep_hint)
+	var serve := UIFactory.button(Loc.t("task.serve_now"), 17, 150.0)
+	UIFactory.style_button(serve, UIFactory.BAD, false)
+	serve.pressed.connect(_serve_unsafe)
+	hold_row.add_child(serve)
+	v.add_child(hold_row)
 	_safe_bar = ProgressBar.new()
 	_safe_bar.min_value = 0.0
 	_safe_bar.max_value = _safe_needed
@@ -296,11 +316,64 @@ func _burn_the_fish() -> void:
 	_burnt_sheet = content_sheet(body, body, 560.0)
 
 
+## Outcome B: the player chooses to serve the fish before the inside is proven safe.
+##
+## The step stops and says what serving it would mean — plainly, in words, with no
+## picture of anyone being ill, which is why this is written as a risk and not as an
+## illness. The message keeps three separate things separate: being exposed to the
+## larvae, being infected, and getting cancer.
+##
+## Two ways out are offered, so the message is skippable rather than a wall: start a
+## fresh fish, or simply take this one back and keep cooking it. The mistake is
+## recorded first, so neither way erases it.
+func _serve_unsafe() -> void:
+	if _served_unsafe or settled or not _active:
+		return
+	_served_unsafe = true
+	_active = false
+	_holding = false
+	register_mistake({"id": "served_unsafe"}, {"reason": "unsafe_serve"})
+	AudioManager.play_sfx("tap_bad")
+	kitchen.play_effect("smoke", kitchen.wok_world_position() + Vector3(0, 0.16, 0))
+	show_reason(Loc.t("feedback.unsafe_serve"), UIFactory.BAD)
+	if _cook_panel != null and is_instance_valid(_cook_panel):
+		_cook_panel.visible = false
+
+	var body := UIFactory.vbox(10)
+	body.add_child(UIFactory.wrap(Loc.t("task.unsafe_serve_detail"), 18, UIFactory.TEXT_DIM))
+	var again := UIFactory.button(Loc.t("task.retry_cook"), 21, 280.0)
+	UIFactory.style_button(again, UIFactory.ACCENT, true)
+	again.pressed.connect(_restart_cook)
+	var keep := UIFactory.button(Loc.t("task.keep_cooking"), 19, 280.0)
+	UIFactory.style_button(keep, UIFactory.TEXT_DIM, false)
+	keep.pressed.connect(_resume_cook)
+	body.add_child(UIFactory.centre_row(again))
+	body.add_child(UIFactory.centre_row(keep))
+	_serve_sheet = content_sheet(body, body, 560.0)
+
+
+## Dismisses the unsafe-serving message and hands the same undercooked fish back:
+## the player chose to keep cooking rather than start over.
+func _resume_cook() -> void:
+	if _serve_sheet != null and is_instance_valid(_serve_sheet):
+		_serve_sheet.queue_free()
+	_serve_sheet = null
+	_served_unsafe = false
+	if _cook_panel != null and is_instance_valid(_cook_panel):
+		_cook_panel.visible = true
+	_update_cook_ui()
+	_active = true
+
+
 ## Puts a raw fish back in the pan and resets the heat, the timer and the colour.
 func _restart_cook() -> void:
 	if _burnt_sheet != null and is_instance_valid(_burnt_sheet):
 		_burnt_sheet.queue_free()
 	_burnt_sheet = null
+	if _serve_sheet != null and is_instance_valid(_serve_sheet):
+		_serve_sheet.queue_free()
+	_serve_sheet = null
+	_served_unsafe = false
 	_burnt = false
 	_temperature = GameConfig.COOK_START_TEMP_C
 	_browning = 0.0

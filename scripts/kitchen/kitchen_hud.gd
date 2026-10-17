@@ -111,7 +111,20 @@ func _place_prompt(top: float, margin: float) -> void:
 func content_top() -> float:
 	if prompt_slot == null or not is_instance_valid(prompt_slot):
 		return 190.0
-	return prompt_slot.position.y + prompt_slot.get_combined_minimum_size().y + 10.0
+	# Measure the bottom of what is actually on screen. A container asked for its
+	# combined minimum size before it has been laid out answers with a theoretical
+	# height that is far too large, and a task panel reading that would be pushed
+	# off the bottom of the screen.
+	var bottom := prompt_slot.position.y
+	var laid_out := false
+	for child in prompt_slot.get_children():
+		var control := child as Control
+		if control != null and control.is_visible_in_tree() and control.size.y > 0.0:
+			bottom = maxf(bottom, prompt_slot.position.y + control.position.y + control.size.y)
+			laid_out = true
+	if not laid_out:
+		bottom += prompt_slot.get_combined_minimum_size().y
+	return bottom + 10.0
 
 
 # ------------------------------------------------------------------- building ---

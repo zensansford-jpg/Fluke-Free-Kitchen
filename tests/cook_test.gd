@@ -5,10 +5,13 @@ extends Node
 ## the two things that test cannot reach in reasonable time:
 ##
 ##   1. the fish *changes as it cooks* — the surface walks a browning ramp from raw
-##      towards burnt instead of snapping from one look to another, and
+##      towards burnt instead of snapping from one look to another,
 ##   2. a fish that burns before its inside is safe ends the step with the burnt
 ##      outcome and an immediate retry, and the retry really does start a fresh
-##      fish rather than wiping the record.
+##      fish rather than wiping the record, and
+##   3. choosing to serve a fish whose inside is not proven safe ends the step with
+##      the unsafe-serving outcome (B): the mistake is recorded, the message keeps
+##      exposure risk, infection and cancer apart, and there is a way back.
 ##
 ## To reach the burnt outcome deterministically the step's safe hold is set longer
 ## than the test is willing to sit here: burning is what happens when heat keeps
@@ -148,6 +151,41 @@ func _run() -> void:
 	else:
 		print("  outcome C: the retried fish heats up again")
 
+	# ---- outcome B: choosing to serve a fish that is not safe yet --------------
+	# The fish has only been warmed, so this is exactly the situation the
+	# unsafe-serving outcome exists for. The checks are that the choice is offered,
+	# that it ends the step, that it is recorded as a mistake, that the message
+	# really does keep exposure risk apart from infection, and that there is a way
+	# back to cooking.
+	var serve := _find_button(task, Loc.t("task.serve_now"))
+	if serve == null:
+		failures.append("the cooking step offered no way to serve the fish")
+	else:
+		var mistakes_before := int(task.get("mistakes"))
+		await _click(serve)
+		await _frames(3)
+		await _shot("cook_4_unsafe_serve")
+		if not bool(task.get("_served_unsafe")):
+			failures.append("serving an undercooked fish did not end in the unsafe-serving outcome")
+		if int(task.get("mistakes")) <= mistakes_before:
+			failures.append("the unsafe serving was not recorded as a mistake")
+		if _find_text(task, "infection") == null and _find_text(task, "ติดเชื้อ") == null:
+			failures.append("the unsafe-serving message did not separate exposure risk from infection")
+		var leave := _find_button(task, Loc.t("task.retry_cook"))
+		if leave == null:
+			leave = _find_button(task, Loc.t("task.keep_cooking"))
+		if leave == null:
+			failures.append("the unsafe-serving outcome offered no way to continue")
+		else:
+			await _click(leave)
+			await _frames(3)
+			if bool(task.get("_served_unsafe")):
+				failures.append("the unsafe-serving outcome could not be left")
+			elif int(task.get("mistakes")) <= mistakes_before:
+				failures.append("leaving the unsafe-serving message erased the mistake")
+			else:
+				print("  outcome B: an unsafe serving ended the step and was recoverable")
+
 	cook_step["hold_seconds"] = original_hold
 	_finish(screen)
 
@@ -208,6 +246,19 @@ func _find_button(root: Node, text: String) -> Button:
 			and (node as Button).text == text \
 			and (node as Button).is_visible_in_tree() \
 			and not (node as Button).disabled)
+
+
+## The first visible label whose text contains `needle`. Used to check that the
+## unsafe-serving message actually says the thing it is supposed to say.
+func _find_text(root: Node, needle: String) -> Node:
+	return _find(root, func(node: Node) -> bool:
+		var label := node as Label
+		if label != null:
+			return label.is_visible_in_tree() and label.text.contains(needle)
+		var rich := node as RichTextLabel
+		if rich != null:
+			return rich.is_visible_in_tree() and rich.text.contains(needle)
+		return false)
 
 
 func _find(root: Node, predicate: Callable) -> Node:

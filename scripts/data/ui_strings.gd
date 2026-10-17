@@ -115,6 +115,16 @@ static func table() -> Dictionary:
 			"th": "การไหม้คือผลของความร้อนที่มากเกินไปต่อผิวนอก ยังไม่ได้บอกว่าด้านในถึงอุณหภูมิปลอดภัยหรือไม่ เกมจึงวัดที่อุณหภูมิด้านใน",
 		},
 		"task.retry_cook": {"en": "Start this fish again", "th": "เริ่มปรุงปลาตัวนี้ใหม่"},
+		"task.serve_now": {"en": "Serve it now", "th": "เสิร์ฟเลยตอนนี้"},
+		"task.keep_cooking": {"en": "Keep cooking this one", "th": "ปรุงตัวนี้ต่อ"},
+		"feedback.unsafe_serve": {
+			"en": "This fish is not cooked enough to serve. Served like this it may still carry living liver-fluke larvae.",
+			"th": "ปลาจานนี้ยังสุกไม่พอที่จะเสิร์ฟ หากเสิร์ฟแบบนี้อาจยังมีตัวอ่อนพยาธิใบไม้ตับที่ยังมีชีวิตอยู่",
+		},
+		"task.unsafe_serve_detail": {
+			"en": "Eating raw or undercooked freshwater fish is how people get liver flukes. Serving this plate means whoever eats it is exposed to the larvae — that is a risk of becoming infected, not an infection that has already happened, and an infection is not the same thing as cancer. Cooking the fish through until the inside is safe removes the risk.",
+			"th": "การรับประทานปลาน้ำจืดดิบหรือกึ่งสุกเป็นทางที่คนติดพยาธิใบไม้ตับ การเสิร์ฟจานนี้จึงทำให้ผู้ที่รับประทานได้รับตัวอ่อนพยาธินั่นคือความเสี่ยงที่จะติดเชื้อ ไม่ใช่การติดเชื้อที่เกิดขึ้นแล้ว และการติดเชื้อก็ไม่เท่ากับการเป็นมะเร็ง การปรุงให้สุกจนด้านในปลอดภัยจะกำจัดความเสี่ยงนี้",
+		},
 
 		# ------------------------------------------------------------ lessons --
 		"lesson.health_tip": {"en": "Health tip", "th": "เกร็ดสุขภาพ"},

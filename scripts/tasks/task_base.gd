@@ -40,6 +40,8 @@ var _prompt_area: VBoxContainer = null
 var _boxes: Array = []
 ## Content-fitted bottom sheets that must be re-measured when the window resizes.
 var _sheets: Array = []
+## Bounded retry counter for the sheet re-measuring passes (see `_refit_measured`).
+var _refit_retry := 0
 
 
 func _ready() -> void:
@@ -221,38 +223,71 @@ func refit_sheets() -> void:
 	call_deferred("_refit_measured")
 
 
-## Second measuring pass. The minimum height a wrapped label reports is the height
-## it would need at its *narrowest* width, which for a sentence of Thai is absurdly
-## tall; by now the content has been laid out at the real width, so the height it
-## actually took is the right one to fit the sheet to.
+## Second measuring pass. A wrapped label's minimum height only becomes meaningful
+## once it has been laid out and knows its width: before that it answers with the
+## height it would need at almost zero width, which for a sentence of Thai is
+## thousands of pixels. This pass therefore waits until the panel has a real width
+## and then reads the *minimum* height, which is exactly the content's true height.
+##
+## The panel's own `size` is deliberately not used: a container stretches its child
+## to fill the rect it was given, so the child's size just echoes back whatever the
+## previous fit decided, and fitting to it would ratchet the sheet taller every pass.
 func _refit_measured() -> void:
 	if not is_inside_tree():
 		return
+	var vp := UIFactory.viewport_size()
+	var pending := false
 	for entry in _sheets:
 		var measured = entry.get("measured")
 		if is_instance_valid(measured):
 			var control := measured as Control
-			if control.size.y > 0.0:
-				entry["actual"] = control.size.y
+			var content_height := control.get_combined_minimum_size().y
+			if content_height > 0.0 and content_height < vp.y:
+				entry["actual"] = content_height
+			else:
+				pending = true
 		_fit_sheet(entry)
+	# A few extra passes, one frame apart, in case the content was not laid out on
+	# the first one. Bounded, so a panel that somehow never settles cannot spin.
+	if pending:
+		if _refit_retry < 4:
+			_refit_retry += 1
+			var tree := get_tree()
+			if tree != null:
+				await tree.process_frame
+				if is_inside_tree():
+					_refit_measured()
+	else:
+		_refit_retry = 0
 
 
 func _fit_sheet(entry: Dictionary) -> void:
 	var panel = entry.get("panel")
 	if not is_instance_valid(panel):
 		return
+	var vp := UIFactory.viewport_size()
+	var margin := float(UIFactory.ui_margin())
 	var needed := 190.0
 	var measured = entry.get("measured")
 	if is_instance_valid(measured):
+		var control := measured as Control
 		var content_height := float(entry.get("actual", 0.0))
 		if content_height <= 0.0:
-			content_height = (measured as Control).get_combined_minimum_size().y
-		needed = maxf(190.0, content_height + 64.0)
-	var vp := UIFactory.viewport_size()
-	var margin := float(UIFactory.ui_margin())
+			# Until the first measuring pass has run, fall back to the minimum size,
+			# but only when it is plausible: a not-yet-laid-out wrapped label reports
+			# a fantasy height, and fitting to that clips the sheet.
+			var combined := control.get_combined_minimum_size().y
+			if combined > 0.0 and combined < vp.y:
+				content_height = combined
+		# 44 = the panel's own content margin (20 top and bottom) plus a little air.
+		needed = maxf(190.0, content_height + 44.0)
 	var top := margin + 190.0
 	if hud != null and is_instance_valid(hud):
 		top = hud.content_top()
+	# The instruction area can report the same not-yet-laid-out height, which would
+	# leave the sheet no room at all. The top is clamped to a band that always leaves
+	# space for a sheet, whatever the HUD currently claims.
+	top = clampf(top, margin + 120.0, maxf(margin + 120.0, vp.y * 0.45))
 	UIFactory.bottom_box(panel, float(entry.get("w")), needed, float(entry.get("off")),
 		margin, maxf(160.0, vp.y - margin - top))
 
