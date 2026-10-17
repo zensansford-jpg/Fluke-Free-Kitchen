@@ -31,14 +31,21 @@ godot --path . --editor
 godot --path .
 ```
 
-Headless checks (used throughout development):
+Headless checks (used throughout development). All five report PASS/FAIL themselves, so they can
+be run in one go:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\run_all_tests.ps1   # imports, runs all five, prints a summary
+```
+
+Individually:
 
 ```powershell
 godot --headless --path . res://tests/smoke_test.tscn        # content, wiring, scoring
 godot --headless --path . res://tests/flow_test.tscn         # all three challenges end to end
 godot --headless --path . res://tests/behaviour_test.tscn    # real pointer input (click/drag/swipe/hold)
-godot --headless --path . res://tests/cook_test.tscn         # cooking visuals + the burnt outcome and its retry
-godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (120 layouts)
+godot --headless --path . res://tests/cook_test.tscn         # cooking visuals + outcomes B (unsafe serving) and C (burnt) and their retries
+godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (132 layouts)
 godot --headless --path . res://tests/layout_check.tscn      # UI geometry, per step
 godot --path . res://tests/visual_capture.tscn -- l1         # renders states to PNGs
 ```
@@ -112,7 +119,7 @@ scripts/ui/     the design system and every screen
 scripts/world/  procedural materials and props
 scenes/         main_menu · level_select · kitchen · journal · assessment
 tests/          smoke · flow · behaviour · cook · responsive · layout · visual capture
-tools/          serve_web.py · web_smoke.mjs · study/analyse_export.py
+tools/          serve_web.py · web_smoke.mjs · run_all_tests.ps1 · study/analyse_export.py
 docs/           the education and competition documents; docs/study/ holds the paper forms
 build/          export output (.exe, .apk, web/) — ignored by the asset scanner
 ```
@@ -126,6 +133,7 @@ start quietly if a lesson cites an unknown or disallowed source.
 | File | What it covers |
 |------|----------------|
 | `docs/PROJECT_AUDIT.md` | the audit, the reuse/replace decisions, the architecture, the acceptance criteria |
+| `docs/ROADMAP.md` | the consolidated plan: every requirement, its status, its evidence, and what is human-only or blocked |
 | `docs/MILESTONES.md` | milestone status: what is done, what is left |
 | `docs/RESPONSIVE.md` | how the interface reflows, the 12 sizes it was checked at, the results, and what is still untested |
 | `docs/EXPORTS.md` | what was exported to each platform, how it was verified, what was *not* verified, and how to rebuild |

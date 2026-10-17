@@ -1,6 +1,6 @@
 # Milestones — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
 
-**Version:** 2.0.0 · **Updated:** 2026-10-16
+**Version:** 2.0.0 · **Updated:** 2026-10-17
 This is the live status tracker. The milestone plan itself (gates and deliverables) is in
 `docs/PROJECT_AUDIT.md` §9; the acceptance criteria are in §10 of the same file.
 
@@ -19,9 +19,9 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
 | **M4** | Level 2 — Safe Cooking | ✅ | `flow_test.tscn`: 5 steps, 3 stars, 1450/1450, 2 questions |
 | **M5** | Level 3 — Village Prevention | ✅ | `flow_test.tscn`: 6 steps, 3 stars, 1610/1610, 2 questions |
 | **M6** | Progression & journal | ✅ | stars, unlocks, per-level best, learning log, knowledge journal, reset progress; journal shows 12 recorded lessons |
-| **M7** | Presentation pass | ✅ | fixed angled camera, cosy kitchen set, feedback, UI polish, screen transitions; **progressive cooking visuals** (raw → cooked → golden → burnt) and the burnt outcome with quick retry verified by `cook_test.tscn`; in-game screens verified by `layout_check` and `visual_capture` |
+| **M7** | Presentation pass | ✅ | fixed angled camera, cosy kitchen set, feedback, UI polish, screen transitions; **progressive cooking visuals** (raw → cooked → golden → burnt), the burnt outcome with quick retry **and the unsafe-serving outcome (B)** all verified by `cook_test.tscn`; in-game screens verified by `layout_check` and `visual_capture` |
 | **M8** | Education & research pack | 🔄 | in-game pre/post assessment + anonymised export (running); the five documents written; source re-verification and any real study remain |
-| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 132/132 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); five suites green (smoke, flow, behaviour, cook, responsive); remaining: manual play-through checklist on a physical device and a final Thai/English string review |
+| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 132/132 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); five suites green (smoke, flow, behaviour, cook, responsive) and runnable in one command (`tools\run_all_tests.ps1`); remaining: manual play-through checklist on a physical device and a final Thai/English string review |
 
 ---
 
@@ -56,6 +56,20 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
   burnt outcome appears with a retry, that the retry puts a **raw** fish back, that the mistake
   survives the retry, and that the fresh fish heats up again. Colour is presentation only: the
   panel says on screen that golden is not a safety check, and no pass/fail rule reads the colour.
+* **All three outcomes are real and each is covered by a test.**
+  *A* — the dish is safe: the step succeeds only after the inside holds a safe temperature.
+  *C* — burnt: too much heat spoils the fish, shown with an explanation and a quick retry.
+  *B* — unsafe serving: the player may deliberately "serve it now" below the safe temperature;
+  the step stops, records a mistake, says in words — with nothing depicted — that the fish may
+  still carry living larvae, that the eater would be *exposed* (a risk of infection, not an
+  infection, and not the same as cancer), and offers either a fresh fish or "keep cooking this
+  one" so the message is one tap to skip. Added 2026-10-17; driven by `cook_test.tscn`.
+* **Bottom sheets are fitted to what they actually contain.** A wrapped label reports a fantasy
+  minimum height until it knows its width, and a container stretches its child to the rect it was
+  given, so fitting a sheet to either number clips it or inflates it. `KitchenTask._fit_sheet` /
+  `_refit_measured` and `KitchenHUD.content_top()` were corrected on 2026-10-17 to use the
+  post-layout minimum and the visible bottom of the instruction area; the new outcome-B message
+  exposed the fault, and all five sheets were re-checked in a windowed run afterwards.
 * **A fifth suite drives the real pointer pipeline** (`tests/behaviour_test.tscn`): it pushes
   `InputEventMouseButton` / `InputEventMouseMotion` into the viewport and checks that a
   demonstration blocks input, that a wrong answer is explained and the step stays open (on a

@@ -329,7 +329,7 @@ Milestone-by-milestone mapping to the official *Fluke Free Fighters* judging cri
 
 ---
 
-## 13. Repair pass — status by area (2026-10-16)
+## 13. Repair pass — status by area (2026-10-16, updated 2026-10-17)
 
 A later brief asked for an audit-and-repair pass over the finished game: responsive layout
 across a viewport matrix, progressive cooking visuals, honest handling of the three
@@ -348,7 +348,8 @@ that backs it:
 | Visuals separated from safety logic; never teach that golden = safe | **PASS** | Pass/fail reads only the internal temperature and the time held at it. The cooking panel prints, in both languages, that golden colour is not a safety check (`task.colour_not_proof`) |
 | Outcome A (safe dish) | **PASS** | The cooking step succeeds only after the fish holds a safe internal temperature (63 °C) for the required time; `behaviour_test` and `flow_test` both drive it |
 | Outcome C (burnt / overcooked) with quick retry | **PASS** | `_burn_the_fish()` / `_restart_cook()`; `cook_test.tscn` drives a real press-and-hold until the burn, checks the retry button, the fresh raw fish, the retained mistake and that the fresh fish heats again |
-| Outcome B (serving an unsafe dish) as its own screen | **NOT IMPLEMENTED** | The current five-step challenge has no "serve" action, so there is nothing to serve early. The unsafe-serving teaching is carried by the `lime_or_cook` decision and the required knowledge question instead. A serve step is a design addition, not a repair, and is not claimed |
+| Outcome B (serving an unsafe dish) — non-graphic, skippable, distinguishes exposure risk from infection | **PASS** | The cooking step now offers a deliberate "serve it now" choice (`task.serve_now`). Taking it below the safe temperature ends the step in the B outcome: the mistake is recorded, the message says the fish *may* still carry living larvae and separates exposure → risk of infection → infection → cancer in words only, and either "start this fish again" or "keep cooking this one" leaves the message in one tap. `cook_test.tscn` drives it and asserts the ending, the recorded mistake, the exposure/infection wording and the way out; screenshot `cook_4_unsafe_serve.png` |
+| Bottom sheets fitted to their real content (all tasks) | **PASS** | A wrapped label answers `get_combined_minimum_size()` with a fantasy height until it knows its width, and a container's child `size` just echoes the rect it was given. `_fit_sheet`/`_refit_measured` now fit sheets to the post-layout minimum, and `KitchenHUD.content_top()` measures the visible bottom of the instruction area instead of its claimed minimum. Before this, a tall sheet (the new B message) was clamped to ~160 px and clipped. All five sheets re-checked in a windowed run; the 132-layout matrix still passes |
 | Motion / tilt controls with fallbacks | **NOT APPLICABLE, NOT FAKED** | No sensor interaction exists anywhere in the game; every task is pointer-driven. No settings toggle pretends otherwise. Rationale in `docs/RESPONSIVE.md` §8 |
 | Save/load: versioned, validated, atomic, corrupt-safe, no silent overwrite | **PASS** | `SaveData` schema v2, temp swap, `save_v2.corrupt.json` quarantine, legacy `save_v1.json` kept as a backup; `smoke_test` plants a file of every kind, resets, and proves none survive |
 | Settings persistence and reset | **PASS** | `settings_v2.json`; "reset all progress" clears disk and memory, including half-written and quarantined files |

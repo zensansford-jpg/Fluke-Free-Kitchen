@@ -61,6 +61,19 @@ As of 2026-10-16 **every source is `verified`**; the column is kept so the histo
 
 **Myths corrected at this level:** `lime_kills`, `pickling_safe`, `all_fish_infected`, `temp_magic_number`.
 
+**Outcome B — the "unsafe serving" message, and exactly what it claims.**
+The cooking step lets the player deliberately serve the fish before its inside is proven safe.
+That ends the step in the unsafe-serving outcome. The message makes three separate statements:
+
+| Statement (Thai/English in `ui_strings.gd`) | Why it is safe to say | Sources |
+|---------------------------------------------|------------------------|---------|
+| the fish "may still carry living liver-fluke larvae" | Under-cooking is exactly the route by which the larvae survive; the game says *may*, never *does* | `cdc_about_opisthorchis`, `who_foodborne_trematodes` |
+| whoever eats it "is exposed to the larvae — that is a risk of becoming infected, not an infection that has already happened" | Transmission is by eating the larvae; exposure and established infection are different states, and the DDC/CDC frame prevention as avoiding exposure | `cdc_clinical_opisthorchis`, `ddc_thailand` |
+| "an infection is not the same thing as cancer" | IARC classifies chronic infection as the Group 1 hazard; the game repeats that most infected people do not develop cancer | `iarc_opisthorchis_group1`, `sripa_2012_tumorigenic` |
+
+No symptom, illness or medical imagery is shown or described. The message is text only, and
+either of its two buttons leaves it immediately.
+
 > **Why the game does not simply say "cook it to 70 °C for 10 minutes".**
 > No single temperature-and-time applies to every fish, every cut and every cooking method, and
 > the studies tested particular regimes (boiling/microwaving ≥ 5 min; −20 °C ≥ 48 h). The
@@ -104,6 +117,9 @@ These omissions are intentional and are part of the content quality:
    that comes straight from a published abstract (ARR 1.41), which is attributed to that study.
 8. **No study has been run on this game.** The game itself says so on the assessment screen:
    it reports that no classroom trial has been conducted, so no learning gain can be claimed.
+9. **Serving undercooked fish is not said to make anyone ill.** The outcome-B message says the
+   person who eats it would be *exposed* to the larvae and *at risk* of infection; it never says
+   they are infected, and never says an infection is cancer. Nothing is depicted.
 
 ---
 
