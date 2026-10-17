@@ -134,6 +134,7 @@ start quietly if a lesson cites an unknown or disallowed source.
 |------|----------------|
 | `docs/PROJECT_AUDIT.md` | the audit, the reuse/replace decisions, the architecture, the acceptance criteria |
 | `docs/ROADMAP.md` | the consolidated plan: every requirement, its status, its evidence, and what is human-only or blocked |
+| `docs/QA_CHECKLIST.md` | the practical pre-demo / pre-submission checklist, condensed from the roadmap |
 | `docs/MILESTONES.md` | milestone status: what is done, what is left |
 | `docs/RESPONSIVE.md` | how the interface reflows, the 12 sizes it was checked at, the results, and what is still untested |
 | `docs/EXPORTS.md` | what was exported to each platform, how it was verified, what was *not* verified, and how to rebuild |

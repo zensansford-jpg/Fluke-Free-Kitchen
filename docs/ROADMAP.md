@@ -37,9 +37,9 @@ python tools\study\analyse_export.py --selftest
 | All 5 Godot test suites | ✅ **5/5 PASS** | `tools/run_all_tests.ps1` → smoke, flow, behaviour, cook, responsive |
 | Responsive layout matrix | ✅ **132/132 layouts** across 12 sizes | `responsive_check` |
 | Study data pipeline | ✅ **SELFTEST PASSED** | `analyse_export.py --selftest` (statistics pinned, synthetic data, empty-folder guard) |
-| Windows export present | ✅ 104.602 MB | `build/FlukeFreeKitchen.exe` |
-| Web export present | ✅ wasm 37.684 MB, pck 0.395 MB, js 0.267 MB | `build/web/` |
-| Android export present + signed | ✅ 55.345 MB, `apksigner verify` v2+v3 true, 1 signer | `build/android/FlukeFreeKitchen.apk` |
+| Windows export present | ✅ 104.605 MB | `build/FlukeFreeKitchen.exe` |
+| Web export present | ✅ wasm 37.684 MB, pck 0.399 MB, js 0.267 MB | `build/web/` |
+| Android export present + signed | ✅ 55.349 MB, `apksigner verify` v2+v3 true, 1 signer | `build/android/FlukeFreeKitchen.apk` |
 | All 11 health sources verified | ✅ | `docs/REFERENCES.md` §6 |
 
 ---
@@ -66,7 +66,7 @@ python tools\study\analyse_export.py --selftest
 |---|------|--------|------------------------|
 | B1 | One command runs every suite | ✅ PASS | `tools/run_all_tests.ps1` (added this session) |
 | B2 | Re-validate existing exports without rebuilding | ✅ PASS | `apksigner verify`; size listing (this session) |
-| B3 | Reproducible re-export from committed source | 🟡 PARTIAL | Exports exist and are validated; a from-scratch re-export on a clean checkout is 👤/optional |
+| B3 | Reproducible re-export from the current source | ✅ PASS | All three working presets re-exported 2026-10-17 after the outcome-B change; Web build re-opened in real Chrome (0 console errors); APK signature re-verified. A clean-checkout re-export on another machine is still 👤/optional |
 | B4 | Web build runs in a real browser (0 console errors) | ✅ PASS | CDP check + screenshot; `docs/EXPORTS.md` §4 |
 | B5 | Memory/perf measurement on real hardware | ⛔ BLOCKED | No device; window resizing on one laptop is not a device measurement |
 
@@ -120,8 +120,8 @@ python tools\study\analyse_export.py --selftest
    HUD's stale height measurement~~ — **done** (`KitchenTask._fit_sheet` / `_refit_measured`,
    `KitchenHUD.content_top()`); all four existing sheets re-checked in a windowed run.
 4. ~~Commit~~ — see git log.
-5. (Optional, low risk) add a short `docs/QA_CHECKLIST.md` derived from this roadmap for the oral
-   defence.
+5. ~~Add a short `docs/QA_CHECKLIST.md`~~ — **done** (`docs/QA_CHECKLIST.md`: run it, play it, look at
+   the sizes, export it, the human items, and the paperwork).
 
 Everything else in §3 that is not ✅ is either 👤 (a person must do it) or ⛔ (blocked by the
 environment or by ethics). Those are **not** silently dropped; they are named with their reason.

@@ -2,7 +2,8 @@
 
 **Engine:** Godot `4.7.2.stable.official.ed1daf0bf`
 **Export templates:** `%APPDATA%\Godot\export_templates\4.7.2.stable` (`version.txt` = `4.7.2.stable`)
-**Last export run:** 2026-10-16
+**Last export run:** 2026-10-17 (all three working presets re-exported from the current source after
+the outcome-B change; sizes re-measured, APK signature re-verified, Web build re-run in Chrome)
 
 This file records what was actually exported, on what toolchain, with what
 evidence, and what was **not** verified. Nothing here is aspirational: if an
@@ -28,6 +29,19 @@ The three presets that exist now:
 [preset.2]  Android
 [preset.3]  iOS
 ```
+
+### 1.1 Re-export and re-verification — 2026-10-17
+
+An export is only evidence for the source it was built from, so after the outcome-B change all
+three working presets were re-exported from the current source and re-checked:
+
+| Artefact | Size (2026-10-17) | Check |
+| --- | --- | --- |
+| `build/FlukeFreeKitchen.exe` | 104.605 MB | export exit 0, no errors |
+| `build/web/` | wasm 37.684 MB · pck 0.399 MB · js 0.267 MB | served over HTTP and opened in real headless Chrome via the DevTools protocol: title *Fluke Free Kitchen*, canvas 1254 × 564, `Engine` global present, **0 console errors**, screenshot inspected |
+| `build/android/FlukeFreeKitchen.apk` | 55.349 MB | export exit 0 (aligned + signed); `apksigner verify` — v2 **true**, v3 **true**, 1 signer, `CN=Android Debug` |
+
+The APK is a debug build and is still **NOT** installed or launched on any device.
 
 ---
 
@@ -83,7 +97,7 @@ godot --headless --path . --export-release "Windows Desktop" build/FlukeFreeKitc
 | Property | Value |
 | --- | --- |
 | File | `build/FlukeFreeKitchen.exe` |
-| Size | 104.599 MB |
+| Size | 104.605 MB |
 | Architecture | x86_64 |
 | PCK | embedded (`binary_format/embed_pck=true`) |
 | Icon | `res://icon.svg` |
@@ -109,7 +123,7 @@ godot --headless --path . --export-release "Web" build/web/index.html
 | `index.html` | 5 KB | default Godot shell, `canvas_resize_policy=2` (adaptive) |
 | `index.js` | 267 KB | loader |
 | `index.wasm` | 37.684 MB | engine |
-| `index.pck` | 393 KB | the game |
+| `index.pck` | 399 KB | the game |
 | `index.png`, `index.icon.png`, `index.apple-touch-icon.png` | — | page icons |
 | `index.audio.worklet.js`, `index.audio.position.worklet.js` | — | Web Audio worklets |
 
