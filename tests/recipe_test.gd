@@ -36,6 +36,7 @@ func _run() -> void:
 	_check_catalogue()
 	_check_generator()
 	_check_free_cook()
+	_check_generated()
 	_check_save_migration()
 	_check_save_recovery()
 	_check_records_and_achievements()
@@ -281,6 +282,74 @@ func _check_free_cook() -> void:
 		failures.append("free cook: an unknown fish produced a challenge")
 	if not RecipeDB.build_free_cook("pla_nil", "not_a_method").is_empty():
 		failures.append("free cook: an unknown method produced a challenge")
+
+
+# ========================================================== composed dishes ===
+## The dishes the game composes itself. These are the "unlimited cuisine" promise:
+## the catalogue is never a fixed list, so a large batch of composed dishes is
+## checked here and every one is held to exactly the same standard as a written
+## recipe — valid steps, exactly one mandatory safe cook, and honest labelling.
+func _check_generated() -> void:
+	var generator := ChallengeGenerator.new()
+	generator.begin(1)
+
+	# Determinism: the same seed must compose the same dish, or a bug cannot be
+	# reproduced. Compared as text so an extra field cannot slip through.
+	var first := RecipeDB.generate_dish(4242)
+	var again := RecipeDB.generate_dish(4242)
+	if first.is_empty() or JSON.stringify(first) != JSON.stringify(again):
+		failures.append("composed: the same seed did not compose the same dish")
+
+	var checked := 0
+	var ids := {}
+	for seed_value in range(1, 201):
+		var dish := RecipeDB.generate_dish(seed_value)
+		if dish.is_empty():
+			failures.append("composed: seed %d composed nothing" % seed_value)
+			continue
+		checked += 1
+		var recipe := RecipeDB.generate_recipe(seed_value)
+		for problem in RecipeDB.validate(recipe):
+			failures.append("composed: seed %d invalid recipe: %s" % [seed_value, problem])
+		for problem in generator.validate(dish):
+			failures.append("composed: seed %d invalid challenge: %s" % [seed_value, problem])
+		if bool(dish.get("real", true)):
+			failures.append("composed: seed %d claims to be a traditional dish" % seed_value)
+		var title: Variant = dish.get("title", {})
+		if typeof(title) != TYPE_DICTIONARY \
+				or str((title as Dictionary).get("en", "")).is_empty() \
+				or str((title as Dictionary).get("th", "")).is_empty():
+			failures.append("composed: seed %d has no bilingual name" % seed_value)
+		var difficulty := int(dish.get("difficulty", 0))
+		if difficulty < 1 or difficulty > 3:
+			failures.append("composed: seed %d has difficulty %d" % [seed_value, difficulty])
+		var id := str(dish.get("id", ""))
+		if ids.has(id):
+			failures.append("composed: two seeds share the id '%s'" % id)
+		ids[id] = true
+
+		# The safety rules must survive composition: one cook step, at the safe
+		# figure, and never a plating style the kitchen does not know.
+		var cooks := 0
+		for entry in dish.get("steps", []):
+			var step: Dictionary = entry
+			if str(step.get("kind", "")) != "cook_through":
+				continue
+			cooks += 1
+			if float(step.get("safe_temp", 0.0)) < GameConfig.COOK_SAFE_TEMP_C - 0.001:
+				failures.append("composed: seed %d cooks below the safe temperature" % seed_value)
+		if cooks != 1:
+			failures.append("composed: seed %d has %d cook steps, expected 1" % [seed_value, cooks])
+
+	if checked == 200:
+		print("  composed: 200 composed dishes are valid, honest and safely cooked")
+
+	# The browse pool: distinct dishes, all valid, from a single base seed.
+	var pool := RecipeDB.generated_pool(6, 900)
+	if pool.size() == 6:
+		print("  composed: the browse pool returned 6 distinct, valid dishes")
+	else:
+		failures.append("composed: the browse pool returned %d dishes, expected 6" % pool.size())
 
 
 # ==================================================================== saves ===

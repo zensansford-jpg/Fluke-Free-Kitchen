@@ -351,6 +351,10 @@ static func table() -> Dictionary:
 		"free.experimental_note": {"en": "This dish is your own creation, not a traditional recipe.", "th": "จานนี้เป็นผลงานสร้างสรรค์ของคุณ ไม่ใช่สูตรอาหารพื้นบ้าน"},
 		"free.freshwater_note": {"en": "Freshwater fish can carry liver-fluke larvae, so it must be cooked through.", "th": "ปลาน้ำจืดอาจมีตัวอ่อนพยาธิใบไม้ตับ จึงต้องปรุงให้สุกทั่วถึง"},
 		"free.sea_note": {"en": "Sea fish are not part of the fluke life cycle, but they are still cooked properly.", "th": "ปลาทะเลไม่อยู่ในวงจรชีวิตของพยาธิใบไม้ตับ แต่ก็ยังต้องปรุงให้สุก"},
+		"free.composed_title": {"en": "Composed by the kitchen", "th": "ครัวคิดให้"},
+		"free.composed_note": {"en": "Not sure what to cook? The kitchen can invent a dish for you from the same real fish, ingredients and methods. Every one is a game creation, never a traditional recipe — and still has to be cooked safely.", "th": "ยังไม่รู้จะปรุงอะไรดี ครัวสามารถคิดจานให้คุณได้จากปลา ส่วนผสม และวิธีปรุงจริง ทุกจานเป็นการสร้างในเกม ไม่ใช่สูตรอาหารพื้นบ้าน และยังต้องปรุงให้ปลอดภัยเสมอ"},
+		"free.surprise": {"en": "Surprise me", "th": "สุ่มให้หน่อย"},
+		"free.cook_this": {"en": "Cook this", "th": "ปรุงจานนี้"},
 
 		# ----------------------------------------------------------- endless --
 		"endless.title": {"en": "Endless Kitchen", "th": "ครัวไม่รู้จบ"},

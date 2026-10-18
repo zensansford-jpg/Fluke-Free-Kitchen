@@ -11,6 +11,10 @@ extends MenuScreen
 
 var _fish_id := ""
 var _method_id := ""
+## The composed dishes on show, and the seed they were drawn from. Kept on the
+## instance so a resize reflows the same dishes instead of rolling new ones.
+var _composed: Array = []
+var _compose_seed := 1200
 
 
 func _ready() -> void:
@@ -37,6 +41,19 @@ func _build() -> void:
 	column.add_child(centred(start))
 	if start.disabled:
 		column.add_child(centred(UIFactory.wrap(Loc.t("free.pick_both"), 16, UIFactory.TEXT_DIM)))
+
+	# Composed dishes: the same real fish, ingredients and methods, arranged by the
+	# game. This is the "unlimited cuisine" idea made concrete — the player can never
+	# run out of something new to cook, and every composed dish is still held to the
+	# same validator and the same mandatory safe-cook step as a written recipe.
+	column.add_child(gap(18))
+	column.add_child(UIFactory.label(Loc.t("free.composed_title"), 21, UIFactory.ACCENT, true))
+	column.add_child(centred(UIFactory.wrap(Loc.t("free.composed_note"), 16, UIFactory.TEXT_DIM)))
+	column.add_child(centred(_composed_grid()))
+	var surprise := UIFactory.button(Loc.t("free.surprise"), 20, 260.0)
+	UIFactory.style_button(surprise, UIFactory.ACCENT, false)
+	surprise.pressed.connect(_surprise)
+	column.add_child(centred(surprise))
 
 	column.add_child(centred(back_button(func() -> void: Game.go_to_modes())))
 
@@ -120,3 +137,54 @@ func _start() -> void:
 	if _fish_id.is_empty() or _method_id.is_empty():
 		return
 	Game.start_free_cook(_fish_id, _method_id)
+
+
+# ----------------------------------------------------------- composed dishes ---
+## Three dishes the game composed itself, from the seed the page is currently on.
+## Generated once and cached so the row does not change under the player on resize.
+func _composed_grid() -> GridContainer:
+	if _composed.is_empty():
+		_composed = RecipeDB.generated_pool(3, _compose_seed)
+	var grid := GridContainer.new()
+	grid.columns = UIFactory.columns(3, 1)
+	grid.add_theme_constant_override("h_separation", 18)
+	grid.add_theme_constant_override("v_separation", 18)
+	for entry in _composed:
+		var dish: Dictionary = entry
+		grid.add_child(_composed_card(dish))
+	return grid
+
+
+func _composed_card(dish: Dictionary) -> PanelContainer:
+	var card := UIFactory.panel(UIFactory.CARD_COLOR)
+	# A grid child, so its minimum is capped to its column. The card's own 20 pixel
+	# padding is what the button inside measures against (see `inset` below).
+	UIFactory.responsive_grid_size(card, 300.0, 3, 1, 360.0, 18)
+	var v := UIFactory.vbox(10)
+	card.add_child(v)
+
+	var preview := DishPreview.new()
+	preview.custom_minimum_size = Vector2(0, 130)
+	# The preview is drawn from the recipe, not the challenge: same seed, so the same
+	# dish, and the silhouette comes from the fish the dish actually names.
+	preview.configure(RecipeDB.generate_recipe(int(dish.get("seed", 0))), true)
+	v.add_child(preview)
+
+	v.add_child(UIFactory.wrap(RecipeDB.local(dish.get("title", {})), 19, UIFactory.TEXT_BRIGHT))
+	v.add_child(UIFactory.wrap(Loc.t("free.experimental_note"), 14, UIFactory.TEXT_DIM))
+
+	var cook := UIFactory.button(Loc.t("free.cook_this"), 18, 160.0)
+	UIFactory.style_button(cook, UIFactory.GOOD, true)
+	cook.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UIFactory.responsive_grid_size(cook, 160.0, 3, 1, 48.0, 18, 40.0)
+	var seed_value := int(dish.get("seed", 0))
+	cook.pressed.connect(func() -> void: Game.start_generated(seed_value))
+	v.add_child(centred(cook))
+	return card
+
+
+## Rolls a fresh set of composed dishes and rebuilds the page around them.
+func _surprise() -> void:
+	_compose_seed += 3
+	_composed.clear()
+	rebuild_for_size()

@@ -36,6 +36,7 @@ python tools\study\analyse_export.py --selftest
 | All 7 Godot test suites | ✅ **7/7 PASS** | `tools/run_all_tests.ps1`: smoke, flow, behaviour, cook, recipe, minigame, responsive all PASSED |
 | Responsive layout matrix | ✅ **300/300 layouts, 0 problems** | `tests/responsive_check.gd`: 12 sizes × 7 menu screens + settings modal + 3 kitchens + full recipe walk |
 | Recipe catalogue (data-driven) | ✅ **11 dishes, 27 ingredients, 8 recipes + 3 challenge variations** | `scripts/data/recipe_data.gd` - validation via `validate_steps`, unlock graph with ≥2 dishes open at start |
+| Procedural dish composition | ✅ **Implemented + tested (200 seeds)** | `RecipeDB.generate_recipe(seed)` / `generate_dish(seed)` / `generated_pool(count, seed)`; every composed dish is validated, labelled a game creation, and carries exactly one safe-cook step; surfaced in Free Cook as a picture-first row + "Surprise me" (`Game.start_generated`); `recipe_test` checks 200 seeds, determinism and a 6-dish pool |
 | Minigame library (14 interaction kinds wired) | ✅ **Implemented** | `scripts/tasks/task_slice.gd`, `task_stir.gd`, `task_flip.gd`, `task_plate.gd`, `task_serve.gd`, `task_factory.gd` with gesture hints; character reactions integrated |
 | Three modes (Let's Cook, Endless Kitchen, Free Cook) | ✅ **Implemented** | `scenes/main/mode_select.tscn`, `dish_select.tscn`, `free_cook.tscn`, `dish_preview.tscn`; `scripts/ui/*.gd`; Free Cook clearly marked experimental |
 | Endless challenge generator (validated) | ✅ **Implemented** | `scripts/data/challenge_generator.gd` uses shared `RecipeDB.validate_steps`; seeded deterministic with fallbacks |
@@ -54,7 +55,7 @@ python tools\study\analyse_export.py --selftest
 
 | # | Item | Status | Evidence / next action |
 |---|------|--------|------------------------|
-| A1 | Data-driven dish catalogue (infinite-data-driven, not fabricated assets) | ✅ PASS | `scripts/data/recipe_data.gd` - 8 fish + 1 colour variant, 27 ingredients, 6 methods, 7 garnishes, 5 plating styles, 8 real recipes + 3 challenge variations; `build_steps`, `build_free_cook`, validation, unlocks |
+| A1 | Data-driven dish catalogue (infinite-data-driven, not fabricated assets) | ✅ PASS | `scripts/data/recipe_data.gd` - 8 fish + 1 colour variant, 27 ingredients, 6 methods, 7 garnishes, 5 plating styles, 8 real recipes + 3 challenge variations; `build_steps`, `build_free_cook`, validation, unlocks; **plus `generate_recipe`/`generate_dish`/`generated_pool` — procedural dishes composed from the same real data and held to the same validator** |
 | A2 | Reusable minigame library (14 interaction kinds) | ✅ PASS | All task types wired via `task_factory.gd`; gesture hints; requires real input (verified in `minigame_test`) |
 | A3 | Zero-reading tutorials (teach-once-per-session demo gating) | ✅ PASS | `scripts/tasks/task_base.gd` gains `is_accepting_input()` and session-taught demo gating (teach-once-per-session) to reduce friction in Endless Kitchen |
 | A4 | Character reactions to real actions | ✅ PASS | `scripts/world/kitchen_character.gd` + `scripts/world/kitchen_scene.gd`.react() integrated |
@@ -76,7 +77,8 @@ python tools\study\analyse_export.py --selftest
 | B6 | Re-export builds (Windows/Web/Android) | ❌ NOT DONE | Existing builds present; re-export after fixes recommended but not completed |
 | B7 | Full end-to-end play-through across all three modes | 🟡 PARTIAL | Core logic verified via tests (smoke/flow/cook/recipe/minigame integration); manual full play-through not completed in this session |
 | B8 | Update documentation with honest status | ✅ PASS | Updated ROADMAP.md, QA_CHECKLIST.md and FINAL_STATUS.md this session to reflect 7/7 PASS |
-| B9 | Commit expansion if all tests pass | ❌ NOT DONE | Commit with clear message summarizing catalogue/minigame/validation/responsive improvements once all green |
+| B9 | Commit expansion if all tests pass | ✅ PASS | Committed once all seven suites were green (`Green the suite: responsive layout, cook/hold panels, test-infra fixes`) |
+| B11 | Procedural dish composition (build + validate + surface + test) | ✅ PASS | `RecipeDB.generate_recipe`/`generate_dish`/`generated_pool`; `Game.start_generated`; Free Cook composed-dish row + "Surprise me"; `recipe_test._check_generated` (200 seeds, determinism, pool) |
 | B10 | Test-infrastructure fixes (minigame drive-loop race; orchestrator verdict case bug) | ✅ PASS | `minigame_test` guards on `watch["finished"]`/freed task; `run_all_tests.ps1` verdict now the final case-sensitive `PASSED`/`FAILED` line |
 
 ### C. Baseline Feature Completeness vs Original Brief
@@ -135,7 +137,7 @@ Based on the expansion session, the immediate priorities are:
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
 6. **Commit expansion** (🤖) - Ready to commit with summary; all tests green.
-7. **Rebuild mandate, remaining slices** (🤖) - Picture-first/virtualised recipe browser, procedural dish generation + player recipe creator + personal cookbook, animation-library overhaul, audio layering, mission-first UI removal.
+7. **Rebuild mandate, remaining slices** (🤖) - Done this session: procedural dish composition + validation, surfaced in Free Cook. Still open: a virtualised/paged picture-first browser over the composed pool, a player recipe creator + personal cookbook (save schema), an animation-library overhaul, audio layering, and mission-first UI removal.
 
 ---
 

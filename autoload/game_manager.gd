@@ -307,6 +307,22 @@ func start_free_cook(fish_id: String, method_id: String) -> bool:
 	return _begin_run()
 
 
+## Free Cook, "surprise me": a dish the game composes itself from the catalogue and
+## a seed. It is labelled as a game creation everywhere and is held to the same
+## validator as a hand-written recipe; a composition that somehow fails validation
+## is refused rather than played.
+func start_generated(seed_value: int) -> bool:
+	var challenge := RecipeDB.generate_dish(seed_value)
+	if challenge.is_empty():
+		push_warning("Game: could not compose a dish for seed %d." % seed_value)
+		return false
+	mode = Mode.FREE_COOK
+	current_recipe_id = ""
+	current_challenge = challenge
+	current_level_id = str(challenge.get("id", ""))
+	return _begin_run()
+
+
 ## Restarts the current run from the beginning. Run data resets; saved progress
 ## (stars, best scores, discoveries, learning log) does not.
 func restart_level() -> bool:

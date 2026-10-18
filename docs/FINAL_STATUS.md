@@ -40,6 +40,20 @@ Two test-infrastructure defects were fixed this session so the summary is trustw
   `content_sheet` machinery) and the cook panel stacks its labels instead of forcing a
   385 px row, so both fit a 320 px phone.
 
+## Procedural dish composition (added this session)
+
+`RecipeDB.generate_recipe(seed)` / `generate_dish(seed)` compose a new dish from the
+same real fish, ingredients and methods, as a pure function of one integer seed. The
+composed dish is a runnable challenge in exactly the shape `ChallengeGenerator.build`
+produces, so the kitchen runs it like any other — but it is **never** presented as a
+traditional dish (`real: false` plus a bilingual `note`), and it is held to the same
+`validate` / `validate_steps` before it can be played. `generated_pool(count, seed)`
+backs a browse list or a "surprise me" roll. Free Cook grew a picture-first row of
+three composed dishes (each drawn with `DishPreview`) and a **Surprise me** button;
+`Game.start_generated(seed)` runs one. `recipe_test` now checks 200 consecutive seeds
+(every one valid, honest, and with exactly one safe cook step), determinism, and a
+six-dish pool.
+
 ## Expansion Completed
 
 ✅ Data-driven catalogue (11 dishes, 8 real recipes + 3 challenge variations)  

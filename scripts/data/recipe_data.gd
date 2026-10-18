@@ -775,6 +775,201 @@ static func build_free_cook(fish_id: String, method_id: String, difficulty: int 
 	}
 
 
+# ================================================ procedural dish composition ===
+## Dishes the game composes itself, so the catalogue is never a fixed, finite list.
+##
+## A composed dish is built from the *same* real fish, ingredients and methods as a
+## hand-written recipe and is held to the *same* `validate`/`validate_steps` before
+## it can be played. It is never dressed up as a traditional dish: `real` is false
+## and the `note` says so in both languages, exactly like a challenge variation.
+##
+## The whole composition is a pure function of one integer seed, so the same seed
+## always yields the same dish and a bug can be reproduced instead of chased.
+
+## Which plating styles suit which cooking method. Drawn from, not fixed, so two
+## grilled dishes do not always arrive on the same plate.
+const GENERATED_PLATING := {
+	"boil": ["bowl"],
+	"steam": ["oval", "plate"],
+	"grill": ["platter", "banana_leaf"],
+	"fry": ["plate", "banana_leaf"],
+	"stir_fry": ["plate"],
+	"mince_fry": ["banana_leaf", "plate"],
+}
+
+
+## The *recipe* a generated dish is built from. Kept separate from `generate_dish`
+## so the raw composition can be validated and previewed without building steps.
+static func generate_recipe(seed_value: int) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+
+	var method: Dictionary = methods()[rng.randi_range(0, methods().size() - 1)]
+	var method_id := str(method.get("id", ""))
+	var method_name: Dictionary = method.get("name", {"en": method_id, "th": method_id})
+
+	# Fish: a base species, not a colour variant. A generated "new" dish reads oddly
+	# if it is named after a recolour whose species is different.
+	var fish_pool: Array = []
+	for entry in fish():
+		var spec: Dictionary = entry
+		if str(spec.get("variant_of", "")).is_empty():
+			fish_pool.append(str(spec.get("id", "")))
+	if fish_pool.is_empty():
+		fish_pool.append("pla_nil")
+	var fish_id := str(fish_pool[rng.randi_range(0, fish_pool.size() - 1)])
+	var fish_name: Dictionary = fish_by_id(fish_id).get("name", {"en": "Fish", "th": "ปลา"})
+
+	# Ingredients, drawn role by role so the mix is always sensible for cooking: at
+	# least one aromatic (so a chopping step has something real to chop), at least
+	# one seasoning, and however many vegetables and herbs the roll allows.
+	var chosen: Array = []
+	_pick_into(chosen, _ingredients_with_role("aromatic"), rng, 1, 2)
+	_pick_into(chosen, _ingredients_with_role("seasoning"), rng, 1, 2)
+	_pick_into(chosen, _ingredients_with_role("vegetable"), rng, 0, 2)
+	_pick_into(chosen, _ingredients_with_role("herb"), rng, 0, 1)
+	if method_id == "mince_fry":
+		_pick_into(chosen, _ingredients_with_role("binder"), rng, 1, 1)
+
+	var plating_options: Array = GENERATED_PLATING.get(method_id, ["plate"])
+	var plating := str(plating_options[rng.randi_range(0, plating_options.size() - 1)])
+
+	# One or two garnishes, never the same one twice.
+	var garnish_pool: Array = []
+	for entry in garnishes():
+		garnish_pool.append(str((entry as Dictionary).get("id", "")))
+	_shuffle(garnish_pool, rng)
+	var garnish: Array = garnish_pool.slice(0, 1 + rng.randi_range(0, 1))
+
+	return {
+		"id": "gen_%d" % seed_value,
+		"real": false,
+		"name": {
+			"en": "Kitchen experiment: %s, %s" % [str(fish_name.get("en", "Fish")), str(method_name.get("en", method_id))],
+			"th": "จานทดลองครัว: %s %s" % [str(fish_name.get("th", "ปลา")), str(method_name.get("th", method_id))],
+		},
+		"about": {
+			"en": "A dish composed by the game from real fish, real ingredients and a real cooking method. It is a game creation, not a traditional recipe — but however it is made, the inside must reach a safe temperature.",
+			"th": "จานที่เกมประกอบขึ้นจากปลา ส่วนผสม และวิธีปรุงจริง เป็นการสร้างในเกม ไม่ใช่สูตรอาหารพื้นบ้าน แต่ไม่ว่าจะปรุงแบบใด เนื้อในต้องถึงอุณหภูมิปลอดภัย",
+		},
+		"note": {
+			"en": "A game-composed dish, not a traditional recipe.",
+			"th": "จานที่เกมสร้างขึ้น ไม่ใช่สูตรอาหารพื้นบ้าน",
+		},
+		"method": method_id,
+		"fish": [fish_id],
+		"ingredients": chosen,
+		"garnish": garnish,
+		"plating": plating,
+		"difficulty": rng.randi_range(1, 3),
+		"unlock": "",
+		"tags": ["generated", "experiment"],
+		"quiz": ["q_l2_cook"],
+		"lessons": ["cook_thoroughly"],
+	}
+
+
+## A runnable challenge for a generated dish, in the same shape as `build_free_cook`
+## so the kitchen runs it exactly like any other. Returns `{}` on the (should be
+## impossible) chance that the composition fails the shared validator, so the caller
+## gets nothing rather than a broken dish.
+static func generate_dish(seed_value: int) -> Dictionary:
+	var recipe := generate_recipe(seed_value)
+	var problems := validate(recipe)
+	if not problems.is_empty():
+		push_warning("RecipeDB: generated dish %d failed validation: %s"
+			% [seed_value, ", ".join(problems)])
+		return {}
+	return {
+		"id": "gen_challenge_%d" % seed_value,
+		"index": 3,
+		"title": recipe.get("name", {}),
+		"goal": recipe.get("about", {}),
+		"objective_short": {
+			"en": "Cook a dish the kitchen invented — safely.",
+			"th": "ปรุงจานที่ครัวคิดขึ้นอย่างปลอดภัย",
+		},
+		"recipe_id": str(recipe.get("id", "")),
+		"real": false,
+		"difficulty": int(recipe.get("difficulty", 1)),
+		"steps": build_steps(recipe),
+		"quiz": ["q_l2_cook"],
+		"required_quiz": ["q_l2_cook"],
+		"lessons": ["cook_thoroughly"],
+		"tags": ["generated", "experiment"],
+		"generated": true,
+		"seed": seed_value,
+	}
+
+
+## A pool of distinct generated dishes from a base seed, for a browse list or a
+## "surprise me" button, so the list is never exhausted. `generate_dish` already
+## guarantees validity; this only removes near-duplicate rolls.
+static func generated_pool(count: int, base_seed: int = 1337) -> Array:
+	var out: Array = []
+	var seen: Array = []
+	var next_seed := base_seed
+	var attempts := 0
+	# Bounded: a run of unlucky rolls must not spin forever looking for variety.
+	while out.size() < count and attempts < count * 8 + 16:
+		attempts += 1
+		var dish := generate_dish(next_seed)
+		next_seed += 1
+		if dish.is_empty():
+			continue
+		var signature := _dish_signature(dish)
+		if seen.has(signature):
+			continue
+		seen.append(signature)
+		out.append(dish)
+	return out
+
+
+## The ingredient ids this dish must actually use, so two seeds that compose the
+## same method/fish/ingredient mix can be treated as the same dish.
+static func _dish_signature(dish: Dictionary) -> String:
+	var parts: Array = [JSON.stringify(dish.get("title", {}))]
+	for entry in dish.get("steps", []):
+		var step: Dictionary = entry
+		if str(step.get("kind", "")) != "drag_to":
+			continue
+		for item in step.get("items", []):
+			parts.append(str((item as Dictionary).get("id", "")))
+		break
+	return "|".join(PackedStringArray(parts))
+
+
+static func _ingredients_with_role(role: String) -> Array:
+	var out: Array = []
+	for entry in ingredients():
+		if str(entry.get("role", "")) == role:
+			out.append(str(entry.get("id", "")))
+	return out
+
+
+## Appends between `minimum` and `maximum` ids from `pool` to `chosen`, without
+## repeating one already chosen. A single helper so every role is drawn the same way.
+static func _pick_into(chosen: Array, pool: Array, rng: RandomNumberGenerator,
+		minimum: int, maximum: int) -> void:
+	if pool.is_empty() or maximum <= 0:
+		return
+	var copies := pool.duplicate()
+	_shuffle(copies, rng)
+	var want := rng.randi_range(maxi(minimum, 0), maxi(maximum, minimum))
+	for i in mini(want, copies.size()):
+		var id := str(copies[i])
+		if not chosen.has(id):
+			chosen.append(id)
+
+
+static func _shuffle(list: Array, rng: RandomNumberGenerator) -> void:
+	for i in range(list.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var swap: Variant = list[i]
+		list[i] = list[j]
+		list[j] = swap
+
+
 ## Appends a step with a stable, unique id derived from its prefix and position.
 ## A helper rather than an inline counter because GDScript lambdas capture local
 ## variables by value, which would make every id the same number.
