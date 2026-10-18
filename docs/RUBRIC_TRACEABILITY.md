@@ -1,6 +1,6 @@
 # Rubric Traceability — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
 
-**Version:** 2.0.0 · **Compiled:** 2026-10-16
+**Version:** 2.0.0 · **Compiled:** 2026-10-16 · **Updated:** 2026-10-18
 
 This document maps each scoring criterion of the *Fluke Free Fighters* competition to the
 concrete evidence in this project — a file, a feature that runs, a test, or a document. Where a
@@ -33,15 +33,21 @@ Legend: ✅ evidenced · ⚠️ partly evidenced · ❌ not yet done
   explicit reuse/replace matrix and acceptance criteria.
 * `docs/MILESTONES.md` — M0–M9 plan with deliverables, acceptance and status.
 * `docs/RESEARCH_PLAN.md` — instrument, procedure, analysis plan, validity threats.
-* Test suite that runs: `tests/smoke_test.tscn` (autoload wiring, content validity, 8 interaction
-  kinds, save schema, scoring, assessment pairing, export fields), `tests/flow_test.tscn` (drives
-  all three levels end to end and asserts scoring invariants), `tests/behaviour_test.tscn` (pushes
-  real mouse events into the viewport and checks the demonstration gate, the retry path, and the
-  swipe/drag/hold/cook gestures), `tests/layout_check.tscn`
-  (numeric UI-geometry check), `tests/visual_capture.tscn` (renders each state to PNG).
-* The interaction framework is a small reusable engine (`scripts/tasks/task_base.gd` plus eight
-  task kinds behind `task_factory.gd`), and the content is separated from the code
-  (`scripts/data/`), which is the engineering decision that keeps health text auditable.
+* Eight test suites that run together (`tools/run_all_tests.ps1`): `smoke_test` (autoload wiring,
+  content validity, 14 interaction kinds, save schema, scoring, assessment pairing, export fields),
+  `anim_test` (the shared motion library and its refusal contract), `flow_test` (drives all three
+  levels end to end and asserts scoring invariants), `behaviour_test` (pushes real mouse events into
+  the viewport and checks the demonstration gate, the retry path, and the swipe/drag/hold/cook
+  gestures), `cook_test` (progressive cooking visuals plus outcome B and outcome C and their
+  retries), `recipe_test` (the catalogue, the generator and the saved cookbook), `minigame_test`
+  (every cooking interaction, driven with real pointer events, and the sustained audio beds that
+  follow the hold) and `responsive_check` (the 12-size matrix, 360 layouts). `layout_check` and
+  `visual_capture` are capture tools rather than pass/fail suites.
+* The interaction framework is a small reusable engine (`scripts/tasks/task_base.gd` plus fourteen
+  interaction kinds behind `task_factory.gd`), all object and character motion goes through one
+  library (`scripts/world/anim.gd`), and dishes are composed and validated as data
+  (`challenge_generator.gd`). Separating content from code (`scripts/data/`) is the engineering
+  decision that keeps health text auditable.
 
 **Status:** ✅ (design process and software engineering). The *study* half of the scientific
 process is ⚠️ until the plan in `docs/RESEARCH_PLAN.md` is executed.
@@ -102,8 +108,10 @@ were corrected.
 ### 1.6 Value, application and prevention-behaviour impact — 10 points
 
 **Evidence:**
-* Three challenges of 1–3 minutes each with 5–6 interactive steps, suitable for a classroom
-  session; mouse, touch, drag, hold and swipe are all supported (`InputManager`, task kinds).
+* Three story challenges of 1–3 minutes each with 5–6 interactive steps, suitable for a classroom
+  session, plus extra modes (endless kitchen, free cook, a player-built cookbook and a
+  picture-first dish browser) that reuse the same engine; mouse, touch, drag, hold and swipe are
+  all supported (`InputManager`, task kinds).
 * The behaviours taught are the ones a family can act on: cook fish through; keep raw and
   ready-to-eat food apart; wash hands and utensils; keep faeces out of water; have health checks;
   do not rely on lime, salt or pickling.
@@ -134,7 +142,7 @@ section is a marked placeholder until a study is run.
 
 | Criterion | Points | Evidence | Status |
 |-----------|--------|----------|--------|
-| Scientific / engineering process | 20 | `docs/PROJECT_AUDIT.md`, `docs/MILESTONES.md`, `docs/RESEARCH_PLAN.md`, four runnable test suites | ⚠️ software step complete; study step pending |
+| Scientific / engineering process | 20 | `docs/PROJECT_AUDIT.md`, `docs/MILESTONES.md`, `docs/RESEARCH_PLAN.md`, eight runnable test suites | ⚠️ software step complete; study step pending |
 | Originality | 15 | Education enforced by level rules; misconceptions as data; dual text tiers; audited content database (see 1.3) | ✅ |
 | Study results, analysis, discussion | 20 | Instrument and analysis plan built and playable; schema documented | ❌ no data collected yet |
 | Knowledge and Q&A | 15 | `docs/SCIENTIFIC_CONTENT.md`, `docs/REFERENCES.md`, in-game knowledge journal, careful non-claims | ✅ (Q&A preparation still to do) |
