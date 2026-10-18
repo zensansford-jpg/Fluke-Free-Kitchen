@@ -21,7 +21,7 @@ func _build() -> void:
 	column.add_child(title_block("modes.title", "modes.subtitle"))
 
 	var grid := GridContainer.new()
-	grid.columns = UIFactory.columns(3)
+	grid.columns = UIFactory.columns(2)
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 18)
 	grid.add_child(_mode_card("modes.cook_title", "modes.cook_body", "modes.cook_cta",
@@ -30,6 +30,8 @@ func _build() -> void:
 		UIFactory.GOOD, func() -> void: Game.start_endless()))
 	grid.add_child(_mode_card("modes.free_title", "modes.free_body", "modes.free_cta",
 		Color(0.5, 0.8, 0.95), func() -> void: Game.navigate("free_cook")))
+	grid.add_child(_mode_card("modes.cookbook_title", "modes.cookbook_body", "modes.cookbook_cta",
+		Color(0.85, 0.6, 0.95), func() -> void: Game.navigate("cookbook")))
 	column.add_child(centred(grid))
 
 	column.add_child(centred(_records_panel()))
@@ -44,7 +46,7 @@ func rebuild_for_size() -> void:
 func _mode_card(title_key: String, body_key: String, cta_key: String, accent: Color,
 		action: Callable) -> PanelContainer:
 	var panel := UIFactory.panel(UIFactory.CARD_COLOR)
-	UIFactory.responsive_grid_size(panel, 330.0, 3, 1, 420.0, 18)
+	UIFactory.responsive_grid_size(panel, 330.0, 2, 1, 420.0, 18)
 	var v := UIFactory.vbox(10)
 	panel.add_child(v)
 	v.add_child(UIFactory.wrap(Loc.t(title_key), 26, accent, true))
@@ -54,9 +56,9 @@ func _mode_card(title_key: String, body_key: String, cta_key: String, accent: Co
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# The button lives inside a grid card, so its minimum has to fit the *inner*
 	# column: the card's 20 pixel padding on each side comes out of the column before
-	# the button gets its share. Without this a 200 pixel button keeps a three column
-	# grid 8 pixels too wide for a 768 pixel tablet.
-	UIFactory.responsive_grid_size(button, 200.0, 3, 1, 54.0, 18, 40.0)
+	# the button gets its share. Without this a 200 pixel button keeps a two column
+	# grid wider than a 768 pixel tablet.
+	UIFactory.responsive_grid_size(button, 200.0, 2, 1, 54.0, 18, 40.0)
 	v.add_child(centred(button))
 	return panel
 

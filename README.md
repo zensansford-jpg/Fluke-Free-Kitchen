@@ -45,7 +45,7 @@ godot --headless --path . res://tests/smoke_test.tscn        # content, wiring, 
 godot --headless --path . res://tests/flow_test.tscn         # all three challenges end to end
 godot --headless --path . res://tests/behaviour_test.tscn    # real pointer input (click/drag/swipe/hold)
 godot --headless --path . res://tests/cook_test.tscn         # cooking visuals + outcomes B (unsafe serving) and C (burnt) and their retries
-godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (132 layouts)
+godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (348 layouts)
 godot --headless --path . res://tests/layout_check.tscn      # UI geometry, per step
 godot --path . res://tests/visual_capture.tscn -- l1         # renders states to PNGs
 ```
@@ -76,9 +76,11 @@ and earns no stars — until its required knowledge question has been answered c
 The interface is built to **reflow**, not to shrink: below 700 px wide, grids collapse to a
 single column, labels get the full page width, and the journal's tabs become a dropdown
 rather than three clipped buttons. Twelve window sizes between 320 × 568 and 3840 × 2160,
-across ten layouts each, are checked automatically by `tests/responsive_check.tscn`
-(**132/132 passing**). What that does and does not prove — no phone has run this build, safe
-areas and system font scaling are not handled — is written out in `docs/RESPONSIVE.md`.
+across every menu screen (plus a filled creator, a filled cookbook, the settings modal, the
+three kitchens and a full recipe walk), are checked automatically by
+`tests/responsive_check.tscn` (**348/348 passing**). What that does and does not prove — no
+phone has run this build, safe areas and system font scaling are not handled — is written
+out in `docs/RESPONSIVE.md`.
 
 Thai is the primary language and English can be toggled at any time without restarting the
 challenge. There are no motion or tilt controls in the game, so no settings toggle pretends

@@ -32,6 +32,9 @@ static func list() -> Array:
 		{"id": "collector", "rule": "all_real_dishes",
 			"name": {"en": "Full menu", "th": "ครบทุกเมนู"},
 			"hint": {"en": "Discover every real dish in the catalogue.", "th": "ค้นพบเมนูจริงทุกเมนูในสารบัญ"}},
+		{"id": "signature_dish", "rule": "cookbook_1",
+			"name": {"en": "Signature dish", "th": "เมนูประจำตัว"},
+			"hint": {"en": "Save a dish you created in your own cookbook.", "th": "บันทึกจานที่คุณสร้างไว้ในสมุดสูตรของคุณ"}},
 	]
 
 

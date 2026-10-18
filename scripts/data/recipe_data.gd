@@ -970,6 +970,140 @@ static func _shuffle(list: Array, rng: RandomNumberGenerator) -> void:
 		list[j] = swap
 
 
+# ===================================================== player-made dishes ===
+## Dishes the player composes themselves, in the recipe creator.
+##
+## A player-made dish is built from the same real fish, ingredients, methods,
+## garnishes and plating as everything else, and is held to the same `validate` /
+## `validate_steps` before the kitchen will run it. It is never dressed up as a
+## traditional recipe: `real` is false, `custom` is true, and the note says plainly
+## that it is the player's own creation.
+##
+## The id is derived from the composition, so the same dish saved twice is the same
+## dish (the cookbook de-duplicates it) and a restored save still finds its own id.
+
+## The most ingredients and garnishes a player-made dish may use, so the built step
+## list stays a reasonable length rather than a chore.
+const CUSTOM_INGREDIENT_MAX := 5
+const CUSTOM_GARNISH_MAX := 2
+
+
+## Difficulty from the amount of work the dish asks for, so a five-ingredient dish
+## gets the chopping step a two-ingredient one skips. Clamped to the 1–3 the
+## validator and the kitchen understand.
+static func custom_difficulty(ingredient_count: int) -> int:
+	if ingredient_count >= 5:
+		return 3
+	if ingredient_count >= 3:
+		return 2
+	return 1
+
+
+## Builds the *recipe* for a player-made dish. `name_text` is whatever the player
+## typed; the same text is stored for both languages, because the game does not
+## pretend to translate a name it was handed. Returns `{}` when the input cannot make
+## a playable dish, so the creator can refuse it rather than save something broken.
+static func custom_recipe(name_text: String, fish_id: String, method_id: String,
+		ingredient_ids: Array, garnish_ids: Array, plating_id: String) -> Dictionary:
+	var dish_name := name_text.strip_edges()
+	if dish_name.is_empty():
+		return {}
+	if fish_by_id(fish_id).is_empty() or method_by_id(method_id).is_empty():
+		return {}
+	if plating_by_id(plating_id).is_empty():
+		return {}
+
+	# Keep only real, distinct ingredients, and refuse a dish with nothing in it or
+	# more than the cap. Selection order is preserved for the kitchen; the id below is
+	# computed from a sorted copy so two orders of the same dish are the same dish.
+	var ingredients: Array = []
+	for entry in ingredient_ids:
+		var ingredient_id := str(entry)
+		if ingredient_by_id(ingredient_id).is_empty() or ingredients.has(ingredient_id):
+			continue
+		ingredients.append(ingredient_id)
+	if ingredients.is_empty() or ingredients.size() > CUSTOM_INGREDIENT_MAX:
+		return {}
+
+	var garnish: Array = []
+	for entry in garnish_ids:
+		var garnish_id := str(entry)
+		if garnish_by_id(garnish_id).is_empty() or garnish.has(garnish_id):
+			continue
+		garnish.append(garnish_id)
+		if garnish.size() >= CUSTOM_GARNISH_MAX:
+			break
+
+	var method_name: Dictionary = method_by_id(method_id).get("name", {"en": method_id, "th": method_id})
+	var signature := "%s|%s|%s|%s|%s" % [
+		fish_id, method_id,
+		"|".join(PackedStringArray(_sorted_ids(ingredients))),
+		"|".join(PackedStringArray(_sorted_ids(garnish))),
+		plating_id,
+	]
+	return {
+		"id": "custom_%d" % abs(hash(signature)),
+		"real": false,
+		"custom": true,
+		"name": {"en": dish_name, "th": dish_name},
+		"about": {
+			"en": "A dish you put together yourself, cooked by %s. It is your own creation, not a traditional recipe — and it still has to reach a safe temperature inside." % str(method_name.get("en", method_id)),
+			"th": "จานที่คุณคิดขึ้นเอง ปรุงด้วยวิธี %s เป็นผลงานของคุณ ไม่ใช่สูตรอาหารพื้นบ้าน และยังต้องปรุงให้สุกถึงอุณหภูมิปลอดภัย" % str(method_name.get("th", method_id)),
+		},
+		"note": {
+			"en": "A dish you created, not a traditional recipe.",
+			"th": "จานที่คุณสร้างขึ้น ไม่ใช่สูตรอาหารพื้นบ้าน",
+		},
+		"method": method_id,
+		"fish": [fish_id],
+		"ingredients": ingredients,
+		"garnish": garnish,
+		"plating": plating_id,
+		"difficulty": custom_difficulty(ingredients.size()),
+		"unlock": "",
+		"tags": ["custom", "created"],
+		"quiz": ["q_l2_cook"],
+		"lessons": ["cook_thoroughly"],
+	}
+
+
+## A runnable challenge for a player-made dish, in the same shape as `build_free_cook`
+## and `generate_dish` so the kitchen runs it like any other. Returns `{}` if the
+## composition fails the shared validator.
+static func build_custom(recipe: Dictionary) -> Dictionary:
+	var problems := validate(recipe)
+	if not problems.is_empty():
+		push_warning("RecipeDB: a player-made dish failed validation: %s" % ", ".join(problems))
+		return {}
+	return {
+		"id": "custom_challenge_%s" % str(recipe.get("id", "")),
+		"index": 3,
+		"title": recipe.get("name", {}),
+		"goal": recipe.get("about", {}),
+		"objective_short": {
+			"en": "Cook the dish you created — safely.",
+			"th": "ปรุงจานที่คุณสร้างขึ้นอย่างปลอดภัย",
+		},
+		"recipe_id": str(recipe.get("id", "")),
+		"real": false,
+		"custom": true,
+		"difficulty": int(recipe.get("difficulty", 1)),
+		"steps": build_steps(recipe),
+		"quiz": ["q_l2_cook"],
+		"required_quiz": ["q_l2_cook"],
+		"lessons": ["cook_thoroughly"],
+		"tags": ["custom", "created"],
+	}
+
+
+static func _sorted_ids(values: Array) -> Array:
+	var out: Array = []
+	for entry in values:
+		out.append(str(entry))
+	out.sort()
+	return out
+
+
 ## Appends a step with a stable, unique id derived from its prefix and position.
 ## A helper rather than an inline counter because GDScript lambdas capture local
 ## variables by value, which would make every id the same number.

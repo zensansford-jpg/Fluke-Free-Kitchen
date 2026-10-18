@@ -6,6 +6,8 @@ extends Node
 ##   * discovered fish dishes, their mastery and best score
 ##   * Endless Kitchen records
 ##   * favourites and recently played dishes
+##   * the player's own saved dishes (the cookbook), stored as compositions so the
+##     steps are always rebuilt rather than trusted from disk
 ##   * achievements, each tied to a real event
 ##   * the learning log (see `Learning`)
 ##   * the optional before/after knowledge-check answers
@@ -44,6 +46,10 @@ var endless: Dictionary = {}
 var favourites: Array = []
 ## Recipe ids, most recent first.
 var recent: Array = []
+## The player's own dishes, in the order they were saved. Each entry is the
+## *composition* only (fish, method, ingredients, garnish, plating, name); the
+## kitchen rebuilds the steps from it, so a save never carries a stale step list.
+var cookbook: Array = []
 ## recipe id or "free" -> number of free-cook runs finished.
 var free_cook_runs: int = 0
 ## achievement id -> ISO timestamp it was unlocked.
@@ -93,6 +99,7 @@ func _clear_in_memory() -> void:
 	endless = {}
 	favourites = []
 	recent = []
+	cookbook = []
 	free_cook_runs = 0
 	achievements = {}
 	learning = {}
@@ -146,6 +153,7 @@ func _absorb(data: Dictionary) -> void:
 		achievements = (achievements_data as Dictionary).duplicate(true)
 	favourites = _string_array(data.get("favourites", []))
 	recent = _string_array(data.get("recent", []))
+	cookbook = _cookbook_array(data.get("cookbook", []))
 	free_cook_runs = int(data.get("free_cook_runs", 0))
 	var code: Variant = data.get("participant_code", "")
 	if typeof(code) == TYPE_STRING:
@@ -201,6 +209,29 @@ func _string_array(value: Variant) -> Array:
 	return out
 
 
+## Keeps only entries from a parsed save that a dish can actually be rebuilt from.
+## A hand-edited file must not be able to smuggle a malformed recipe into the
+## kitchen: anything that is not a dictionary with an id, a method and a fish is
+## dropped. The steps are never trusted from disk — they are always rebuilt.
+func _cookbook_array(value: Variant) -> Array:
+	var out: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return out
+	for entry in (value as Array):
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var recipe: Dictionary = entry
+		if str(recipe.get("id", "")).is_empty():
+			continue
+		if str(recipe.get("method", "")).is_empty():
+			continue
+		var fish: Variant = recipe.get("fish", [])
+		if typeof(fish) != TYPE_ARRAY or (fish as Array).is_empty():
+			continue
+		out.append(recipe.duplicate(true))
+	return out
+
+
 func _read_text(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -248,6 +279,7 @@ func save() -> void:
 		"endless": endless,
 		"favourites": favourites,
 		"recent": recent,
+		"cookbook": cookbook,
 		"free_cook_runs": free_cook_runs,
 		"achievements": achievements,
 		"learning": learning,
@@ -461,6 +493,63 @@ func recent_ids() -> Array:
 	return recent.duplicate()
 
 
+# ----------------------------------------------------------------- cookbook ---
+## The player's own saved dishes, newest last. A defensive copy, so a screen cannot
+## change the stored list by accident.
+func saved_recipes() -> Array:
+	var out: Array = []
+	for entry in cookbook:
+		if typeof(entry) == TYPE_DICTIONARY:
+			out.append((entry as Dictionary).duplicate(true))
+	return out
+
+
+func saved_recipe_count() -> int:
+	return cookbook.size()
+
+
+func has_saved_recipe(recipe_id: String) -> bool:
+	if recipe_id.is_empty():
+		return false
+	for entry in cookbook:
+		if str((entry as Dictionary).get("id", "")) == recipe_id:
+			return true
+	return false
+
+
+## Finds one saved dish by id, so it can be cooked again from the cookbook.
+func saved_recipe(recipe_id: String) -> Dictionary:
+	for entry in cookbook:
+		var recipe: Dictionary = entry
+		if str(recipe.get("id", "")) == recipe_id:
+			return recipe.duplicate(true)
+	return {}
+
+
+## Adds a dish to the cookbook. The same dish (same derived id) is not stored twice,
+## so saving a favourite twice is idempotent. Returns true when the book changed.
+func save_recipe(recipe: Dictionary) -> bool:
+	if recipe.is_empty() or str(recipe.get("id", "")).is_empty():
+		return false
+	if has_saved_recipe(str(recipe.get("id", ""))):
+		return false
+	cookbook.append(recipe.duplicate(true))
+	_evaluate_achievements()
+	save()
+	return true
+
+
+func remove_saved_recipe(recipe_id: String) -> bool:
+	if recipe_id.is_empty():
+		return false
+	for i in range(cookbook.size() - 1, -1, -1):
+		if str((cookbook[i] as Dictionary).get("id", "")) == recipe_id:
+			cookbook.remove_at(i)
+			save()
+			return true
+	return false
+
+
 # ----------------------------------------------------------------- endless --
 func endless_stats() -> Dictionary:
 	return {
@@ -542,6 +631,8 @@ func _evaluate_achievements() -> void:
 		real_total += 1
 	if real_total > 0 and _real_discovered() >= real_total:
 		unlock_achievement("collector")
+	if saved_recipe_count() >= 1:
+		unlock_achievement("signature_dish")
 
 
 func _recipes_cooked() -> int:

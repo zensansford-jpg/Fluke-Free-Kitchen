@@ -20,7 +20,7 @@ python tools\study\analyse_export.py --selftest
 ```
 
 - [ ] 1. `run_all_tests.ps1` → **smoke · flow · behaviour · cook · recipe · minigame · responsive** all print PASSED
-- [ ] 2. `responsive_check` reports **300/300 layouts** across the 12 sizes
+- [ ] 2. `responsive_check` reports **348/348 layouts** across the 12 sizes
 - [ ] 3. `analyse_export.py --selftest` → all statistics match their reference values
 
 If any of these fails, stop: do not demo or submit until it is green again.

@@ -25,6 +25,8 @@ enum State {
 	MODES,
 	DISH_SELECT,
 	FREE_COOK,
+	CUSTOM_COOK,
+	COOKBOOK,
 }
 
 ## What kind of run is open. The kitchen behaves the same way in all of them; what
@@ -43,6 +45,8 @@ const SCENES := {
 	"levels": "res://scenes/main/level_select.tscn",
 	"dishes": "res://scenes/main/dish_select.tscn",
 	"free_cook": "res://scenes/main/free_cook.tscn",
+	"custom": "res://scenes/main/custom_cook.tscn",
+	"cookbook": "res://scenes/main/cookbook.tscn",
 	"kitchen": "res://scenes/kitchen/kitchen.tscn",
 	"journal": "res://scenes/journal/journal.tscn",
 	"assessment": "res://scenes/assessment/assessment.tscn",
@@ -143,6 +147,10 @@ func _apply_state_for(key: String) -> void:
 			change_state(State.DISH_SELECT)
 		"free_cook":
 			change_state(State.FREE_COOK)
+		"custom":
+			change_state(State.CUSTOM_COOK)
+		"cookbook":
+			change_state(State.COOKBOOK)
 		"assessment":
 			change_state(State.ASSESSMENT)
 		"sources":
@@ -321,6 +329,31 @@ func start_generated(seed_value: int) -> bool:
 	current_challenge = challenge
 	current_level_id = str(challenge.get("id", ""))
 	return _begin_run()
+
+
+## The recipe creator: cook a dish the player put together themselves. It is built
+## and validated exactly like any other recipe, and labelled as the player's own
+## creation. Returns false (and plays nothing) if the composition is not cookable.
+func start_custom(recipe: Dictionary) -> bool:
+	var challenge := RecipeDB.build_custom(recipe)
+	if challenge.is_empty():
+		push_warning("Game: the created dish '%s' could not be built." % str(recipe.get("id", "")))
+		return false
+	mode = Mode.FREE_COOK
+	current_recipe_id = str(recipe.get("id", ""))
+	current_challenge = challenge
+	current_level_id = str(challenge.get("id", ""))
+	return _begin_run()
+
+
+## Cooks a dish the player saved earlier. The composition is rebuilt from the
+## cookbook, so a saved dish is always cooked with the current rules.
+func start_saved(recipe_id: String) -> bool:
+	var recipe := SaveData.saved_recipe(recipe_id)
+	if recipe.is_empty():
+		push_warning("Game: no saved dish named '%s'." % recipe_id)
+		return false
+	return start_custom(recipe)
 
 
 ## Restarts the current run from the beginning. Run data resets; saved progress

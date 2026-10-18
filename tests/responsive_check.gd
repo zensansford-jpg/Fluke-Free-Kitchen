@@ -40,7 +40,7 @@ const MATRIX: Array = [
 
 ## Screens built as standalone scenes. The kitchen is handled separately because
 ## its layout depends on which step is on screen.
-const SCREENS: Array = ["menu", "modes", "levels", "dishes", "free_cook", "journal", "assessment"]
+const SCREENS: Array = ["menu", "modes", "levels", "dishes", "free_cook", "custom", "cookbook", "journal", "assessment"]
 
 ## A control may stick out by this many pixels before it counts as an overflow: a
 ## panel that is one or two pixels wider than the window is a sub-pixel rounding
@@ -86,6 +86,8 @@ func _check_size(name: String, size: Vector2i) -> void:
 
 	for key in SCREENS:
 		await _check_screen(name, size, key)
+	await _check_custom_filled(name, size)
+	await _check_cookbook(name, size)
 	await _check_settings(name, size)
 	await _check_kitchen(name, size, "l1", 0)
 	await _check_kitchen(name, size, "l2", 4)
@@ -105,6 +107,48 @@ func _check_screen(name: String, size: Vector2i, key: String) -> void:
 	await _shot(name, key)
 
 	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## The creator in its "ready" shape: a named dish with ingredients and a garnish. The
+## empty form the SCREENS list builds does not show the difficulty line or the enabled
+## buttons, and those are part of the layout that has to fit. The choices are set on
+## the instance before it enters the tree, which is where `_ready` reads them.
+func _check_custom_filled(name: String, size: Vector2i) -> void:
+	Game.change_state(Game.State.MENU)
+	var screen: Control = load(str(Game.SCENES["custom"])).instantiate()
+	screen.set("_name", "Layout test dish")
+	screen.set("_fish_id", "pla_nil")
+	screen.set("_method_id", "steam")
+	screen.set("_plating_id", "plate")
+	screen.set("_ingredients", ["lemongrass", "garlic", "chilli"])
+	screen.set("_garnish", ["coriander"])
+	add_child(screen)
+	await TestWindow.settle(3)
+	_report_control(screen, name, "custom/filled", size)
+	await _shot(name, "custom_filled")
+	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## A filled cookbook: the card grid only appears once the player has saved a dish, so
+## the empty page the SCREENS list builds is not the layout that can overflow. The
+## saved dishes are pushed straight into the in-memory book (disk writes are suspended
+## for this whole run) and taken back out afterwards.
+func _check_cookbook(name: String, size: Vector2i) -> void:
+	var backup: Array = SaveData.cookbook.duplicate(true)
+	SaveData.cookbook.append(RecipeDB.custom_recipe("Layout test dish",
+		"pla_nil", "steam", ["lemongrass", "garlic", "chilli"], [], "plate"))
+	SaveData.cookbook.append(RecipeDB.custom_recipe("Second layout dish",
+		"pla_duk", "grill", ["chilli"], [], "banana_leaf"))
+	Game.change_state(Game.State.MENU)
+	var screen: Control = load(str(Game.SCENES["cookbook"])).instantiate()
+	add_child(screen)
+	await TestWindow.settle(3)
+	_report_control(screen, name, "cookbook/filled", size)
+	await _shot(name, "cookbook_filled")
+	screen.queue_free()
+	SaveData.cookbook = backup
 	await TestWindow.settle(1)
 
 

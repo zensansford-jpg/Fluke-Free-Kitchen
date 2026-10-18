@@ -13,7 +13,7 @@
 | cook_test | ✅ PASS | A/B/C outcomes |
 | recipe_test | ✅ PASS | Catalogue, generator, v3 save migration with quarantine (its one stderr JSON line is the deliberate corrupt-file case) |
 | minigame_test | ✅ PASS | Full generated recipe driven with real pointer input; plate finish race guarded |
-| responsive_check | ✅ PASS | 300 layouts across 12 screen sizes, 0 problems |
+| responsive_check | ✅ PASS | 348 layouts across 12 screen sizes, 0 problems |
 
 **Result:** **7/7 suites PASS.**
 
@@ -54,6 +54,36 @@ three composed dishes (each drawn with `DishPreview`) and a **Surprise me** butt
 (every one valid, honest, and with exactly one safe cook step), determinism, and a
 six-dish pool.
 
+## Player-made dishes and the personal cookbook (added this session)
+
+The player can now build a dish of their own. `RecipeDB.custom_recipe(...)` composes a
+recipe from the **same real catalogue** the rest of the game uses (real fish, ingredients,
+methods, garnishes, plating), and `RecipeDB.build_custom(...)` turns it into a runnable
+challenge in exactly the shape `ChallengeGenerator.build` produces — so the kitchen runs
+it unchanged, and it passes the same `validate` / `validate_steps` as a hand-written
+recipe before it can be cooked. It is never dressed up as a traditional dish (`real:
+false`, `custom: true`, a bilingual note), and the mandatory safe-cook step is present
+exactly as everywhere else.
+
+The creator screen (`custom_cook.gd`, *Create a dish*) has a name field, single-choice
+fish/method/plating chips and multi-choice ingredient/garnish chips (capped at 5 and 2),
+with a live `DishPreview` and a status line that names the one thing still missing. It can
+cook the dish immediately (`Game.start_custom`) or save it. The **personal cookbook**
+(`cookbook.gd`, *My Cookbook*, a fourth card on the mode screen) lists saved dishes as
+cards with a Cook and a Delete button, and `Game.start_saved` rebuilds a saved dish with
+the current rules.
+
+The cookbook is stored in the existing **v3** save file as a new `cookbook` array; the
+format is unchanged and still migrates a v2 file in place, because a missing field loads
+as an empty list. Only the *composition* is stored (never a step list), and a
+hand-edited cookbook entry is sanitised on load — anything without an id, a method and a
+fish is dropped, so a malformed file cannot smuggle a broken dish into the kitchen. Saving
+a dish unlocks the new *Signature dish* achievement (a real event, not a screen visit).
+`recipe_test._check_custom` checks every fish × every method (48 dishes) for validity,
+honesty and exactly one safe cook step, the refusals (no name / no ingredient / unknown
+fish / too many), order-independent ids, and a real save → reload → remove round-trip
+including a malformed-save sanitisation case.
+
 ## Expansion Completed
 
 ✅ Data-driven catalogue (11 dishes, 8 real recipes + 3 challenge variations)  
@@ -63,6 +93,7 @@ six-dish pool.
 ✅ Endless challenge generator (seeded, validated, with fallbacks)  
 ✅ Visual-only quiz integration  
 ✅ Three modes: Let's Cook, Endless Kitchen, Free Cook (experimental)  
+✅ Player recipe creator + personal cookbook (composed from the real catalogue, saved in v3)  
 ✅ Progression/unlocks (≥2 dishes open at start, all 11 reachable)  
 ✅ v3 save system with v2 migration  
 ✅ Raycast fix to exclude carried items  
@@ -81,7 +112,6 @@ competition paperwork.
 - Full manual play-through across all three modes
 - Re-export builds after any UI fixes
 - Commit expansion
-
 ## Conclusion
 
 The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all seven automated suites

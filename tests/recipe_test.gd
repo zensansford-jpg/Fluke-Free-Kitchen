@@ -37,6 +37,7 @@ func _run() -> void:
 	_check_generator()
 	_check_free_cook()
 	_check_generated()
+	_check_custom()
 	_check_save_migration()
 	_check_save_recovery()
 	_check_records_and_achievements()
@@ -350,6 +351,112 @@ func _check_generated() -> void:
 		print("  composed: the browse pool returned 6 distinct, valid dishes")
 	else:
 		failures.append("composed: the browse pool returned %d dishes, expected 6" % pool.size())
+
+
+# =========================================================== created dishes ===
+## The recipe creator's data layer. A player-made dish must be built from real
+## catalogue entries, validate like any other recipe, carry exactly one safe cook
+## step, and survive a save/load round-trip through the cookbook. Nothing here trusts
+## the UI: this is the same validation the kitchen runs before playing the dish.
+func _check_custom() -> void:
+	# Every fish with every method makes a valid, safe, honest dish.
+	var built := 0
+	for fish in RecipeDB.fish():
+		for method in RecipeDB.methods():
+			var fish_id := str(fish.get("id", ""))
+			var method_id := str(method.get("id", ""))
+			var recipe := RecipeDB.custom_recipe("Test dish", fish_id, method_id,
+				["lemongrass", "garlic", "chilli"], ["coriander"], "plate")
+			if recipe.is_empty():
+				failures.append("created: %s / %s built nothing" % [fish_id, method_id])
+				continue
+			built += 1
+			for problem in RecipeDB.validate(recipe):
+				failures.append("created: %s / %s invalid recipe: %s" % [fish_id, method_id, problem])
+			var challenge := RecipeDB.build_custom(recipe)
+			if challenge.is_empty():
+				failures.append("created: %s / %s built no challenge" % [fish_id, method_id])
+				continue
+			var generator := ChallengeGenerator.new()
+			for problem in generator.validate(challenge):
+				failures.append("created: %s / %s invalid challenge: %s" % [fish_id, method_id, problem])
+			if bool(challenge.get("real", true)):
+				failures.append("created: %s / %s claims to be a traditional dish" % [fish_id, method_id])
+			var cooks := 0
+			for entry in challenge.get("steps", []):
+				if str((entry as Dictionary).get("kind", "")) == "cook_through":
+					cooks += 1
+			if cooks != 1:
+				failures.append("created: %s / %s has %d cook steps, expected 1" % [fish_id, method_id, cooks])
+	if built == RecipeDB.fish().size() * RecipeDB.methods().size():
+		print("  created: every fish and method makes a valid, safe, player-made dish")
+
+	# Things the creator must refuse rather than save something broken.
+	if not RecipeDB.custom_recipe("", "pla_nil", "steam", ["garlic"], [], "plate").is_empty():
+		failures.append("created: an unnamed dish was built")
+	if not RecipeDB.custom_recipe("X", "pla_nil", "steam", [], [], "plate").is_empty():
+		failures.append("created: a dish with no ingredients was built")
+	if not RecipeDB.custom_recipe("X", "no_such_fish", "steam", ["garlic"], [], "plate").is_empty():
+		failures.append("created: an unknown fish was accepted")
+	if not RecipeDB.custom_recipe("X", "pla_nil", "no_such_method", ["garlic"], [], "plate").is_empty():
+		failures.append("created: an unknown method was accepted")
+	if not RecipeDB.custom_recipe("X", "pla_nil", "steam",
+			["garlic", "chilli", "lime", "lemongrass", "galangal", "shallot"], [], "plate").is_empty():
+		failures.append("created: more ingredients than the cap was accepted")
+	print("  created: the creator refuses a dish that cannot be cooked")
+
+	# The id comes from what the dish is made of, order-independent, so the same dish
+	# saved twice is one entry and a restored save still finds its own dish.
+	var a := RecipeDB.custom_recipe("Dish", "pla_nil", "steam", ["garlic", "chilli"], [], "plate")
+	var b := RecipeDB.custom_recipe("Dish", "pla_nil", "steam", ["chilli", "garlic"], [], "plate")
+	var c := RecipeDB.custom_recipe("Dish", "pla_nil", "grill", ["garlic", "chilli"], [], "plate")
+	if str(a.get("id", "")) != str(b.get("id", "")):
+		failures.append("created: the same dish in a different order got a different id")
+	if str(a.get("id", "")) == str(c.get("id", "")):
+		failures.append("created: two different dishes share an id")
+	print("  created: a dish's id comes from what it is made of, not the order")
+
+	# The cookbook. Disk writes are real here (the section below backs up and restores
+	# user://), because a cookbook that does not survive a restart is not a cookbook.
+	SaveData.reset_progress()
+	if not SaveData.save_recipe(a):
+		failures.append("cookbook: saving a dish reported no change")
+	if SaveData.save_recipe(a):
+		failures.append("cookbook: saving the same dish twice changed the book")
+	if SaveData.saved_recipe_count() != 1:
+		failures.append("cookbook: expected one saved dish, got %d" % SaveData.saved_recipe_count())
+	SaveData.save_recipe(c)
+	if not SaveData.has_saved_recipe(str(c.get("id", ""))):
+		failures.append("cookbook: a second dish was not saved")
+	if SaveData.saved_recipe(str(a.get("id", ""))).is_empty():
+		failures.append("cookbook: a saved dish could not be read back")
+	if not SaveData.has_achievement("signature_dish"):
+		failures.append("cookbook: saving a dish did not unlock 'signature dish'")
+
+	SaveData.save()
+	SaveData.load_progress()
+	if SaveData.saved_recipe_count() == 2:
+		print("  cookbook: saved dishes survive a save and reload")
+	else:
+		failures.append("cookbook: the book did not survive a save/load (%d)" % SaveData.saved_recipe_count())
+
+	if not SaveData.remove_saved_recipe(str(a.get("id", ""))):
+		failures.append("cookbook: removing a saved dish reported no change")
+	if SaveData.has_saved_recipe(str(a.get("id", ""))):
+		failures.append("cookbook: a removed dish is still in the book")
+	if SaveData.remove_saved_recipe("not_a_dish"):
+		failures.append("cookbook: removing an unknown dish reported a change")
+
+	# A hand-edited save must not smuggle a malformed recipe into the kitchen.
+	_write(SaveData.SAVE_PATH, JSON.stringify({
+		"version": SaveData.VERSION,
+		"cookbook": [{"id": "x"}, "not a dish", 42, {"id": "y", "method": "steam", "fish": ["pla_nil"]}],
+	}))
+	SaveData.load_progress()
+	if SaveData.saved_recipe_count() == 1:
+		print("  cookbook: a malformed saved dish is dropped, not played")
+	else:
+		failures.append("cookbook: a malformed save was not sanitised (%d)" % SaveData.saved_recipe_count())
 
 
 # ==================================================================== saves ===
