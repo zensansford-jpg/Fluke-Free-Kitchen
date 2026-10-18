@@ -24,6 +24,16 @@ static func create(kind: String) -> KitchenTask:
 			return OrderStepsTask.new()
 		"checklist":
 			return ChecklistTask.new()
+		"slice", "prep_fish":
+			return SliceTask.new()
+		"stir":
+			return StirTask.new()
+		"flip":
+			return FlipTask.new()
+		"plate":
+			return PlateTask.new()
+		"serve":
+			return ServeTask.new()
 		_:
 			push_error("TaskFactory: unknown step kind '%s'." % kind)
 			return null
@@ -36,6 +46,7 @@ static func known_kinds() -> Array[String]:
 	return [
 		"tap_correct", "choose_safer", "drag_to", "swipe_clean",
 		"hold", "cook_through", "order_steps", "checklist",
+		"slice", "prep_fish", "stir", "flip", "plate", "serve",
 	]
 
 

@@ -22,6 +22,7 @@ static func table() -> Dictionary:
 		"menu.play": {"en": "Play", "th": "เล่น"},
 		"menu.continue": {"en": "Continue", "th": "เล่นต่อ"},
 		"menu.levels": {"en": "Challenges", "th": "ด่านภารกิจ"},
+		"menu.challenges": {"en": "Story Challenges", "th": "ด่านเรื่องราว"},
 		"menu.journal": {"en": "Recipe & Knowledge Journal", "th": "สมุดสูตรอาหารและความรู้"},
 		"menu.assessment": {"en": "Knowledge Check", "th": "แบบทดสอบความรู้"},
 		"menu.settings": {"en": "Settings", "th": "ตั้งค่า"},
@@ -124,6 +125,35 @@ static func table() -> Dictionary:
 		"task.unsafe_serve_detail": {
 			"en": "Eating raw or undercooked freshwater fish is how people get liver flukes. Serving this plate means whoever eats it is exposed to the larvae — that is a risk of becoming infected, not an infection that has already happened, and an infection is not the same thing as cancer. Cooking the fish through until the inside is safe removes the risk.",
 			"th": "การรับประทานปลาน้ำจืดดิบหรือกึ่งสุกเป็นทางที่คนติดพยาธิใบไม้ตับ การเสิร์ฟจานนี้จึงทำให้ผู้ที่รับประทานได้รับตัวอ่อนพยาธินั่นคือความเสี่ยงที่จะติดเชื้อ ไม่ใช่การติดเชื้อที่เกิดขึ้นแล้ว และการติดเชื้อก็ไม่เท่ากับการเป็นมะเร็ง การปรุงให้สุกจนด้านในปลอดภัยจะกำจัดความเสี่ยงนี้",
+		},
+
+		# ------------------------------------------------- cooking minigames --
+		"task.gesture_circle": {"en": "Move in circles", "th": "ขยับเป็นวงกลม"},
+		"task.gesture_swipe": {"en": "Swipe up", "th": "ปัดขึ้น"},
+		"task.chop": {"en": "Chop the ingredients", "th": "หั่นส่วนผสม"},
+		"task.prep_fish": {"en": "Prepare the fish", "th": "เตรียมปลา"},
+		"task.stir": {"en": "Stir the pot", "th": "คนในหม้อ"},
+		"task.flip": {"en": "Flip the fish", "th": "พลิกปลา"},
+		"task.flip_button": {"en": "Flip", "th": "พลิก"},
+		"task.plate": {"en": "Plate the dish", "th": "จัดจาน"},
+		"task.serve_or_check": {"en": "Serve it, or check it first?", "th": "จะเสิร์ฟเลย หรือตรวจก่อน"},
+		"task.take_it_back": {"en": "Put it back and keep cooking", "th": "เอาออกไปปรุงต่อ"},
+		"feedback.prepped": {"en": "Prepared and ready.", "th": "เตรียมเสร็จแล้ว"},
+		"feedback.stirred": {"en": "Mixed evenly.", "th": "คนเข้ากันดีแล้ว"},
+		"feedback.flipped": {"en": "Nice flip — both sides will cook.", "th": "พลิกได้ดี ทั้งสองด้านจะสุก"},
+		"feedback.plated": {"en": "Plated and ready to serve.", "th": "จัดจานพร้อมเสิร์ฟ"},
+		"feedback.served_ready": {"en": "Served. It was cooked through, so this is a safe plate.", "th": "เสิร์ฟแล้ว ปรุงสุกทั่วถึง จึงเป็นจานที่ปลอดภัย"},
+		"feedback.already_ready": {
+			"en": "This one is already cooked through — it is safe to serve.",
+			"th": "จานนี้สุกทั่วถึงแล้ว เสิร์ฟได้อย่างปลอดภัย",
+		},
+		"feedback.good_catch": {
+			"en": "Good catch. It was not ready. Checking before serving is exactly the right habit.",
+			"th": "ตรวจได้ดี จานนี้ยังไม่พร้อม การตรวจก่อนเสิร์ฟเป็นนิสัยที่ถูกต้อง",
+		},
+		"feedback.keep_kitchen_order": {
+			"en": "Ingredients go in the pan; soap and cleaning things belong at the sink.",
+			"th": "ส่วนผสมใส่ในกระทะ ส่วนสบู่และของทำความสะอาดให้วางที่อ่างล้าง",
 		},
 
 		# ------------------------------------------------------------ lessons --
@@ -274,6 +304,69 @@ static func table() -> Dictionary:
 		"common.cancel": {"en": "Cancel", "th": "ยกเลิก"},
 		"common.level_n": {"en": "Challenge %d", "th": "ภารกิจที่ %d"},
 		"common.loading": {"en": "Loading…", "th": "กำลังโหลด…"},
+
+		# --------------------------------------------------------- game modes --
+		"modes.title": {"en": "Choose how to cook", "th": "เลือกวิธีเล่น"},
+		"modes.subtitle": {"en": "Three ways in. All of them teach the same safety rule.", "th": "สามโหมด ทุกโหมดสอนกฎความปลอดภัยเดียวกัน"},
+		"modes.cook_title": {"en": "Let's Cook", "th": "มาทำอาหารกัน"},
+		"modes.cook_body": {"en": "Pick a dish, cook it step by step, and discover new dishes as you go.", "th": "เลือกเมนู ทำทีละขั้น และค้นพบเมนูใหม่ไปเรื่อย ๆ"},
+		"modes.cook_cta": {"en": "Choose a dish", "th": "เลือกเมนู"},
+		"modes.endless_title": {"en": "Endless Kitchen", "th": "ครัวไม่รู้จบ"},
+		"modes.endless_body": {"en": "One challenge after another, getting a little harder. How long a streak can you keep?", "th": "ภารกิจต่อเนื่องที่ค่อย ๆ ยากขึ้น คุณจะทำสถิติต่อเนื่องได้กี่จาน"},
+		"modes.endless_cta": {"en": "Start a run", "th": "เริ่มรอบใหม่"},
+		"modes.free_title": {"en": "Free Cook", "th": "ครัวอิสระ"},
+		"modes.free_body": {"en": "Choose any fish and any cooking method, and experiment. Your dish is labelled as a creation, not a traditional recipe.", "th": "เลือกปลาและวิธีปรุงได้ตามใจ ทดลองได้เลย จานของคุณจะถูกระบุว่าเป็นผลงานทดลอง ไม่ใช่สูตรพื้นบ้าน"},
+		"modes.free_cta": {"en": "Open Free Cook", "th": "เข้าโหมดครัวอิสระ"},
+		"modes.records_title": {"en": "Your records", "th": "สถิติของคุณ"},
+		"modes.record_dishes": {"en": "Dishes discovered", "th": "เมนูที่ค้นพบ"},
+		"modes.record_endless": {"en": "Best endless streak", "th": "สถิติต่อเนื่องสูงสุด"},
+		"modes.record_achievements": {"en": "Achievements", "th": "ความสำเร็จ"},
+
+		# ------------------------------------------------------- dish browser --
+		"dishes.title": {"en": "Let's Cook", "th": "มาทำอาหารกัน"},
+		"dishes.subtitle": {"en": "Real Thai dishes and skill challenges. Get the fish cooked through and the rest is flavour.", "th": "เมนูไทยจริงและด่านฝึกฝีมือ ทำให้ปลาสุกทั่วถึง ส่วนที่เหลือคือรสชาติ"},
+		"dishes.real": {"en": "Real dish", "th": "เมนูจริง"},
+		"dishes.variation": {"en": "Game challenge — not a traditional dish", "th": "ด่านในเกม ไม่ใช่เมนูพื้นบ้าน"},
+		"dishes.locked": {"en": "Locked", "th": "ยังไม่ปลดล็อก"},
+		"dishes.locked_hint": {"en": "Finish the dish it comes from to unlock this one.", "th": "ทำเมนูต้นทางให้สำเร็จเพื่อปลดล็อกเมนูนี้"},
+		"dishes.cook": {"en": "Cook this", "th": "ทำเมนูนี้"},
+		"dishes.cook_again": {"en": "Cook again", "th": "ทำอีกครั้ง"},
+		"dishes.best": {"en": "Best", "th": "สูงสุด"},
+		"dishes.best_none": {"en": "not yet", "th": "ยังไม่มี"},
+		"dishes.difficulty": {"en": "Difficulty", "th": "ระดับความยาก"},
+		"dishes.favourite": {"en": "Save to favourites", "th": "บันทึกเป็นเมนูโปรด"},
+		"dishes.favourited": {"en": "In favourites", "th": "อยู่ในเมนูโปรด"},
+		"dishes.discovered": {"en": "Discovered", "th": "ค้นพบแล้ว"},
+		"dishes.recent": {"en": "Recently cooked", "th": "ทำล่าสุด"},
+		"dishes.variation_note": {"en": "This is a game challenge, not a traditional recipe.", "th": "นี่คือด่านในเกม ไม่ใช่สูตรอาหารพื้นบ้าน"},
+		"dishes.none": {"en": "No dishes are available yet.", "th": "ยังไม่มีเมนูที่เล่นได้"},
+
+		# --------------------------------------------------------- free cook --
+		"free.title": {"en": "Free Cook", "th": "ครัวอิสระ"},
+		"free.subtitle": {"en": "Choose a fish and a method. Cook it safely, then plate it your way.", "th": "เลือกปลาและวิธีปรุง ปรุงให้ปลอดภัย แล้วจัดจานในแบบของคุณ"},
+		"free.fish": {"en": "Fish", "th": "ปลา"},
+		"free.method": {"en": "Cooking method", "th": "วิธีปรุง"},
+		"free.start": {"en": "Start cooking", "th": "เริ่มปรุง"},
+		"free.pick_both": {"en": "Choose a fish and a method first.", "th": "เลือกปลาและวิธีปรุงก่อน"},
+		"free.experimental_note": {"en": "This dish is your own creation, not a traditional recipe.", "th": "จานนี้เป็นผลงานสร้างสรรค์ของคุณ ไม่ใช่สูตรอาหารพื้นบ้าน"},
+		"free.freshwater_note": {"en": "Freshwater fish can carry liver-fluke larvae, so it must be cooked through.", "th": "ปลาน้ำจืดอาจมีตัวอ่อนพยาธิใบไม้ตับ จึงต้องปรุงให้สุกทั่วถึง"},
+		"free.sea_note": {"en": "Sea fish are not part of the fluke life cycle, but they are still cooked properly.", "th": "ปลาทะเลไม่อยู่ในวงจรชีวิตของพยาธิใบไม้ตับ แต่ก็ยังต้องปรุงให้สุก"},
+
+		# ----------------------------------------------------------- endless --
+		"endless.title": {"en": "Endless Kitchen", "th": "ครัวไม่รู้จบ"},
+		"endless.streak_label": {"en": "Streak", "th": "ต่อเนื่อง"},
+		"endless.next": {"en": "Next challenge", "th": "ภารกิจถัดไป"},
+		"endless.end_run": {"en": "End run", "th": "จบรอบ"},
+		"endless.run_score": {"en": "Run score", "th": "คะแนนรอบนี้"},
+
+		# -------------------------------------------------------- achievements --
+		"ach.title": {"en": "Achievements", "th": "ความสำเร็จ"},
+		"ach.body": {"en": "Earned by cooking, not by clicking. Each one has a real condition.", "th": "ได้มาจากการลงมือทำจริง ไม่ใช่แค่คลิก แต่ละอย่างมีเงื่อนไขจริง"},
+		"ach.locked": {"en": "Not yet", "th": "ยังไม่ได้รับ"},
+
+		# ------------------------------------------------------------- result --
+		"result.back_dishes": {"en": "Back to dishes", "th": "กลับไปเลือกเมนู"},
+		"result.variation_note": {"en": "This was a game challenge, not a traditional recipe.", "th": "นี่เป็นด่านในเกม ไม่ใช่สูตรอาหารพื้นบ้าน"},
 
 		# ------------------------------------------------------------ sources --
 		"sources.title": {"en": "About & Sources", "th": "เกี่ยวกับและแหล่งอ้างอิง"},

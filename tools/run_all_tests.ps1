@@ -36,16 +36,25 @@ function Invoke-Suite {
     $errText = ''
     if ((Test-Path $err) -and ((Get-Item $err).Length -gt 0)) { $errText = [string](Get-Content $err -Encoding UTF8 -Raw) }
     $verdict = 'UNKNOWN'
+    # Only the suite's *final* verdict line decides the result, and it is matched
+    # case-sensitively: the suites print "PASSED"/"FAILED" in capitals, while their
+    # own expected-to-fail probes mention "failed" in lower case prose (for example
+    # recipe_test's deliberate "Parse JSON failed" from the corrupt-save case). A
+    # case-insensitive search over the whole output mistook that prose for a failure.
+    $verdictLine = ($text -split "`n" | Where-Object { $_ -cmatch 'PASSED|FAILED' } | Select-Object -Last 1)
     if (-not $finished) { $verdict = 'TIMEOUT' }
-    elseif ($text -match 'FAILED') { $verdict = 'FAIL' }
-    elseif ($text -match 'PASSED') { $verdict = 'PASS' }
+    elseif ($verdictLine -cmatch 'FAILED') { $verdict = 'FAIL' }
+    elseif ($verdictLine -cmatch 'PASSED') { $verdict = 'PASS' }
     # last meaningful line for the summary
     $detail = ($text -split "`n" | Where-Object { $_ -match 'PASSED|FAILED|problems|layouts' } | Select-Object -Last 1)
+    # Engine warnings are noise on a pass (ObjectDB leaks at exit, the intentional
+    # corrupt-save parse line); a real error is still surfaced.
+    $showErr = $errText.Trim().Length -gt 0 -and ($verdict -ne 'PASS' -or $errText -match 'SCRIPT ERROR|Parse Error')
     [pscustomobject]@{
         Suite  = $name
         Result = $verdict
         Detail = if ($detail) { $detail.Trim() } else { '' }
-        Stderr = if ($errText.Trim().Length -gt 0) { $errText.Trim() } else { '' }
+        Stderr = if ($showErr) { $errText.Trim() } else { '' }
     }
 }
 
@@ -61,6 +70,8 @@ $suites = @(
     'res://tests/flow_test.tscn',
     'res://tests/behaviour_test.tscn',
     'res://tests/cook_test.tscn',
+    'res://tests/recipe_test.tscn',
+    'res://tests/minigame_test.tscn',
     'res://tests/responsive_check.tscn'
 )
 

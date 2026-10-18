@@ -33,7 +33,7 @@ var _resize_pending := false
 
 
 func _ready() -> void:
-	level = LevelDB.by_id(Game.current_level_id)
+	level = _resolve_challenge()
 	if level.is_empty():
 		push_error("KitchenScreen: no challenge named '%s'." % Game.current_level_id)
 		Game.go_to_levels()
@@ -45,12 +45,20 @@ func _ready() -> void:
 
 	session = KitchenSession.new()
 	session.begin(level)
-	_quiz_required = QuizDB.required_ids(str(level.get("id", "")))
+	_quiz_required = _quiz_required_ids()
 	Game.state_changed.connect(_on_state_changed)
 
 	_set_step(0)
 	_running = true
 	set_process(true)
+
+
+## The challenge to run. A generated one when the manager has one (Let's Cook,
+## Endless Kitchen, Free Cook); otherwise the story challenge the manager named.
+func _resolve_challenge() -> Dictionary:
+	if not Game.current_challenge.is_empty():
+		return Game.current_challenge
+	return LevelDB.by_id(Game.current_level_id)
 
 
 func _exit_tree() -> void:
@@ -212,6 +220,8 @@ func _on_task_finished(_success: bool, task: KitchenTask) -> void:
 	var level_id := str(level.get("id", ""))
 	session.record_step(step_id, task.attempts, task.mistakes)
 	Learning.record_activity(level_id, step_id)
+	if kitchen != null and is_instance_valid(kitchen):
+		kitchen.react("encourage" if task.mistakes > 0 else "happy")
 
 	var corrected: Array = task.corrects()
 	for claim_id in corrected:
@@ -248,9 +258,37 @@ func _replay_demo() -> void:
 
 
 # ------------------------------------------------------------------------- quiz ---
+## The questions for this challenge. A generated challenge carries its own list of
+## question ids; the three story challenges use the ids recorded against their level.
+func _quiz_questions() -> Array:
+	var explicit: Array = level.get("quiz", [])
+	if explicit.is_empty():
+		return QuizDB.for_level(str(level.get("id", "")))
+	var out: Array = []
+	for question_id in explicit:
+		var question := QuizDB.by_id(str(question_id))
+		if not question.is_empty():
+			out.append(question)
+	return out
+
+
+## The subset that must be answered correctly before the challenge counts.
+func _quiz_required_ids() -> Array[String]:
+	var explicit: Array = level.get("quiz", [])
+	if explicit.is_empty():
+		return QuizDB.required_ids(str(level.get("id", "")))
+	var wanted: Array = level.get("required_quiz", [])
+	if wanted.is_empty():
+		wanted = explicit
+	var out: Array[String] = []
+	for question_id in wanted:
+		out.append(str(question_id))
+	return out
+
+
 func _begin_quiz() -> void:
 	var level_id := str(level.get("id", ""))
-	var questions := QuizDB.for_level(level_id)
+	var questions := _quiz_questions()
 	if questions.is_empty():
 		# The design requires at least one knowledge question per challenge, so an
 		# empty list means the content is wrong. Finish honestly rather than
@@ -288,13 +326,37 @@ func _finish() -> void:
 	var level_id := str(level.get("id", ""))
 	var result := session.summary()
 	result["seconds"] = _elapsed
+	result["mode"] = int(Game.mode)
+	result["recipe_id"] = str(level.get("recipe_id", ""))
+	result["free_cook"] = bool(level.get("free_cook", false))
+	result["real"] = bool(level.get("real", true))
 
-	var save_info := SaveData.record_level_result(
-		level_id,
-		int(result.get("stars", 0)),
-		int(result.get("score", 0)),
-		float(result.get("accuracy", 0.0)),
-		bool(result.get("passed", false)))
+	var stars := int(result.get("stars", 0))
+	var score := int(result.get("score", 0))
+	var accuracy := float(result.get("accuracy", 0.0))
+	var passed := bool(result.get("passed", false))
+
+	# Where the result is recorded depends on the mode, but a single finished
+	# challenge is never counted twice.
+	var save_info := {}
+	match Game.mode:
+		Game.Mode.COOK:
+			save_info = SaveData.record_recipe_result(
+				str(level.get("recipe_id", "")), stars, score, accuracy, passed)
+		Game.Mode.ENDLESS:
+			save_info = SaveData.record_recipe_result(
+				str(level.get("recipe_id", "")), stars, score, accuracy, passed)
+			Game.endless_streak += 1
+			Game.endless_score += score
+			SaveData.record_endless(Game.endless_score, Game.endless_streak, false)
+			save_info["endless"] = true
+			save_info["streak"] = Game.endless_streak
+			save_info["run_score"] = Game.endless_score
+		Game.Mode.FREE_COOK:
+			SaveData.record_free_cook()
+			save_info = {"free_cook": true}
+		_:
+			save_info = SaveData.record_level_result(level_id, stars, score, accuracy, passed)
 
 	Game.finish_level(result)
 	result_screen.show_result(level, result, save_info)
@@ -309,20 +371,39 @@ func _retry() -> void:
 
 
 func _next_level() -> void:
+	Game.resume()
+	if pause_menu != null:
+		pause_menu.close()
+	if Game.mode == Game.Mode.ENDLESS:
+		Game.next_endless()
+		return
+	if Game.mode != Game.Mode.STORY:
+		_to_dishes()
+		return
 	var next := LevelDB.next_level_id(str(level.get("id", "")))
 	if next.is_empty():
 		_to_levels()
 		return
-	Game.resume()
-	if pause_menu != null:
-		pause_menu.close()
 	Game.start_level(next)
 
 
 func _to_levels() -> void:
 	Game.resume()
+	# Which screen to return to depends on the mode; the target is decided before
+	# abandoning the run, because abandoning clears the mode.
+	var target := "levels"
+	if Game.mode == Game.Mode.COOK or Game.mode == Game.Mode.FREE_COOK:
+		target = "dishes"
+	elif Game.mode == Game.Mode.ENDLESS:
+		target = "modes"
 	Game.abandon_level()
-	Game.go_to_levels()
+	Game.navigate(target)
+
+
+func _to_dishes() -> void:
+	Game.resume()
+	Game.abandon_level()
+	Game.navigate("dishes")
 
 
 func _to_journal() -> void:

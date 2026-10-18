@@ -13,9 +13,9 @@ config_version=5
 config/name="Fluke Free Kitchen"
 config/description="ครัวปลอดพยาธิ — a short, friendly cooking game that teaches how to prevent liver flukes and bile duct cancer."
 config/version="2.0.0"
-config/icon="res://icon.svg"
 run/main_scene="res://scenes/main/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
+config/icon="res://icon.svg"
 
 [autoload]
 
@@ -32,13 +32,6 @@ InputManager="*res://autoload/input_manager.gd"
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
-; `disabled` means one UI unit is one screen pixel: the interface reflows and
-; switches layout at breakpoints instead of being scaled down to a sliver on a
-; phone. See docs/RESPONSIVE.md and tests/responsive_check.tscn.
-window/stretch/mode="disabled"
-window/size/resizable=true
-; Sensor = the device decides, so the reflowable layout can actually be used in
-; portrait or landscape. Only meaningful on handheld platforms.
 window/handheld/orientation=6
 
 [physics]
@@ -47,7 +40,7 @@ window/handheld/orientation=6
 
 [rendering]
 
+textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
 anti_aliasing/quality/msaa_3d=1
 environment/defaults/default_clear_color=Color(0.42, 0.6, 0.75, 1)
-textures/vram_compression/import_etc2_astc=true

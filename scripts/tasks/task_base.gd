@@ -19,6 +19,12 @@ signal finished(success: bool)
 ## uses it to log the mistake and to show the explanation that came with it.
 signal mistake(made: Dictionary)
 
+## The gesture kinds the player has already been shown this session. The very first
+## time a gesture appears its demonstration plays in full and input waits for it;
+## after that the same gesture is demonstrated quickly without blocking for long, so
+## a long Endless run never re-teaches the same swipe ten times over.
+static var _taught: Dictionary = {}
+
 var step: Dictionary = {}
 ## The `KitchenScene` this task is running inside. Physical tasks use its camera,
 ## its bench slots and its effects.
@@ -82,6 +88,14 @@ func pointer_moved(_screen_position: Vector2) -> void:
 
 func pointer_released(_screen_position: Vector2) -> void:
 	pass
+
+
+## True when the task will act on the player's pointer. A task showing its
+## demonstration reports false, which is what keeps the promise that nothing is
+## expected of the player before they have seen what to do. Tasks that hold an
+## `_active` flag override this; the default is "ready as soon as it exists".
+func is_accepting_input() -> bool:
+	return not settled
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -172,10 +186,14 @@ func register_attempt() -> void:
 ## with the challenge card or the pause button.
 func build_prompt_bar(gesture_key: String = "") -> PanelContainer:
 	var panel := UIFactory.panel(UIFactory.PANEL_COLOR)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	# The bar only ever holds words, so it lets the pointer through: a gesture that
+	# travels over the top of the screen must still reach the food rather than being
+	# eaten by an instruction panel.
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var row := UIFactory.hbox(14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(row)
 
 	var text := UIFactory.wrap(prompt_text(), 21)
@@ -185,6 +203,7 @@ func build_prompt_bar(gesture_key: String = "") -> PanelContainer:
 
 	if not gesture_key.is_empty():
 		var chip := UIFactory.panel(UIFactory.CARD_COLOR)
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		chip.add_child(UIFactory.label(Loc.t(gesture_key), 17, UIFactory.ACCENT, true))
 		row.add_child(chip)
 
@@ -323,6 +342,16 @@ static func gesture_hint_for(kind: String) -> String:
 			return "task.drag"
 		"swipe_clean":
 			return "task.drag"
+		"slice", "prep_fish":
+			return "task.drag"
+		"stir":
+			return "task.gesture_circle"
+		"flip":
+			return "task.gesture_swipe"
+		"plate":
+			return "task.drag"
+		"serve":
+			return "task.tap"
 		"hold", "cook_through":
 			return "task.hold"
 		"tap_correct", "choose_safer", "checklist", "order_steps":
@@ -357,20 +386,29 @@ func celebrate() -> void:
 ## an interaction the player has not seen. Text tasks demonstrate the gesture with
 ## this banner; physical tasks additionally animate a ghost pointer.
 func run_demo_then(callback: Callable, seconds: float = 1.5) -> void:
+	# A gesture is taught in full once, then shown briefly. The "your turn" beat is
+	# kept short on repeats so the pace of an Endless run never drags.
+	var kind := str(step.get("kind", ""))
+	var first_time := not _taught.has(kind)
+	_taught[kind] = true
+	var demo_seconds := seconds if first_time else minf(seconds, 0.9)
+	var beat_seconds := 0.7 if first_time else 0.45
 	var banner := UIFactory.panel(UIFactory.CARD_COLOR)
 	banner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var label := UIFactory.label(Loc.t("task.watch_demo"), 22, UIFactory.ACCENT, true)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.custom_minimum_size = Vector2(0, 44)
 	banner.add_child(label)
 	_prompt_area.add_child(banner)
-	await get_tree().create_timer(seconds, false).timeout
+	await get_tree().create_timer(demo_seconds, false).timeout
 	if not is_inside_tree():
 		return
 	label.text = Loc.t("task.your_turn")
 	AudioManager.play_ui("pop")
-	await get_tree().create_timer(0.7, false).timeout
+	await get_tree().create_timer(beat_seconds, false).timeout
 	if not is_inside_tree():
 		return
 	banner.queue_free()

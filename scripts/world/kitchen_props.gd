@@ -70,11 +70,27 @@ static func _hemisphere() -> SphereMesh:
 	return m
 
 
+## How far a bowl's rim sits above the point it rests on: the cavity is `0.8 *
+## radius` deep (see `bowl`), so a bowl standing on a surface is placed with its rim
+## this much higher than its foot.
+static func bowl_rim(radius: float) -> float:
+	return radius * 0.8
+
+
+## A bowl: a cavity that opens upwards, not a mound.
+##
+## `_hemisphere()` is the *upper* half of a sphere, so leaving it as-is built an
+## upside-down bowl: contents placed at the origin were swallowed by the shell and
+## the pan read as a bump on the bench. The mesh is turned over (a proper 180°
+## rotation, so normals stay correct) which puts `.position` on the rim plane and
+## the cavity `0.8 * radius` below it. Every caller lays its contents into that
+## cavity.
 static func bowl(parent: Node3D, radius: float, mat_name: String, pos: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = _hemisphere()
 	mi.material_override = double_sided(mat_name)
 	mi.position = pos
+	mi.rotation_degrees = Vector3(180.0, 0.0, 0.0)
 	mi.scale = Vector3(radius * 2.0, radius * 1.6, radius * 2.0)
 	parent.add_child(mi)
 	return mi
@@ -128,8 +144,10 @@ static func counter(root: Node3D, length: float = 6.0, z: float = 0.35) -> Node3
 	bench.position = Vector3(0.0, 0.0, z)
 	root.add_child(bench)
 
-	# Top, apron and legs.
-	PropFactory.box(bench, Vector3(length, 0.12, BENCH_DEPTH), "wood_light", Vector3(0, BENCH_Y, 0))
+	# Top, apron and legs. The slab is dropped by half its own thickness so that
+	# BENCH_Y really is the *surface* props stand on. Centring the slab on BENCH_Y
+	# put the surface 6 cm higher and quietly sank every plate, bowl and ingredient.
+	PropFactory.box(bench, Vector3(length, 0.12, BENCH_DEPTH), "wood_light", Vector3(0, BENCH_Y - 0.06, 0))
 	PropFactory.box(bench, Vector3(length, 0.16, BENCH_DEPTH - 0.1), "wood", Vector3(0, BENCH_Y - 0.14, 0))
 	for x: float in [-length * 0.5 + 0.35, 0.0, length * 0.5 - 0.35]:
 		PropFactory.box(bench, Vector3(0.16, BENCH_Y - 0.22, 0.16), "wood_dark", Vector3(x, (BENCH_Y - 0.22) * 0.5, -0.45))
@@ -158,27 +176,42 @@ static func sink(parent: Node3D, x: float) -> Node3D:
 	return node
 
 
-## A charcoal stove with a wok. Returns the wok node, which is what the cooking
-## tasks heat and where the fish is placed.
-static func stove(parent: Node3D, x: float) -> Node3D:
+## A charcoal stove with a wok resting in its mouth.
+##
+## The stove used to be extruded *downwards* from the bench surface, so its body was
+## buried inside the counter with only the top edge showing and the pan floating an
+## inch above the worktop — the two things that made the cooking area read as an
+## unfinished prototype. Here the body stands on the bench (`BENCH_Y` is the
+## surface), the pan is a genuine cavity whose rim clears the stove mouth, and the
+## handle is pinned to the rim by a collar so pan and handle move as one object.
+static func stove(parent: Node3D, x: float, z: float = 0.30) -> Node3D:
 	var node := Node3D.new()
 	node.name = "Stove"
-	node.position = Vector3(x, BENCH_Y, 0.0)
+	node.position = Vector3(x, BENCH_Y, z)
 	parent.add_child(node)
 
-	PropFactory.cyl(node, 0.42, 0.34, "concrete", Vector3(0, -0.14, 0))
-	PropFactory.torus(node, 0.34, "steel_dull", Vector3(0, 0.05, 0), Vector3.ZERO, 0.16)
+	# Clay body standing on the bench, with a steel mouth and a ring of coals. Kept
+	# low so the pan's cavity is what the player sees, not a tall pedestal.
+	PropFactory.cyl(node, 0.42, 0.16, "concrete", Vector3(0, 0.08, 0))
+	PropFactory.torus(node, 0.34, "steel_dull", Vector3(0, 0.16, 0), Vector3.ZERO, 0.16)
 	for i in 6:
 		var a := TAU * float(i) / 6.0
 		PropFactory.box(node, Vector3(0.10, 0.06, 0.10), "charcoal",
-			Vector3(cos(a) * 0.2, 0.0, sin(a) * 0.2))
+			Vector3(cos(a) * 0.2, 0.16, sin(a) * 0.2))
 
 	var wok := Node3D.new()
 	wok.name = "Wok"
-	wok.position = Vector3(0, 0.12, 0)
+	wok.position = Vector3(0, 0.30, 0)
 	node.add_child(wok)
+	# Concave pan: the rim sits on the wok's origin and the cavity drops below it, so
+	# food can be laid *into* the pan rather than on top of a bump. The cavity's floor
+	# lands just above the bench, sitting down inside the stove's mouth.
 	bowl(wok, 0.36, "steel_dull", Vector3.ZERO)
-	PropFactory.cyl(wok, 0.045, 0.34, "wood_dark", Vector3(0.5, 0.06, 0), Vector3(0, 0, 80))
+	PropFactory.torus(wok, 0.355, "steel_dull", Vector3.ZERO, Vector3.ZERO, 0.10)
+	# Handle: a collar bolted through the rim, then the handle itself, both lying in
+	# the rim plane. The transform lives on the prop so no task needs an offset.
+	PropFactory.cyl(wok, 0.07, 0.10, "steel_dull", Vector3(0.38, 0.0, 0), Vector3(0, 0, 90))
+	PropFactory.cyl(wok, 0.042, 0.40, "wood_dark", Vector3(0.60, 0.0, 0), Vector3(0, 0, 90))
 	return wok
 
 
@@ -231,16 +264,19 @@ static func soap(parent: Node3D, pos: Vector3) -> Node3D:
 ## The body and the fins are tagged `food_surface` so the kitchen can colour them
 ## as they cook. The eyes are left untagged on purpose: they are already dark, and
 ## a fish whose eye has "burnt" would read as burnt long before it is.
+## A whole fish. The body is lifted so the fish's belly rests on its anchor: the
+## unscaled mesh used to sit 4 cm below the origin, which half-buried every fish laid
+## on the board. The same visual is dropped into the pan by `place_fish_in_wok`.
 static func fish(parent: Node3D, pos: Vector3, mat_name: String = "fish_raw") -> Node3D:
 	var node := Node3D.new()
 	node.name = "Fish"
 	node.position = pos
 	parent.add_child(node)
-	_tag_food_surface(PropFactory.sphere(node, 0.16, mat_name, Vector3(0, 0.06, 0), Vector3(1.0, 0.62, 3.0)))
-	_tag_food_surface(PropFactory.prism(node, Vector3(0.22, 0.18, 0.02), mat_name, Vector3(0, 0.06, -0.46), Vector3(0, 0, 90)))
-	_tag_food_surface(PropFactory.prism(node, Vector3(0.16, 0.12, 0.02), mat_name, Vector3(0, 0.16, 0.06), Vector3(0, 0, 0)))
-	PropFactory.sphere(node, 0.028, "hair", Vector3(0.09, 0.11, 0.40))
-	PropFactory.sphere(node, 0.028, "hair", Vector3(-0.09, 0.11, 0.40))
+	_tag_food_surface(PropFactory.sphere(node, 0.16, mat_name, Vector3(0, 0.10, 0), Vector3(1.0, 0.62, 3.0)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.22, 0.18, 0.02), mat_name, Vector3(0, 0.10, -0.46), Vector3(0, 0, 90)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.16, 0.12, 0.02), mat_name, Vector3(0, 0.20, 0.06), Vector3(0, 0, 0)))
+	PropFactory.sphere(node, 0.028, "hair", Vector3(0.09, 0.15, 0.40))
+	PropFactory.sphere(node, 0.028, "hair", Vector3(-0.09, 0.15, 0.40))
 	return node
 
 
@@ -262,15 +298,49 @@ static func vegetable_pile(parent: Node3D, pos: Vector3) -> Node3D:
 	return node
 
 
+## A small pile of the actual ingredient, tinted with its own catalogue colour.
+##
+## `visual_for` only knows a handful of generic props, so an aromatic or a vegetable
+## used to arrive as a crate — which then looked wrong when the knife cut it. This
+## builds the ingredient itself, in its own colour, so the thing being chopped is
+## recognisable and the pieces left behind match it.
+static func ingredient_mound(parent: Node3D, pos: Vector3, colour: Color,
+		radius: float = 0.14) -> Node3D:
+	var node := Node3D.new()
+	node.name = "Ingredient"
+	node.position = pos
+	parent.add_child(node)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = colour
+	# Four overlapping pieces: enough to read as a small heap from the game camera,
+	# cheap enough to build on every step.
+	var spots := [
+		Vector3(-0.06, 0.05, -0.03), Vector3(0.05, 0.06, 0.02),
+		Vector3(-0.01, 0.10, -0.06), Vector3(0.07, 0.03, -0.07),
+	]
+	for i in spots.size():
+		var piece := MeshInstance3D.new()
+		piece.mesh = PropFactory.unit_sphere() if i % 2 == 0 else PropFactory.unit_box()
+		piece.material_override = material
+		var size := radius * 0.62
+		piece.scale = Vector3(size, size * 0.72, size)
+		piece.position = spots[i]
+		piece.rotation_degrees = Vector3(0, 37.0 * float(i), 12.0)
+		node.add_child(piece)
+	return node
+
+
 static func herb_bunch(parent: Node3D, pos: Vector3) -> Node3D:
 	var node := Node3D.new()
 	node.name = "Herbs"
 	node.position = pos
 	parent.add_child(node)
+	# Sits on its anchor: the sprigs rest on the bench and the stem stands up from it,
+	# instead of the whole bunch being modelled below the point it is placed at.
 	for i in 4:
 		PropFactory.box(node, Vector3(0.24, 0.03, 0.10), "leaf_dark",
-			Vector3(0.02 * i, -0.04 * i, 0.03 * i), Vector3(0, 20 * i, 12))
-	PropFactory.cyl(node, 0.02, 0.20, "leaf", Vector3(0, -0.10, 0))
+			Vector3(0.02 * i, 0.02 + 0.02 * i, 0.03 * i), Vector3(0, 20 * i, 12))
+	PropFactory.cyl(node, 0.02, 0.20, "leaf", Vector3(0, 0.10, 0))
 	return node
 
 
@@ -279,8 +349,11 @@ static func rice_bowl(parent: Node3D, pos: Vector3) -> Node3D:
 	node.name = "RiceBowl"
 	node.position = pos
 	parent.add_child(node)
-	bowl(node, 0.18, "sign_white", Vector3.ZERO)
-	PropFactory.sphere(node, 0.15, "rice", Vector3(0, 0.05, 0), Vector3(1.0, 0.55, 1.0))
+	# The bowl's foot rests on the anchor; its mouth is `bowl_rim` above it.
+	var rim := bowl_rim(0.18)
+	bowl(node, 0.18, "sign_white", Vector3(0, rim, 0))
+	# The rice sits *in* the bowl, heaped just over the rim.
+	PropFactory.sphere(node, 0.15, "rice", Vector3(0, rim - 0.03, 0), Vector3(1.0, 0.55, 1.0))
 	return node
 
 
@@ -289,8 +362,10 @@ static func plate(parent: Node3D, pos: Vector3) -> Node3D:
 	node.name = "Plate"
 	node.position = pos
 	parent.add_child(node)
-	PropFactory.cyl(node, 0.26, 0.03, "sign_white", Vector3.ZERO)
-	PropFactory.cyl(node, 0.20, 0.035, "sign_white", Vector3(0, 0.005, 0))
+	# Discs are stacked upwards from the anchor so the plate rests on the surface
+	# rather than sinking half its height into it.
+	PropFactory.cyl(node, 0.26, 0.03, "sign_white", Vector3(0, 0.015, 0))
+	PropFactory.cyl(node, 0.20, 0.035, "sign_white", Vector3(0, 0.025, 0))
 	return node
 
 
@@ -327,8 +402,9 @@ static func basket(parent: Node3D, pos: Vector3) -> Node3D:
 	node.name = "Basket"
 	node.position = pos
 	parent.add_child(node)
-	bowl(node, 0.30, "basket", Vector3.ZERO)
-	PropFactory.torus(node, 0.30, "basket", Vector3(0, 0.16, 0), Vector3.ZERO, 0.08)
+	bowl(node, 0.30, "basket", Vector3(0, bowl_rim(0.30), 0))
+	# Rim hoop at the bowl's mouth rather than floating above it.
+	PropFactory.torus(node, 0.30, "basket", Vector3(0, bowl_rim(0.30), 0), Vector3.ZERO, 0.08)
 	return node
 
 
@@ -375,10 +451,14 @@ static func floating_label(parent: Node3D, pos: Vector3, text: String, colour: C
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.fixed_size = false
-	label.font_size = 22
-	label.pixel_size = 0.0045
-	label.modulate = colour
-	label.outline_size = 7
+	# Small and slightly translucent: with a whole row of containers and ingredients
+	# on the bench, full-brightness labels turned the worktop into a wall of text.
+	# A label that is being pointed at is brought back to full strength (see
+	# `DropZone.set_highlighted`).
+	label.font_size = 20
+	label.pixel_size = 0.0038
+	label.modulate = Color(colour, colour.a * 0.72)
+	label.outline_size = 6
 	label.font = PropFactory.font_bold()
 	parent.add_child(label)
 	return label
@@ -412,6 +492,18 @@ static func _break_label(text: String, max_chars: int = 12) -> String:
 
 
 # ------------------------------------------------------------- content visuals ---
+## The cook who watches the kitchen. Built from primitives like everything else, with
+## a short procedural reaction set (see `KitchenCharacter.react`).
+static func chef(parent: Node3D, pos: Vector3, facing_deg: float = 22.0) -> KitchenCharacter:
+	var node := KitchenCharacter.new()
+	node.name = "Chef"
+	node.position = pos
+	node.rotation_degrees = Vector3(0, facing_deg, 0)
+	parent.add_child(node)
+	node.build()
+	return node
+
+
 ## Builds the visible body for a named ingredient. Keeping this mapping in one
 ## place means a level's step data can name an item and get a sensible object
 ## without the task knowing about meshes.
@@ -434,8 +526,90 @@ static func visual_for(item_id: String) -> Node3D:
 			return _release(holder, chopping_board(holder, Vector3.ZERO, true))
 		"clean_board":
 			return _release(holder, chopping_board(holder, Vector3.ZERO, false))
+		"soap_bar", "soap":
+			return _release(holder, soap(holder, Vector3.ZERO))
 		_:
-			return _release(holder, _crate(holder))
+			# A catalogue ingredient looks like itself. This is what lets a sorting
+			# step show the actual ingredient named in the recipe rather than a box.
+			var ingredient := ingredient_visual(item_id)
+			if ingredient != null:
+				return ingredient
+			# Nothing recognises the id: hand back an empty crate rather than
+			# nothing, so a step can never fail because of a missing prop. The crate
+			# is built inside its own node — returning the holder itself used to hand
+			# the caller a node that `_release` had already freed.
+			var crate := Node3D.new()
+			crate.name = "Crate"
+			holder.add_child(crate)
+			_crate(crate)
+			return _release(holder, crate)
+
+
+## The prop for a catalogue ingredient: a bottle for a liquid seasoning, a sprig for
+## a herb, a bowl for a side, and a small mound of pieces for anything solid. Returns
+## null when the id is not in the catalogue, so the caller can fall back.
+static func ingredient_visual(ingredient_id: String) -> Node3D:
+	var spec := RecipeDB.ingredient_by_id(ingredient_id)
+	if spec.is_empty():
+		return null
+	var colour: Color = spec.get("colour", Color(0.6, 0.6, 0.5))
+	var role := str(spec.get("role", ""))
+	var holder := Node3D.new()
+	match role:
+		"seasoning":
+			return _release(holder, _bottle(holder, colour))
+		"herb":
+			return _release(holder, _sprig(holder, colour))
+		"side":
+			return _release(holder, rice_bowl(holder, Vector3.ZERO))
+		_:
+			return _release(holder, ingredient_mound(holder, Vector3.ZERO, colour, 0.18))
+
+
+## A sauce or paste bottle in the ingredient's own colour.
+static func _bottle(parent: Node3D, colour: Color) -> Node3D:
+	var node := Node3D.new()
+	node.name = "Bottle"
+	parent.add_child(node)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = colour
+	var body := MeshInstance3D.new()
+	body.mesh = PropFactory.unit_cyl()
+	body.material_override = material
+	body.scale = Vector3(0.15, 0.30, 0.15)
+	body.position = Vector3(0, 0.15, 0)
+	node.add_child(body)
+	var neck := MeshInstance3D.new()
+	neck.mesh = PropFactory.unit_cyl()
+	neck.material_override = material
+	neck.scale = Vector3(0.07, 0.10, 0.07)
+	neck.position = Vector3(0, 0.34, 0)
+	node.add_child(neck)
+	return node
+
+
+## A few leaves and a stalk, tinted with the herb's colour.
+static func _sprig(parent: Node3D, colour: Color) -> Node3D:
+	var node := Node3D.new()
+	node.name = "Sprig"
+	parent.add_child(node)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = colour
+	for i in 4:
+		var leaf := MeshInstance3D.new()
+		leaf.mesh = PropFactory.unit_box()
+		leaf.material_override = material
+		leaf.scale = Vector3(0.22, 0.02, 0.09)
+		leaf.position = Vector3(0.02 * float(i) - 0.03, 0.10 + 0.015 * float(i), 0.02 * float(i))
+		leaf.rotation_degrees = Vector3(0, 22.0 * float(i), 10.0)
+		node.add_child(leaf)
+	var stalk := MeshInstance3D.new()
+	stalk.mesh = PropFactory.unit_cyl()
+	stalk.material_override = material
+	stalk.scale = Vector3(0.02, 0.20, 0.02)
+	stalk.position = Vector3(0, 0.10, 0)
+	node.add_child(stalk)
+	return node
 
 
 ## Takes a built node out of the holder it was assembled in and disposes of the

@@ -26,7 +26,7 @@ func _build() -> void:
 	_star_summary = _build_star_summary()
 	column.add_child(centred(_star_summary))
 
-	column.add_child(centred(make_button(Loc.t("menu.play"), true, func() -> void: Game.go_to_levels())))
+	column.add_child(centred(make_button(Loc.t("menu.play"), true, func() -> void: Game.go_to_modes())))
 
 	# The secondary entries sit two to a row: seven full-width buttons stacked
 	# vertically do not fit a 1280x720 canvas, and a title screen whose last
@@ -36,6 +36,7 @@ func _build() -> void:
 	grid.columns = UIFactory.columns(2)
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 10)
+	grid.add_child(grid_button(Loc.t("menu.challenges"), func() -> void: Game.go_to_levels()))
 	grid.add_child(grid_button(Loc.t("menu.journal"), func() -> void: Game.navigate("journal")))
 	grid.add_child(grid_button(Loc.t("menu.assessment"), func() -> void: Game.navigate("assessment")))
 	grid.add_child(grid_button(Loc.t("menu.how_to_play"), func() -> void: show_overlay(_how_to_play_panel())))
@@ -176,7 +177,8 @@ func _how_to_play_panel() -> Control:
 	v.add_child(UIFactory.wrap(Loc.t("how.retry"), 18, UIFactory.TEXT_DIM))
 
 	var helpers := UIFactory.vbox(6)
-	for key in ["task.watch_demo", "task.tap", "task.drag", "task.hold"]:
+	for key in ["task.watch_demo", "task.tap", "task.drag", "task.hold",
+			"task.gesture_circle", "task.gesture_swipe", "task.plate"]:
 		helpers.add_child(UIFactory.label("• " + Loc.t(key), 18, UIFactory.TEXT_DIM))
 	v.add_child(helpers)
 	v.add_child(UIFactory.wrap("%s — %s" % [Loc.t("hud.pause"), InputManager.primary_keys_text()], 16, UIFactory.TEXT_DIM))

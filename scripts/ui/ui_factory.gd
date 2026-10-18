@@ -90,11 +90,18 @@ static func grid_width(natural: float, wide: int, narrow: int = 1, separation: i
 ## Records a minimum size for a child of a `columns()` grid. The column count is
 ## recorded too, so a live resize re-fits the control to its column instead of
 ## letting the grid push the page off the screen.
+##
+## `inset` is the room the control's own surroundings take out of its column: a
+## button inside a card is narrower than the card by the card's padding, so its
+## minimum has to be measured against the *inner* column width. Without it a 200
+## pixel button inside a 210 pixel card column still asks for 240 pixels and pushes
+## the three column grid past a 768 pixel tablet.
 static func responsive_grid_size(control: Control, natural: float, wide: int,
-		narrow: int = 1, height: float = 0.0, separation: int = 16) -> void:
+		narrow: int = 1, height: float = 0.0, separation: int = 16, inset: float = 0.0) -> void:
 	control.set_meta("resp_grid_w", natural)
 	control.set_meta("resp_grid_cols", Vector2i(wide, narrow))
 	control.set_meta("resp_grid_sep", separation)
+	control.set_meta("resp_grid_inset", inset)
 	control.set_meta("resp_min_h", height)
 	apply_responsive_min_size(control)
 
@@ -128,8 +135,9 @@ static func apply_responsive_min_size(control: Control) -> void:
 		var narrow: int = (control.get_meta("resp_grid_cols") as Vector2i).y
 		var separation: int = int(control.get_meta("resp_grid_sep"))
 		var natural := float(control.get_meta("resp_grid_w"))
+		var inset := float(control.get_meta("resp_grid_inset", 0.0))
 		control.custom_minimum_size = Vector2(
-			grid_width(natural, wide, narrow, separation),
+			maxf(0.0, grid_width(natural, wide, narrow, separation) - inset),
 			_fitted_height(float(control.get_meta("resp_min_h")), reserve))
 		return
 	if not control.has_meta("resp_min_w"):
@@ -223,6 +231,13 @@ static func bottom_box(control: Control, width: float, height: float,
 	var w := minf(width, maxf(120.0, vp.x - margin * 2.0))
 	var cap := vp.y * 0.55 if max_height < 0.0 else max_height
 	var h := minf(height, maxf(140.0, cap))
+	# A panel can never be shorter than its own content, so a box that asks for less
+	# than the content needs would hang off the bottom edge. Growing the box to the
+	# content height (never past the space between the top and bottom margins) keeps
+	# the whole panel on screen instead.
+	var min_h := control.get_combined_minimum_size().y
+	if min_h > h:
+		h = minf(min_h, maxf(140.0, vp.y - margin * 2.0))
 	var cx := clampf(vp.x * 0.5 + centre_offset, margin + w * 0.5, maxf(margin + w * 0.5, vp.x - margin - w * 0.5))
 	control.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	control.offset_left = cx - w * 0.5

@@ -50,6 +50,12 @@ func _enable() -> void:
 	_active = true
 
 
+## Input is only accepted once the demonstration has finished, so nothing is asked
+## of the player before they have seen what to do.
+func is_accepting_input() -> bool:
+	return _active and not settled
+
+
 ## Re-plays the sweeping demonstration on request.
 func replay_demo() -> void:
 	_play_demo()

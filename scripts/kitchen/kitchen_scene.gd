@@ -29,6 +29,9 @@ var _board_anchor := Vector3(-0.45, KitchenProps.BENCH_Y, 0.55)
 var _shake := 0.0
 var _camera_home := Vector3.ZERO
 var _steam_cooldown := 0.0
+## The cook who reacts to the player's actions. Lives outside `set_root`, so it
+## survives every `clear_set()` between steps.
+var _chef: KitchenCharacter = null
 ## The fish being cooked, and the copies of its material that `set_fish_browning`
 ## paints. Empty when no fish is in the pan.
 var _fish_node: Node3D = null
@@ -46,6 +49,14 @@ func _ready() -> void:
 	_effects = Node3D.new()
 	_effects.name = "Effects"
 	add_child(_effects)
+
+	_chef = KitchenProps.chef(self, Vector3(-2.35, 0.0, -0.95), 26.0)
+
+
+## The cook reacts to a real event. `kind` is passed straight to `KitchenCharacter`.
+func react(kind: String) -> void:
+	if _chef != null and is_instance_valid(_chef):
+		_chef.react(kind)
 
 
 # ------------------------------------------------------------------- life cycle ---
@@ -82,30 +93,35 @@ func _dress_level_one() -> void:
 	KitchenProps.cloth(_decor, Vector3(2.9, KitchenProps.BENCH_Y + 0.03, 0.6), "cloth_blue")
 
 
+# The cooking station. Everything is arranged around one workflow: the board in the
+# middle where the fish is cut, staging and seasonings to its left, the pan on its
+# own stove to the right with the handle pointing away from the board, and the cloth
+# at the far right for wiping down. Nothing is scattered across the bench any more.
 func _dress_level_two() -> void:
-	_wok = KitchenProps.stove(_decor, 2.0)
+	_wok = KitchenProps.stove(_decor, 1.55)
 	_wok_glow = MeshInstance3D.new()
 	_wok_glow.mesh = PropFactory.unit_cyl(20)
 	_wok_heat_material = GameMaterials.glow("wok_heat", Color(1.0, 0.42, 0.18), 1.0).duplicate() as StandardMaterial3D
 	_wok_glow.material_override = _wok_heat_material
-	_wok_glow.position = Vector3(0, 0.02, 0)
+	# Nestled between the coals and the pan, so the glow reads as the fire under the wok.
+	_wok_glow.position = Vector3(0, 0.24, 0)
 	_wok_glow.scale = Vector3(0.58, 0.02, 0.58)
 	_wok_glow.visible = false
 	# Parented to the stove so it sits under the wok wherever the stove is.
 	_wok.get_parent().add_child(_wok_glow)
-	KitchenProps.herb_bunch(_decor, Vector3(-1.75, KitchenProps.BENCH_Y + 0.12, 0.3))
-	KitchenProps.rice_bowl(_decor, Vector3(-1.25, KitchenProps.BENCH_Y, 0.75))
-	KitchenProps.cloth(_decor, Vector3(3.0, KitchenProps.BENCH_Y + 0.03, 0.6), "cloth_blue")
-	KitchenProps.water_jar(_decor, Vector3(-2.75, KitchenProps.BENCH_Y, 0.25))
+	KitchenProps.water_jar(_decor, Vector3(-2.6, KitchenProps.BENCH_Y, 0.30))
+	KitchenProps.herb_bunch(_decor, Vector3(-1.8, KitchenProps.BENCH_Y, 0.45))
+	KitchenProps.rice_bowl(_decor, Vector3(-1.25, KitchenProps.BENCH_Y, 0.80))
+	KitchenProps.cloth(_decor, Vector3(2.5, KitchenProps.BENCH_Y, 0.75), "cloth_blue")
 
 
 func _dress_level_three() -> void:
 	var model := KitchenProps.village_corner(_decor, Vector3(-1.9, KitchenProps.BENCH_Y, 0.5))
 	model.scale = Vector3(0.72, 0.72, 0.72)
-	KitchenProps.plate(_decor, Vector3(1.7, KitchenProps.BENCH_Y, 0.55))
-	KitchenProps.rice_bowl(_decor, Vector3(2.35, KitchenProps.BENCH_Y, 0.35))
-	KitchenProps.water_jar(_decor, Vector3(2.95, KitchenProps.BENCH_Y, 0.3))
-	KitchenProps.herb_bunch(_decor, Vector3(1.25, KitchenProps.BENCH_Y + 0.12, 0.3))
+	KitchenProps.plate(_decor, Vector3(1.0, KitchenProps.BENCH_Y, 0.45))
+	KitchenProps.rice_bowl(_decor, Vector3(1.9, KitchenProps.BENCH_Y, 0.35))
+	KitchenProps.water_jar(_decor, Vector3(2.6, KitchenProps.BENCH_Y, 0.30))
+	KitchenProps.herb_bunch(_decor, Vector3(0.1, KitchenProps.BENCH_Y, 0.85))
 
 
 ## Empties the per-step content.
@@ -121,14 +137,17 @@ func clear_set() -> void:
 
 
 # ---------------------------------------------------------------------- anchors ---
-## Where an item begins. Front of the bench, spread from left to right.
+## Where an item begins. Front of the bench, spread from left to right. The row is
+## centred a little left of the board so the items and the pan never compete for the
+## same patch of worktop.
 func item_slot(index: int, total: int) -> Vector3:
-	return Vector3(_spread(index, total, 1.75), KitchenProps.BENCH_Y, ITEM_Z)
+	return Vector3(_spread(index, total, 1.6) - 0.45, KitchenProps.BENCH_Y, ITEM_Z)
 
 
-## Where a container is placed. Back of the bench, likewise spread out.
+## Where a container is placed. Back of the bench, likewise spread out — and shifted
+## left of the stove, so a row of targets never grows into the pan.
 func zone_slot(index: int, total: int) -> Vector3:
-	return Vector3(_spread(index, total, 1.9), KitchenProps.BENCH_Y, ZONE_Z)
+	return Vector3(_spread(index, total, 1.45) - 0.8, KitchenProps.BENCH_Y, ZONE_Z)
 
 
 func centre_slot() -> Vector3:
@@ -147,7 +166,7 @@ func wok() -> Node3D:
 
 func wok_world_position() -> Vector3:
 	if _wok == null:
-		return Vector3(2.0, KitchenProps.BENCH_Y + 0.12, 0.0)
+		return Vector3(1.55, KitchenProps.BENCH_Y + 0.30, 0.30)
 	return _wok.global_position
 
 
@@ -160,7 +179,12 @@ static func _spread(index: int, total: int, reach: float) -> float:
 
 # -------------------------------------------------------------------- raycasting ---
 ## What is under the pointer. Returns `{ hit, collider, position, normal }`.
-func raycast_pointer(screen_position: Vector2) -> Dictionary:
+##
+## `exclude_rids` matters while something is being carried. The piece in the player's
+## hand must not be able to hide the container it is being dropped into: a fish is
+## taller than the plate's rim, so without this the ray hits the fish and the drop
+## silently fails — the player sees the piece over the plate and nothing happens.
+func raycast_pointer(screen_position: Vector2, exclude_rids: Array[RID] = []) -> Dictionary:
 	if camera == null:
 		return {"hit": false}
 	var origin := camera.project_ray_origin(screen_position)
@@ -169,6 +193,8 @@ func raycast_pointer(screen_position: Vector2) -> Dictionary:
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
 	query.collision_mask = GameConfig.LAYER_INTERACTIVE
+	if not exclude_rids.is_empty():
+		query.exclude = exclude_rids
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return {"hit": false}
@@ -208,7 +234,9 @@ func place_fish_in_wok() -> Node3D:
 			child.queue_free()
 	var fish := KitchenProps.visual_for("raw_fish")
 	fish.name = "CookingFish"
-	fish.position = Vector3(0, 0.08, 0)
+	# Laid into the pan's cavity (the wok's origin is its rim), so the fish rests in
+	# the wok instead of standing on top of it.
+	fish.position = Vector3(0, -0.10, 0)
 	fish.scale = FISH_BASE_SCALE
 	_wok.add_child(fish)
 	_fish_node = fish

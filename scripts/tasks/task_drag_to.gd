@@ -43,6 +43,12 @@ func _enable() -> void:
 	_active = true
 
 
+## Input is only accepted once the demonstration has finished, so nothing is asked
+## of the player before they have seen what to do.
+func is_accepting_input() -> bool:
+	return _active and not settled
+
+
 ## Re-plays the drag demonstration on request.
 func replay_demo() -> void:
 	_play_demo()
@@ -89,7 +95,7 @@ func _spawn_items() -> void:
 		item.position = kitchen.item_slot(i, items.size())
 		item.set_visual(KitchenProps.visual_for(item_id))
 		item.configure(item_id, _hit_size_for(item_id), entry.get("label", {}))
-		KitchenProps.floating_label(item, Vector3(0, 0.46, 0), item.localised_name(), Color(1.0, 0.94, 0.78))
+		KitchenProps.floating_label(item, Vector3(0, 0.34, 0), item.localised_name(), Color(1.0, 0.94, 0.78))
 		_items.append(item)
 
 
@@ -119,11 +125,11 @@ func pointer_moved(screen_position: Vector2) -> void:
 	if not _active or settled:
 		return
 	if _carried == null:
-		_set_hover(_zone_under(screen_position))
+		_set_hover(_zone_under(screen_position, null))
 		return
 	var point := kitchen.pointer_on_plane(screen_position, _carried.home_position.y)
 	_carried.move_to(point)
-	_set_hover(_zone_under(screen_position))
+	_set_hover(_zone_under(screen_position, _carried))
 
 
 func pointer_released(screen_position: Vector2) -> void:
@@ -131,7 +137,7 @@ func pointer_released(screen_position: Vector2) -> void:
 		return
 	var item := _carried
 	_carried = null
-	var zone := _zone_under(screen_position)
+	var zone := _zone_under(screen_position, item)
 	_set_hover(null)
 
 	if zone == null:
@@ -146,8 +152,13 @@ func pointer_released(screen_position: Vector2) -> void:
 		_reject(item, zone)
 
 
-func _zone_under(screen_position: Vector2) -> DropZone:
-	var hit := kitchen.raycast_pointer(screen_position)
+## Which container is under the pointer. The piece being carried is excluded so that
+## a fish held over the pot cannot hide the pot and swallow its own drop.
+func _zone_under(screen_position: Vector2, ignore: Node3D = null) -> DropZone:
+	var exclude: Array[RID] = []
+	if ignore != null and is_instance_valid(ignore) and ignore is Area3D:
+		exclude.append((ignore as Area3D).get_rid())
+	var hit := kitchen.raycast_pointer(screen_position, exclude)
 	if not hit.get("hit", false):
 		return null
 	var collider: Variant = hit.get("collider")
@@ -192,7 +203,9 @@ func _reject(item: InteractiveItem, zone: DropZone) -> void:
 	item.release()
 	item.return_home()
 
-	var reason_key := "keep_raw_apart" if _wanted.get(item.item_id, "") == "raw_tray" or _wanted.get(item.item_id, "") == "raw_board" else "ready_apart"
+	var reason_key := str(step.get("reject_key", ""))
+	if reason_key.is_empty():
+		reason_key = "keep_raw_apart" if _wanted.get(item.item_id, "") == "raw_tray" or _wanted.get(item.item_id, "") == "raw_board" else "ready_apart"
 	show_reason(Loc.t("feedback.%s" % reason_key))
 	register_mistake({"id": item.item_id, "why": {}}, {"key": reason_key, "text": Loc.t("feedback.%s" % reason_key)})
 

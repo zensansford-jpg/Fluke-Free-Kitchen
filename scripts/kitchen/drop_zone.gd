@@ -16,6 +16,7 @@ var display_name: Dictionary = {}
 var _collision: CollisionShape3D
 var _outline: MeshInstance3D
 var _label: Label3D
+var _label_colour := Color(0, 0, 0, 0)
 var _highlighted := false
 
 
@@ -78,7 +79,8 @@ func fit_visual_to(hit_size: Vector3) -> void:
 		_outline.scale = Vector3(hit_size.x, 0.012, hit_size.z)
 		_outline.position = Vector3(0, 0.02, 0)
 	if _label == null and not display_name.is_empty():
-		_label = KitchenProps.floating_label(self, Vector3(0, hit_size.y + 0.22, 0), localised_name())
+		_label = KitchenProps.floating_label(self, Vector3(0, hit_size.y + 0.16, 0), localised_name())
+		_label_colour = _label.modulate
 
 
 func set_highlighted(on: bool) -> void:
@@ -87,6 +89,11 @@ func set_highlighted(on: bool) -> void:
 	_highlighted = on
 	if _outline != null:
 		_outline.visible = on
+	# The name brightens while the player is aiming at the container, so the bench is
+	# readable without every label shouting at once.
+	if _label != null:
+		var base := _label_colour if _label_colour.a > 0.0 else _label.modulate
+		_label.modulate = Color(base, 1.0) if on else base
 
 
 func localised_name() -> String:

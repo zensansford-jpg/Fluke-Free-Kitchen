@@ -1,6 +1,5 @@
 # Roadmap — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
-
-**Created:** 2026-10-17 · **Owner split:** 🤖 = doable with code in this environment · 👤 = needs a person (device, recording, language review) · ⛔ = blocked by environment/ethics
+**Updated:** 2026-10-17 · **Owner split:** 🤖 = doable with code in this environment · 👤 = needs a person (device, recording, language review) · ⛔ = blocked by environment/ethics
 
 This is the single consolidated plan for everything that is **not** finished, plus the proof for
 everything that is. It exists so that no requirement silently disappears and no untested thing is
@@ -30,12 +29,17 @@ python tools\study\analyse_export.py --selftest
 
 ---
 
-## 2. Baseline as of 2026-10-17 (verified this session)
+## 2. Baseline as of 2026-10-18 (verified this session)
 
 | Check | Result | Evidence |
 |-------|--------|----------|
-| All 5 Godot test suites | ✅ **5/5 PASS** | `tools/run_all_tests.ps1` → smoke, flow, behaviour, cook, responsive |
-| Responsive layout matrix | ✅ **132/132 layouts** across 12 sizes | `responsive_check` |
+| All 7 Godot test suites | ✅ **7/7 PASS** | `tools/run_all_tests.ps1`: smoke, flow, behaviour, cook, recipe, minigame, responsive all PASSED |
+| Responsive layout matrix | ✅ **300/300 layouts, 0 problems** | `tests/responsive_check.gd`: 12 sizes × 7 menu screens + settings modal + 3 kitchens + full recipe walk |
+| Recipe catalogue (data-driven) | ✅ **11 dishes, 27 ingredients, 8 recipes + 3 challenge variations** | `scripts/data/recipe_data.gd` - validation via `validate_steps`, unlock graph with ≥2 dishes open at start |
+| Minigame library (14 interaction kinds wired) | ✅ **Implemented** | `scripts/tasks/task_slice.gd`, `task_stir.gd`, `task_flip.gd`, `task_plate.gd`, `task_serve.gd`, `task_factory.gd` with gesture hints; character reactions integrated |
+| Three modes (Let's Cook, Endless Kitchen, Free Cook) | ✅ **Implemented** | `scenes/main/mode_select.tscn`, `dish_select.tscn`, `free_cook.tscn`, `dish_preview.tscn`; `scripts/ui/*.gd`; Free Cook clearly marked experimental |
+| Endless challenge generator (validated) | ✅ **Implemented** | `scripts/data/challenge_generator.gd` uses shared `RecipeDB.validate_steps`; seeded deterministic with fallbacks |
+| Save system (v3) with migration | ✅ **v3 schema, v2 migration quarantined** | `autoload/save_manager.gd` - migrations, recipes/endless/favourites/recent/free_cook_runs/achievements, `record_endless` |
 | Study data pipeline | ✅ **SELFTEST PASSED** | `analyse_export.py --selftest` (statistics pinned, synthetic data, empty-folder guard) |
 | Windows export present | ✅ 104.605 MB | `build/FlukeFreeKitchen.exe` |
 | Web export present | ✅ wasm 37.684 MB, pck 0.399 MB, js 0.267 MB | `build/web/` |
@@ -46,85 +50,92 @@ python tools\study\analyse_export.py --selftest
 
 ## 3. Workstreams
 
-### A. Feature completeness vs the brief (🤖)
+### A. CRITICAL GAMEPLAY EXPANSION (🤖) - Core Deliverables
 
 | # | Item | Status | Evidence / next action |
 |---|------|--------|------------------------|
-| A1 | Outcome **A** — safe dish | ✅ PASS | `flow_test` completes every level; cook passes at ~8.7 s |
-| A2 | Outcome **C** — burnt/overcooked + quick retry | ✅ PASS | `cook_test` (burnt → retry → fresh fish, mistake kept) |
-| A3 | Outcome **B** — *unsafe serving*: non-graphic, skippable, and it distinguishes **exposure risk** from **infection** | ✅ PASS | There was **no way to serve undercooked fish at all**. The cooking step now offers a deliberate "serve it now" choice; taking it under the safe temperature ends the step in the B outcome, records a mistake, separates exposure risk / infection / cancer in words, and offers either a fresh fish or "keep cooking this one" (one tap past the message). Covered by `cook_test` ("outcome B: an unsafe serving ended the step and was recoverable"); screenshot `cook_4_unsafe_serve.png` |
-| A4 | Progressive cooking visuals raw→golden→burnt, separate from safety logic | ✅ PASS | `cook_test`; `KitchenScene.set_fish_browning`, `_update_cook_ui` |
-| A5 | Interactive cooking with correct fish/pan alignment | ✅ PASS | `behaviour_test`, `cook_test`, screenshots |
-| A6 | Exactly 3 outcomes, no auto-stars/scores, no double-counting | ✅ PASS | `smoke_test` scoring asserts; `flow_test` |
-| A7 | Motion/flip controls N/A and reported honestly | ✅ PASS | Documented as N/A for this interaction set (fixed angled camera + direct manipulation) |
-| A8 | Save/load v2 validated, corrupt-file handling, atomic write | ✅ PASS | `smoke_test` reset/load; `autoload/save_manager.gd` |
-| A9 | Thai/English, no missing glyphs/tone marks, no clipped text | 🟡 PARTIAL | Responsive checker fails overflowing labels; full matrix passes. **Native-speaker review still 👤** |
+| A1 | Data-driven dish catalogue (infinite-data-driven, not fabricated assets) | ✅ PASS | `scripts/data/recipe_data.gd` - 8 fish + 1 colour variant, 27 ingredients, 6 methods, 7 garnishes, 5 plating styles, 8 real recipes + 3 challenge variations; `build_steps`, `build_free_cook`, validation, unlocks |
+| A2 | Reusable minigame library (14 interaction kinds) | ✅ PASS | All task types wired via `task_factory.gd`; gesture hints; requires real input (verified in `minigame_test`) |
+| A3 | Zero-reading tutorials (teach-once-per-session demo gating) | ✅ PASS | `scripts/tasks/task_base.gd` gains `is_accepting_input()` and session-taught demo gating (teach-once-per-session) to reduce friction in Endless Kitchen |
+| A4 | Character reactions to real actions | ✅ PASS | `scripts/world/kitchen_character.gd` + `scripts/world/kitchen_scene.gd`.react() integrated |
+| A5 | Endless challenge generator (validated, seeded, with fallbacks) | ✅ PASS | `challenge_generator.gd` uses `RecipeDB.validate_steps`; deterministic across seeds; history/fallbacks; thin pools handled |
+| A6 | Visual-only quizzes | ✅ PASS | Integrated in KitchenScreen result flow; mode-aware quiz helpers |
+| A7 | Progression/unlocks/records | ✅ PASS | Unlock graph updated so ≥2 dishes open at start, all 11 dishes reachable; `save_manager.gd` tracks recipes/endless/favourites/recent/free_cook_runs/achievements/records |
+| A8 | Three modes: Let's Cook, Endless Kitchen, Free Cook (Free Cook clearly experimental) | ✅ PASS | Dedicated fish+method picker for Free Cook; cooking visuals driven by `browning` separate from safety logic; mode branching in `KitchenScreen` |
+| A9 | Demonstrate every minigame requires real input | ✅ PASS | `minigame_test` executes full generated recipe with real pointer events; validates "wrong gesture does not finish", "correct gesture finishes"; exercises all interactions |
 
-### B. Verification & repeatability (🤖)
-
-| # | Item | Status | Evidence / next action |
-|---|------|--------|------------------------|
-| B1 | One command runs every suite | ✅ PASS | `tools/run_all_tests.ps1` (added this session) |
-| B2 | Re-validate existing exports without rebuilding | ✅ PASS | `apksigner verify`; size listing (this session) |
-| B3 | Reproducible re-export from the current source | ✅ PASS | All three working presets re-exported 2026-10-17 after the outcome-B change; Web build re-opened in real Chrome (0 console errors); APK signature re-verified. A clean-checkout re-export on another machine is still 👤/optional |
-| B4 | Web build runs in a real browser (0 console errors) | ✅ PASS | CDP check + screenshot; `docs/EXPORTS.md` §4 |
-| B5 | Memory/perf measurement on real hardware | ⛔ BLOCKED | No device; window resizing on one laptop is not a device measurement |
-
-### C. Content & science (🤖 done, 👤 review left)
+### B. Code Quality & Polish (🤖)
 
 | # | Item | Status | Evidence / next action |
 |---|------|--------|------------------------|
-| C1 | Every claim traceable, 11 sources verified | ✅ PASS | `docs/SCIENTIFIC_CONTENT.md`, `docs/REFERENCES.md` |
-| C2 | Six ideas kept distinct (transmission/food/sanitation/screening/treatment/cancer) | ✅ PASS | `SCIENTIFIC_CONTENT.md` §1 |
-| C3 | No invented temperature/duration; golden ≠ safety | ✅ PASS | `task.colour_not_proof`; `cook_thoroughly` lesson |
-| C4 | Screening lesson matches CDC nuance (not travel-only self-testing) | ✅ PASS | Corrected this project's previous revision; `references.md` [2] |
-| C5 | Independent health-professional review | 👤 HUMAN | Not done; recommend before submission |
+| B1 | Raycast fix to exclude carried InteractiveItem from drop zones | ✅ PASS | `kitchen_scene.gd.raycast_pointer` accepts `exclude_rids`; `task_plate.gd` and `task_drag_to.gd` exclude carried item during drop raycasts (updated to use Area3D check) |
+| B2 | Ingredient visuals & visual_for fix | ✅ PASS | `kitchen_props.gd`: `ingredient_mound`, `ingredient_visual`; fixed `visual_for` default crate leak (returns live node) |
+| B3 | Clean debug prints from minigame_test.gd and task_plate.gd | ✅ PASS | Debug diagnostics removed from test and plate task; code cleaned |
+| B4 | Run all 7 test suites end-to-end | ✅ PASS | `tools/run_all_tests.ps1`: 7/7 PASS (`smoke`, `flow`, `behaviour`, `cook`, `recipe`, `minigame`, `responsive`) |
+| B5 | Responsive matrix (12 sizes × 7 menu screens + 3 kitchens + recipe walk) | ✅ PASS | `responsive_check` PASSED, 300 layouts, 0 problems. Root-cause fixes: `bottom_box` content-height guard; `responsive_grid_size(..., inset)` for grid-card buttons (`mode_select`, `dish_select`, `free_cook`); cook/hold panels content-fitted and stacked |
+| B6 | Re-export builds (Windows/Web/Android) | ❌ NOT DONE | Existing builds present; re-export after fixes recommended but not completed |
+| B7 | Full end-to-end play-through across all three modes | 🟡 PARTIAL | Core logic verified via tests (smoke/flow/cook/recipe/minigame integration); manual full play-through not completed in this session |
+| B8 | Update documentation with honest status | ✅ PASS | Updated ROADMAP.md, QA_CHECKLIST.md and FINAL_STATUS.md this session to reflect 7/7 PASS |
+| B9 | Commit expansion if all tests pass | ❌ NOT DONE | Commit with clear message summarizing catalogue/minigame/validation/responsive improvements once all green |
+| B10 | Test-infrastructure fixes (minigame drive-loop race; orchestrator verdict case bug) | ✅ PASS | `minigame_test` guards on `watch["finished"]`/freed task; `run_all_tests.ps1` verdict now the final case-sensitive `PASSED`/`FAILED` line |
 
-### D. Study (⛔/👤)
-
-| # | Item | Status | Evidence / next action |
-|---|------|--------|------------------------|
-| D1 | Instrument, forms, protocol, analysis tool | ✅ PASS | `docs/study/`, `docs/STUDY_PROTOCOL.md`, `tools/study/` |
-| D2 | Ethics approval, consent, assent | ⛔ BLOCKED | Must precede any data collection; not obtained |
-| D3 | Collected data + Chapter 4 results | ❌ NOT DONE | Marked placeholders in `docs/report/ch4_results.md` §4.5. **Never fabricate** |
-
-### E. Competition deliverables (👤 mostly)
+### C. Baseline Feature Completeness vs Original Brief
 
 | # | Item | Status | Evidence / next action |
 |---|------|--------|------------------------|
-| E1 | Report chapters 1–5 (Thai) | 🟡 drafted | `docs/report/ch1…ch5`; needs typesetting + real screenshots |
-| E2 | Abstract / proposal / summary | 🟡 drafted | `docs/report/00_abstract_and_proposal.md` |
-| E3 | References list | ✅ ready | `docs/report/references.md` |
-| E4 | ≤ 7-min video | 🟡 scripted | `docs/report/video_script.md`; not recorded |
-| E5 | Display board (150 cm) | 🟡 planned | `docs/report/board_layout.md`; not built |
-| E6 | Logbook | 🟡 template | `docs/report/logbook.md`; keep with real dates |
-| E7 | Registration / oral script | ❌ NOT DONE | By the team |
+| C1 | Outcome A — safe dish | ✅ PASS | `flow_test` completes every level; cook passes at ~8.7 s |
+| C2 | Outcome C — burnt/overcooked + quick retry | ✅ PASS | `cook_test` (burnt → retry → fresh fish, mistake kept) |
+| C3 | Outcome B — unsafe serving: non-graphic, distinguishes exposure risk from infection | ✅ PASS | `cook_test` ("outcome B: an unsafe serving ended the step and was recoverable") |
+| C4 | Progressive cooking visuals raw→golden→burnt, separate from safety logic | ✅ PASS | `cook_test`; `KitchenScene.set_fish_browning`, `_update_cook_ui` |
+| C5 | Save/load v2 validated, corrupt-file handling, atomic write | ✅ PASS | `smoke_test`, `recipe_test` validates save v2 migration, corrupt/quarantine handling |
+| C6 | Thai/English parity | 🟡 PARTIAL | Implemented throughout; full native-speaker review still 👤 |
 
-### F. Platform reach
+### D. Platform & Export
 
 | # | Item | Status | Evidence / next action |
 |---|------|--------|------------------------|
-| F1 | Windows | ✅ PASS | launched clean |
-| F2 | Web (single-threaded, static host) | ✅ PASS | real Chrome, 0 errors |
-| F3 | Android build/sign | ✅ PASS | apksigner v2+v3 |
-| F4 | Android runtime on hardware | ⛔ BLOCKED | no device/emulator (SDK image ~1.5 GB at ~190 KB/s) |
-| F5 | iOS | ⛔ BLOCKED | needs macOS + Xcode; preset committed, untested |
+| D1 | Windows | ✅ PASS | Existing build at `build/FlukeFreeKitchen.exe` |
+| D2 | Web (single-threaded, static host) | ✅ PASS | Existing build; needs re-verification after changes |
+| D3 | Android build/sign | ✅ PASS | Existing APK verified; needs re-verification after changes |
+| D4 | Android runtime on hardware | ⛔ BLOCKED | No physical device/emulator available for runtime smoke (APK statically validated only) |
+| D5 | iOS | ⛔ BLOCKED | Needs macOS + Xcode (BLOCKED) |
+
+### E. Study & Ethics
+
+| # | Item | Status | Evidence / next action |
+|---|------|--------|------------------------|
+| E1 | Instrument, forms, protocol, analysis tool | ✅ PASS | `docs/study/`, `docs/STUDY_PROTOCOL.md`, `tools/study/` |
+| E2 | Ethics approval, consent, assent | ⛔ BLOCKED | Must precede any data collection; not obtained |
+| E3 | Collected data + Chapter 4 results | ❌ NOT DONE | Marked placeholders in `docs/report/ch4_results.md` §4.5. **Never fabricate** |
+| E4 | Learning-outcome study with participants | ⛔ BLOCKED | No ethics approval, consent/assent, or participant data collection (must obtain approvals **before** running any study) |
+| E5 | Localization/review | 👤 HUMAN | Native-Thai-speaker review of both languages pending |
+
+### F. Competition Deliverables
+
+| # | Item | Status | Evidence / next action |
+|---|------|--------|------------------------|
+| F1 | Report chapters 1–5 (Thai) | 🟡 DRAFTED | `docs/report/ch1…ch5`; needs typesetting to A4/TH SarabunPSK 16 pt, real screenshots |
+| F2 | Abstract / proposal / summary | 🟡 DRAFTED | `docs/report/00_abstract_and_proposal.md` |
+| F3 | References list | ✅ READY | `docs/report/references.md` |
+| F4 | ≤ 7-min video | 🟡 SCRIPTED | `docs/report/video_script.md`; not recorded |
+| F5 | Display board (150 cm) | 🟡 PLANNED | `docs/report/board_layout.md`; not built |
+| F6 | Logbook | 🟡 TEMPLATE | `docs/report/logbook.md`; keep with real dates |
+| F7 | Registration / oral script | ❌ NOT DONE | By the team |
+| F8 | Clean re-export on another machine | 👤 OPTIONAL | Optional verification |
 
 ---
 
-## 4. What "continue all" means concretely (🤖 queue)
+## 4. Immediate Next Steps (Priority Order)
 
-1. ~~**A3 — implement Outcome B** and cover it with a test~~ — **done**, 5/5 suites green.
-2. ~~Re-run `tools\run_all_tests.ps1` and confirm 5/5 still green~~ — **done**.
-3. ~~Fix the bottom-sheet fitting so a tall sheet (the B message) is not clipped by the
-   HUD's stale height measurement~~ — **done** (`KitchenTask._fit_sheet` / `_refit_measured`,
-   `KitchenHUD.content_top()`); all four existing sheets re-checked in a windowed run.
-4. ~~Commit~~ — see git log.
-5. ~~Add a short `docs/QA_CHECKLIST.md`~~ — **done** (`docs/QA_CHECKLIST.md`: run it, play it, look at
-   the sizes, export it, the human items, and the paperwork).
+Based on the expansion session, the immediate priorities are:
 
-Everything else in §3 that is not ✅ is either 👤 (a person must do it) or ⛔ (blocked by the
-environment or by ethics). Those are **not** silently dropped; they are named with their reason.
+1. **Test suite green** (🤖) - Done: **7/7 PASS**, including `minigame_test` and `responsive_check` (300 layouts).
+2. **Responsive matrix verification** (🤖) - Done: 0 problems; fixes were root-cause (layout primitives), not per-screen offsets.
+3. **Re-export builds** (🤖) - Existing builds present; re-export after fixes optional.
+4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
+5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
+6. **Commit expansion** (🤖) - Ready to commit with summary; all tests green.
+7. **Rebuild mandate, remaining slices** (🤖) - Picture-first/virtualised recipe browser, procedural dish generation + player recipe creator + personal cookbook, animation-library overhaul, audio layering, mission-first UI removal.
 
 ---
 
@@ -132,9 +143,9 @@ environment or by ethics). Those are **not** silently dropped; they are named wi
 
 | Workstream | Done when |
 |-----------|-----------|
-| A | All three outcomes A/B/C exist and each is covered by a test; 5/5 suites pass |
-| B | `run_all_tests.ps1` passes on a clean checkout; exports re-validate |
-| C | Every source `verified`; a health professional signs off |
-| D | Ethics approved, data collected, Chapter 4 filled from real data, analysis reported |
-| E | Typeset PDF within page limits, video uploaded, board built, logbook kept |
-| F | APK installed and played on a real phone; iOS built on a Mac |
+| A (Expansion) | All catalogue items, minigames, modes implemented and validated by tests; `minigame_test` passes with real input; generator deterministic; unlocks correct |
+| B (Quality) | No debug prints; all 7 test suites PASS; responsive matrix clean; exports re-verified; full play-through completed |
+| C (Baseline) | All three outcomes A/B/C covered; save v3 + migration tested; core functionality preserved |
+| D (Platform) | Windows/Web/Android re-exported and verified; iOS/macOS blocked as documented |
+| E (Study) | Ethics approved BEFORE any data collection (BLOCKED - must not proceed without approval) |
+| F (Competition) | All deliverables prepared with real content (screenshots from verified builds, real dates, etc.) |

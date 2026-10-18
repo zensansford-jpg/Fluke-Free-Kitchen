@@ -12,15 +12,15 @@ Legend: 🤖 run it · 👁 look at it · 👤 needs a person
 ## 1. Run the checks (🤖, ~10 minutes)
 
 ```powershell
-# 1. Every Godot suite, one summary line each. Expect: 5/5 suites passed.
+# 1. Every Godot suite, one summary line each. Expect: 7/7 suites passed.
 powershell -ExecutionPolicy Bypass -File tools\run_all_tests.ps1
 
 # 2. The study data pipeline, on synthetic records only. Expect: SELFTEST PASSED.
 python tools\study\analyse_export.py --selftest
 ```
 
-- [ ] 1. `run_all_tests.ps1` → **smoke · flow · behaviour · cook · responsive** all print PASSED
-- [ ] 2. `responsive_check` reports **132/132 layouts** across the 12 sizes
+- [ ] 1. `run_all_tests.ps1` → **smoke · flow · behaviour · cook · recipe · minigame · responsive** all print PASSED
+- [ ] 2. `responsive_check` reports **300/300 layouts** across the 12 sizes
 - [ ] 3. `analyse_export.py --selftest` → all statistics match their reference values
 
 If any of these fails, stop: do not demo or submit until it is green again.
@@ -56,8 +56,10 @@ Play on the machine you will demo on, in **Thai**, then flip to **EN** mid-sessi
 The matrix already runs headless; this is about *looking* at a few of the extremes.
 
 ```powershell
-godot --headless --path . res://tests/responsive_check.tscn -- 320 568 shots
-godot --headless --path . res://tests/responsive_check.tscn -- 3840 2160 shots
+# NB: no --headless. The dummy renderer cannot read the framebuffer, so screenshots
+# need a real window (the run quits by itself when it is done).
+godot --path . res://tests/responsive_check.tscn -- 320 568 shots
+godot --path . res://tests/responsive_check.tscn -- 3840 2160 shots
 ```
 
 - [ ] Open the screenshots the run writes to `%TEMP%\opencode\responsive` and confirm nothing is

@@ -85,6 +85,12 @@ func _enable() -> void:
 	_active = true
 
 
+## Input is only accepted once the demonstration has finished, so nothing is asked
+## of the player before they have seen what to do.
+func is_accepting_input() -> bool:
+	return _active and not settled
+
+
 ## Re-plays the press-and-hold demonstration on request.
 func replay_demo() -> void:
 	_play_demo()
@@ -100,40 +106,41 @@ func abort() -> void:
 
 # --------------------------------------------------------------------- panels ---
 func _build_hold_panel() -> void:
-	var panel := UIFactory.panel(UIFactory.CARD_COLOR)
-	UIFactory.bottom_box(panel, 340.0, 190.0, -300.0)
-	remember_box(panel, 340.0, 190.0, -300.0)
-
-	var v := UIFactory.vbox(6)
-	panel.add_child(v)
-	var prompt := UIFactory.label(Loc.t("task.press_stove"), 19, UIFactory.ACCENT, true)
+	# The press-and-hold panel is a content-fitted bottom sheet rather than a fixed
+	# box. A ring and a prompt come out taller than the old 190 pixel box on a small
+	# screen, and a box that asks for less height than its content needs hangs off
+	# the bottom edge; the sheet measures itself instead.
+	var body := UIFactory.vbox(6)
+	var prompt := UIFactory.wrap(Loc.t("task.press_stove"), 19, UIFactory.ACCENT, true)
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(prompt)
+	body.add_child(prompt)
 
 	_ring = RingProgress.new()
 	_ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	v.add_child(_ring)
+	body.add_child(_ring)
 
-	add_child(panel)
+	content_sheet(body, body, 340.0, -300.0)
 
 
 func _build_cook_panel() -> void:
-	var panel := UIFactory.panel(UIFactory.CARD_COLOR)
-	_cook_panel = panel
-	UIFactory.bottom_box(panel, 470.0, 300.0, -310.0)
-	remember_box(panel, 470.0, 300.0, -310.0)
-
+	# The cook panel is content-fitted, not a fixed box: the safe-level line, the two
+	# meters and the two pieces of guidance genuinely need more than 300 pixels on a
+	# 320 pixel phone, and a box shorter than its content would hang off the bottom
+	# edge. The sheet measures itself and stays on screen at every size.
 	var v := UIFactory.vbox(8)
-	panel.add_child(v)
 
+	# The caption and the reading share a line; the safe level sits on its own line.
+	# Stacking them is what keeps the panel narrow enough for a 320 pixel phone: the
+	# old single row put four labels side by side and asked for 385 pixels of width.
 	var header := UIFactory.hbox(10)
-	header.add_child(UIFactory.label(Loc.t("task.temperature"), 19, UIFactory.TEXT_DIM))
+	var caption := UIFactory.wrap(Loc.t("task.temperature"), 19, UIFactory.TEXT_DIM)
+	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(caption)
 	_temperature_label = UIFactory.label("%.0f°C" % _temperature, 22, UIFactory.ACCENT, true)
 	header.add_child(_temperature_label)
-	header.add_child(UIFactory.spacer())
-	header.add_child(UIFactory.label(Loc.t("task.safe_zone") + " ≥ %.0f°C" % _safe_temperature, 18, UIFactory.GOOD, true))
 	v.add_child(header)
+	v.add_child(UIFactory.wrap(Loc.t("task.safe_zone") + " ≥ %.0f°C" % _safe_temperature,
+		18, UIFactory.GOOD, true))
 
 	_temperature_bar = ProgressBar.new()
 	# The bar starts at 0 °C rather than at the starting temperature: a meter that
@@ -147,20 +154,17 @@ func _build_cook_panel() -> void:
 	UIFactory.style_progress(_temperature_bar, UIFactory.ACCENT)
 	v.add_child(_temperature_bar)
 
-	# The "keep holding" hint shares its row with the one deliberate way out of the
-	# step: serving the fish before it is safe. Putting it here keeps the panel the
-	# same height as before on a wide screen while still making the choice available,
-	# and the choice is what outcome B exists to teach.
-	var hold_row := UIFactory.hbox(10)
-	var keep_hint := UIFactory.label(Loc.t("task.keep_holding"), 18, UIFactory.TEXT_DIM)
-	keep_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	keep_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hold_row.add_child(keep_hint)
+	# The "keep holding" hint sits above the one deliberate way out of the step:
+	# serving the fish before it is safe. Keeping the button on its own centred row
+	# rather than beside the hint is what lets both fit a phone: side by side they
+	# summed to more width than a 320 pixel screen has, and the choice is what
+	# outcome B exists to teach.
+	var keep_hint := UIFactory.wrap(Loc.t("task.keep_holding"), 18, UIFactory.TEXT_DIM)
+	v.add_child(keep_hint)
 	var serve := UIFactory.button(Loc.t("task.serve_now"), 17, 150.0)
 	UIFactory.style_button(serve, UIFactory.BAD, false)
 	serve.pressed.connect(_serve_unsafe)
-	hold_row.add_child(serve)
-	v.add_child(hold_row)
+	v.add_child(UIFactory.centre_row(serve))
 	_safe_bar = ProgressBar.new()
 	_safe_bar.min_value = 0.0
 	_safe_bar.max_value = _safe_needed
@@ -174,7 +178,7 @@ func _build_cook_panel() -> void:
 	# thing to trust, so the panel says which measurement actually matters.
 	v.add_child(UIFactory.wrap(Loc.t("task.colour_not_proof"), 15, UIFactory.TEXT_DIM))
 
-	add_child(panel)
+	_cook_panel = content_sheet(v, v, 470.0, -310.0)
 
 
 # ------------------------------------------------------------------ interaction ---
@@ -281,6 +285,7 @@ func _finish_hold() -> void:
 func _finish_cook() -> void:
 	AudioManager.play_sfx("sizzle")
 	AudioManager.play_sfx("star_full")
+	kitchen.react("celebrate")
 	kitchen.play_effect("sparkle", kitchen.wok_world_position() + Vector3(0, 0.3, 0))
 	flash_message(Loc.t("feedback.cooked"), UIFactory.GOOD)
 	await get_tree().create_timer(0.6, false).timeout
@@ -301,6 +306,7 @@ func _burn_the_fish() -> void:
 	_holding = false
 	register_mistake({"id": "burnt"}, {"reason": "burnt"})
 	AudioManager.play_sfx("tap_bad")
+	kitchen.react("worried")
 	kitchen.play_effect("smoke", kitchen.wok_world_position() + Vector3(0, 0.2, 0))
 	kitchen.shake(0.05)
 	show_reason(Loc.t("feedback.burnt"), UIFactory.BAD)
@@ -334,6 +340,7 @@ func _serve_unsafe() -> void:
 	_holding = false
 	register_mistake({"id": "served_unsafe"}, {"reason": "unsafe_serve"})
 	AudioManager.play_sfx("tap_bad")
+	kitchen.react("worried")
 	kitchen.play_effect("smoke", kitchen.wok_world_position() + Vector3(0, 0.16, 0))
 	show_reason(Loc.t("feedback.unsafe_serve"), UIFactory.BAD)
 	if _cook_panel != null and is_instance_valid(_cook_panel):

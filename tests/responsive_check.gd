@@ -40,7 +40,7 @@ const MATRIX: Array = [
 
 ## Screens built as standalone scenes. The kitchen is handled separately because
 ## its layout depends on which step is on screen.
-const SCREENS: Array = ["menu", "levels", "journal", "assessment"]
+const SCREENS: Array = ["menu", "modes", "levels", "dishes", "free_cook", "journal", "assessment"]
 
 ## A control may stick out by this many pixels before it counts as an overflow: a
 ## panel that is one or two pixels wider than the window is a sub-pixel rounding
@@ -90,6 +90,7 @@ func _check_size(name: String, size: Vector2i) -> void:
 	await _check_kitchen(name, size, "l1", 0)
 	await _check_kitchen(name, size, "l2", 4)
 	await _check_kitchen(name, size, "l3", 5)
+	await _check_recipe(name, size)
 	print("  %s (%dx%d) checked" % [name, size.x, size.y])
 
 
@@ -164,6 +165,50 @@ func _check_kitchen(name: String, size: Vector2i, level_id: String, target_step:
 	await _shot(name, label)
 
 	Game.abandon_level()
+	screen.queue_free()
+	await TestWindow.settle(1)
+
+
+## Walks a generated recipe challenge from start to finish. This is what puts the
+## new minigames — prepare the fish, chop, stir, flip, plate, serve — through the
+## same measurement as every story step, at every size.
+func _check_recipe(name: String, size: Vector2i) -> void:
+	var generator := ChallengeGenerator.new()
+	generator.begin(20261017)
+	var challenge := generator.build(RecipeDB.recipe_by_id("thot_man_pla"))
+	if challenge.is_empty():
+		failures.append("%s: the recipe challenge could not be built" % name)
+		return
+	Game.current_challenge = challenge
+	Game.change_state(Game.State.PLAYING)
+	var screen: Node = load("res://scenes/kitchen/kitchen.tscn").instantiate()
+	add_child(screen)
+	await TestWindow.settle(4)
+
+	var hud := screen.get("hud") as Control
+	if hud != null:
+		_report_control(hud, name, "recipe/hud", size)
+
+	var guard := 0
+	while guard < 80:
+		guard += 1
+		var card: Node = _find(screen, func(node: Node) -> bool: return node is LessonCard)
+		if card != null:
+			card.emit_signal("dismissed")
+			await TestWindow.settle(1)
+			continue
+		var task := screen.call("current_task") as Control
+		if task == null:
+			_check_modal(screen, name, "recipe/tail", size)
+			break
+		var index := int(screen.call("current_step_index"))
+		_report_control(task, name, "recipe/step%d" % index, size)
+		await _shot(name, "recipe_%d" % index)
+		task.succeed()
+		await TestWindow.settle(2)
+
+	Game.abandon_level()
+	Game.current_challenge = {}
 	screen.queue_free()
 	await TestWindow.settle(1)
 

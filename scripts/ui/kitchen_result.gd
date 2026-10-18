@@ -86,17 +86,37 @@ func show_result(level: Dictionary, result: Dictionary, save_info: Dictionary) -
 
 	v.add_child(UIFactory.wrap(Loc.t("result.education_note"), 16, UIFactory.TEXT_DIM))
 
+	var mode := int(result.get("mode", 0))
+	if mode == Game.Mode.FREE_COOK:
+		v.add_child(UIFactory.wrap(Loc.t("free.experimental_note"), 16, UIFactory.ACCENT))
+	elif mode != Game.Mode.STORY and not bool(result.get("real", true)):
+		v.add_child(UIFactory.wrap(Loc.t("result.variation_note"), 16, UIFactory.ACCENT))
+	if mode == Game.Mode.ENDLESS:
+		v.add_child(_row(Loc.t("endless.streak_label"),
+			str(int(save_info.get("streak", 0))), UIFactory.ACCENT))
+		v.add_child(_row(Loc.t("endless.run_score"),
+			str(int(save_info.get("run_score", 0))), UIFactory.TEXT_BRIGHT))
+
 	# Two to a row on a desktop, one on a phone. The buttons expand to fill their
 	# columns, so nothing is ever clipped.
 	_buttons_grid = GridContainer.new()
 	_buttons_grid.columns = UIFactory.columns(2)
 	_buttons_grid.add_theme_constant_override("h_separation", 10)
 	_buttons_grid.add_theme_constant_override("v_separation", 8)
-	_buttons_grid.add_child(_button(Loc.t("result.retry"), false, func() -> void: retry_pressed.emit()))
-	if LevelDB.next_level_id(str(level.get("id", ""))) != "":
-		_buttons_grid.add_child(_button(Loc.t("result.next_level"), true, func() -> void: next_pressed.emit()))
+	if mode == Game.Mode.ENDLESS:
+		# In the Endless Kitchen the natural next action is another challenge, and
+		# the natural way out is to end the run.
+		_buttons_grid.add_child(_button(Loc.t("endless.next"), true, func() -> void: next_pressed.emit()))
+		_buttons_grid.add_child(_button(Loc.t("endless.end_run"), false, func() -> void: levels_pressed.emit()))
+	else:
+		_buttons_grid.add_child(_button(Loc.t("result.retry"), false, func() -> void: retry_pressed.emit()))
+		if mode == Game.Mode.STORY and LevelDB.next_level_id(str(level.get("id", ""))) != "":
+			_buttons_grid.add_child(_button(Loc.t("result.next_level"), true, func() -> void: next_pressed.emit()))
+		elif mode != Game.Mode.STORY:
+			_buttons_grid.add_child(_button(Loc.t("result.back_dishes"), true, func() -> void: levels_pressed.emit()))
 	_buttons_grid.add_child(_button(Loc.t("journal.title"), false, func() -> void: journal_pressed.emit()))
-	_buttons_grid.add_child(_button(Loc.t("result.to_levels"), false, func() -> void: levels_pressed.emit()))
+	if mode != Game.Mode.ENDLESS:
+		_buttons_grid.add_child(_button(Loc.t("result.to_levels"), false, func() -> void: levels_pressed.emit()))
 	v.add_child(_buttons_grid)
 
 	# Animate the stars in, and let the sound land with them.
