@@ -1,6 +1,6 @@
 # Milestones — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
 
-**Version:** 2.0.0 · **Updated:** 2026-10-17
+**Version:** 2.0.0 · **Updated:** 2026-10-18
 This is the live status tracker. The milestone plan itself (gates and deliverables) is in
 `docs/PROJECT_AUDIT.md` §9; the acceptance criteria are in §10 of the same file.
 
@@ -21,7 +21,7 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
 | **M6** | Progression & journal | ✅ | stars, unlocks, per-level best, learning log, knowledge journal, reset progress; journal shows 12 recorded lessons |
 | **M7** | Presentation pass | ✅ | fixed angled camera, cosy kitchen set, feedback, UI polish, screen transitions; **progressive cooking visuals** (raw → cooked → golden → burnt), the burnt outcome with quick retry **and the unsafe-serving outcome (B)** all verified by `cook_test.tscn`; in-game screens verified by `layout_check` and `visual_capture` |
 | **M8** | Education & research pack | 🔄 | in-game pre/post assessment + anonymised export (running); the five documents written; source re-verification and any real study remain |
-| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 360/360 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); eight suites green (smoke, anim, flow, behaviour, cook, recipe, minigame, responsive) and runnable in one command (`tools\run_all_tests.ps1`); remaining: manual play-through checklist on a physical device, re-exported builds and a final Thai/English string review |
+| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 360/360 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); eight suites green (smoke, anim, flow, behaviour, cook, recipe, minigame, responsive) and runnable in one command (`tools\run_all_tests.ps1`); remaining: manual play-through checklist on a physical device and a final Thai/English string review |
 
 ---
 
@@ -38,10 +38,13 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
   keeps asking until it is right, showing `why` after each wrong option.
 * **Every new action is demonstrated before it is asked for** (`KitchenTask.run_demo_then`, plus a
   ghost pointer for physical tasks).
-* **The five test suites:** smoke (content, wiring, scoring, assessment pairing, export fields),
-  flow (all three levels), layout (UI geometry, per step), visual capture (renders every state to
-  PNG so the presentation can actually be looked at), cooking (progressive browning and the burnt
-  outcome with its retry).
+* **Eight test suites, one command:** smoke (content, wiring, scoring, assessment pairing, export
+  fields), anim (the shared kitchen motion library, including its refusal contract for missing or
+  loose nodes), flow (all three levels), behaviour (what each interaction asks for), cooking
+  (progressive browning and the burnt outcome with its retry), recipe (catalogue, generator and v3
+  save migration with quarantine), minigame (a full generated recipe driven with real pointer
+  events) and responsive (the 360-layout matrix). `tools\run_all_tests.ps1` runs them all and prints
+  a per-suite verdict.
 * **The interface survives a 360-layout responsive matrix.** `tests/responsive_check.tscn` walks
   every menu screen (the main menu, the mode picker, the challenge picker, the dish browser,
   Free Cook, the recipe creator, the cookbook, the Discover browser, the journal and the
@@ -99,7 +102,7 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
   the Thai menu rendering correctly. `--headless --screenshot` was not enough — it catches the boot
   splash, because a 37 MB WebAssembly module takes real seconds to compile.
 * **An Android build exists, is signed, and validates.** `build/android/FlukeFreeKitchen.apk`
-  (55.34 MB): `apksigner verify` passes for signature schemes **v2 and v3**, the manifest is
+  (55.51 MB): `apksigner verify` passes for signature schemes **v2 and v3**, the manifest is
   package `th.ac.kku.flukefreekitchen` at minSdk 24 / targetSdk 36, both `arm64-v8a` and
   `armeabi-v7a` carry `libgodot_android.so`, 25 launcher icons are generated from `icon.svg`, and
   the manifest requests **no permissions at all** — not even `INTERNET`, which makes "this game is

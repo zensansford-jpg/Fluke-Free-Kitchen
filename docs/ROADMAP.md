@@ -1,5 +1,5 @@
 # Roadmap — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
-**Updated:** 2026-10-17 · **Owner split:** 🤖 = doable with code in this environment · 👤 = needs a person (device, recording, language review) · ⛔ = blocked by environment/ethics
+**Updated:** 2026-10-18 · **Owner split:** 🤖 = doable with code in this environment · 👤 = needs a person (device, recording, language review) · ⛔ = blocked by environment/ethics
 
 This is the single consolidated plan for everything that is **not** finished, plus the proof for
 everything that is. It exists so that no requirement silently disappears and no untested thing is
@@ -45,9 +45,9 @@ python tools\study\analyse_export.py --selftest
 | Endless challenge generator (validated) | ✅ **Implemented** | `scripts/data/challenge_generator.gd` uses shared `RecipeDB.validate_steps`; seeded deterministic with fallbacks |
 | Save system (v3) with migration | ✅ **v3 schema, v2 migration quarantined** | `autoload/save_manager.gd` - migrations, recipes/endless/favourites/recent/free_cook_runs/achievements, `record_endless` |
 | Study data pipeline | ✅ **SELFTEST PASSED** | `analyse_export.py --selftest` (statistics pinned, synthetic data, empty-folder guard) |
-| Windows export present | ✅ 104.605 MB | `build/FlukeFreeKitchen.exe` |
-| Web export present | ✅ wasm 37.684 MB, pck 0.399 MB, js 0.267 MB | `build/web/` |
-| Android export present + signed | ✅ 55.349 MB, `apksigner verify` v2+v3 true, 1 signer | `build/android/FlukeFreeKitchen.apk` |
+| Windows export present | ✅ 104.75 MB | `build/FlukeFreeKitchen.exe` |
+| Web export present | ✅ wasm 37.684 MB, pck 0.548 MB, js 0.267 MB | `build/web/` |
+| Android export present + signed | ✅ 55.51 MB, `apksigner verify` v2+v3 true, 1 signer | `build/android/FlukeFreeKitchen.apk` |
 | All 11 health sources verified | ✅ | `docs/REFERENCES.md` §6 |
 
 ---
@@ -144,7 +144,7 @@ Based on the expansion session, the immediate priorities are:
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
 6. **Commit expansion** (🤖) - Done: two commits (`Green the suite…`, `Add procedural dish composition…`); working tree clean.
-7. **Rebuild mandate, remaining slices** (🤖) - Done: procedural dish composition + validation (Free Cook); the player recipe creator + personal cookbook (same real catalogue, saved in the existing v3 file, sanitised on load); and the paged Discover browser over the composed pool (lazy pages, de-duplicated by composition). Still open: mission-first UI removal.
+7. **Rebuild mandate slices** (🤖) - Done: procedural dish composition + validation (Free Cook); the player recipe creator + personal cookbook (same real catalogue, saved in the existing v3 file, sanitised on load); the paged Discover browser over the composed pool (lazy pages, de-duplicated by composition); the shared animation library (`Anim`); and sustained audio beds synced to the gesture (B15). The **mission-first structure is gone by design**: there is no objective or briefing screen anywhere in the flow or the interface strings — the game opens into a picture-first mode page (Let's Cook / Endless Kitchen / Free Cook / Cookbook / Discover), then a dish page, then the kitchen, and `hud.step` is a step counter, not a mission. This slice is therefore closed by the existing design rather than by a removal.
 
 ---
 
