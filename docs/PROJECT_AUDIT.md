@@ -217,23 +217,34 @@ autoload/            Settings · SaveData · Loc · Learning · Education · Gam
                      (this exact order is the autoload order in project.godot)
 scripts/data/        game_config.gd (tuning + scoring) · ui_strings.gd (TH/EN catalogue) ·
                      lesson_data.gd (LessonDB) · level_data.gd (LevelDB) ·
-                     quiz_data.gd (QuizDB) · assessment_data.gd (AssessmentDB)
+                     quiz_data.gd (QuizDB) · assessment_data.gd (AssessmentDB) ·
+                     recipe_data.gd (RecipeDB) · achievement_data.gd ·
+                     challenge_generator.gd (validated procedural dishes)
 scripts/tasks/       task_base.gd (KitchenTask) + task_tap_correct.gd (also serves
                      choose_safer) · task_drag_to.gd · task_swipe_clean.gd ·
-                     task_hold.gd · task_cook_through.gd (inside task_hold) ·
-                     task_order_steps.gd · task_checklist.gd · task_factory.gd
+                     task_hold.gd (also serves cook_through) · task_order_steps.gd ·
+                     task_checklist.gd · task_slice.gd (also serves prep_fish) ·
+                     task_stir.gd · task_flip.gd · task_plate.gd · task_serve.gd ·
+                     task_factory.gd
 scripts/kitchen/     kitchen_scene.gd (the 3D set) · kitchen_screen.gd (flow) ·
                      kitchen_session.gd (rules and scoring) · kitchen_hud.gd ·
                      interactive_item.gd · drop_zone.gd
 scripts/ui/          ui_factory.gd (design system) · menu_screen.gd · main_menu.gd ·
-                     level_select.gd · journal.gd · assessment.gd · quiz_card.gd ·
-                     lesson_card.gd · kitchen_result.gd · pause_menu.gd ·
-                     settings_panel.gd · star_row.gd · ring_progress.gd · ghost_pointer.gd
+                     mode_select.gd · level_select.gd · dish_select.gd · dish_preview.gd ·
+                     free_cook.gd · custom_cook.gd · cookbook.gd · explore.gd · journal.gd ·
+                     assessment.gd · quiz_card.gd · lesson_card.gd · kitchen_result.gd ·
+                     pause_menu.gd · settings_panel.gd · star_row.gd · ring_progress.gd ·
+                     ghost_pointer.gd
 scripts/world/       game_materials.gd · prop_factory.gd (reused and extended) ·
-                     kitchen_props.gd (bench, stove, props, floating labels)
-scenes/              main/main_menu · main/level_select · kitchen/kitchen ·
+                     kitchen_props.gd (bench, stove, props, floating labels) ·
+                     kitchen_character.gd (the cook) · anim.gd (the shared motion library)
+scenes/              main/main_menu · main/mode_select · main/level_select ·
+                     main/dish_select · main/free_cook · main/custom_cook ·
+                     main/cookbook · main/explore · kitchen/kitchen ·
                      journal/journal · assessment/assessment
-tests/               smoke_test · flow_test · layout_check · visual_capture
+tests/               smoke_test · anim_test · flow_test · behaviour_test · cook_test ·
+                     recipe_test · minigame_test · responsive_check
+                     (eight pass/fail suites) + layout_check · visual_capture (capture tools)
 ```
 
 Rules carried over from the existing codebase because they work: typed GDScript; signals over

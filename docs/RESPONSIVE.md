@@ -180,8 +180,9 @@ Stated plainly, because "it passed the matrix" is not the same as "it works ever
 The prompt that produced this work asked for motion controls with graceful fallbacks. This
 game has **no motion-controlled interaction**, so there is nothing to fall back *from*:
 
-* All eight task kinds are pointer interactions — tap, drag, swipe, hold, choose, order,
-  tick. Every one is fully usable with a mouse, a finger or a keyboard.
+* All fourteen interaction kinds are pointer interactions — tap, choose, drag, swipe, hold,
+  order, tick, slice, stir, flip, plate, serve. Every one is fully usable with a mouse, a
+  finger or a keyboard.
 * `InputManager` centralises input and the task base class reads pointer events; there is
   no accelerometer or gyroscope code path anywhere in the project, so no menu offers a
   choice that would do nothing.

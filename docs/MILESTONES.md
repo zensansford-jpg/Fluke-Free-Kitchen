@@ -14,7 +14,7 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
 |---|-----------|--------|----------|
 | **M0** | Audit & plan | ✅ | `docs/PROJECT_AUDIT.md`, `docs/MILESTONES.md` |
 | **M1** | Clean slate + app shell | ✅ | runner code removed; 8 autoloads; 5 screens; save schema v2; `smoke_test.tscn` passes |
-| **M2** | Interaction framework | ✅ | 8 task kinds behind `task_factory.gd`; demo-before-action; generous hit areas; built by `smoke_test` |
+| **M2** | Interaction framework | ✅ | 8 task kinds behind `task_factory.gd` at the time, **14 today**; demo-before-action; generous hit areas; built by `smoke_test` |
 | **M3** | Level 1 — Clean Kitchen | ✅ | `flow_test.tscn`: 5 steps, 3 stars, 1450/1450, 2 questions |
 | **M4** | Level 2 — Safe Cooking | ✅ | `flow_test.tscn`: 5 steps, 3 stars, 1450/1450, 2 questions |
 | **M5** | Level 3 — Village Prevention | ✅ | `flow_test.tscn`: 6 steps, 3 stars, 1610/1610, 2 questions |
