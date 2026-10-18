@@ -4,7 +4,7 @@
 **Export templates:** `%APPDATA%\Godot\export_templates\4.7.2.stable` (`version.txt` = `4.7.2.stable`)
 **Last export run:** 2026-10-18 (all three working presets re-exported from the current source after
 the shared animation library and the sustained audio beds; sizes re-measured, APK signature and
-manifest re-verified, Windows build relaunched headless)
+manifest re-verified, Windows build relaunched headless, Web build re-run in Chrome)
 
 This file records what was actually exported, on what toolchain, with what
 evidence, and what was **not** verified. Nothing here is aspirational: if an
@@ -54,7 +54,7 @@ artefacts were re-checked:
 | Artefact | Size (2026-10-18) | Check |
 | --- | --- | --- |
 | `build/FlukeFreeKitchen.exe` | 104.754 MB | export exit 0, no errors; relaunched `--headless --quit-after 300`: engine banner on stdout, empty stderr |
-| `build/web/` | wasm 37.684 MB · pck 0.548 MB · js 0.267 MB | export exit 0. The wasm and js are unchanged (same engine and templates); only the `.pck` grew. The 2026-10-17 Chrome render check stands for the build system, not for this pck — this pck has **not** been re-opened in a browser |
+| `build/web/` | wasm 37.684 MB · pck 0.548 MB · js 0.267 MB | export exit 0; the re-exported `.pck` was then loaded in real headless Chrome over the DevTools protocol (`node tools/web_smoke.mjs`): title *Fluke Free Kitchen*, canvas 1254 × 564, `Engine` global present, **0 console errors**, screenshot `build/web_smoke.png` |
 | `build/android/FlukeFreeKitchen.apk` | 55.505 MB | `--export-debug` exit 0 (aligned + signed); `apksigner verify` — v2 **true**, v3 **true**, 1 signer, `CN=Android Debug`; manifest re-printed: package `th.ac.kku.flukefreekitchen`, minSdk 24, targetSdk 36, `compileSdkVersion 36`, **no `<uses-permission>` elements** |
 
 The APK remains a debug build and is still **NOT** installed or launched on any device.

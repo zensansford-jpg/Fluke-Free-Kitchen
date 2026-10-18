@@ -140,7 +140,7 @@ Based on the expansion session, the immediate priorities are:
 
 1. **Test suite green** (🤖) - Done: **8/8 PASS**, including `minigame_test` and `responsive_check` (360 layouts).
 2. **Responsive matrix verification** (🤖) - Done: 0 problems; fixes were root-cause (layout primitives), not per-screen offsets.
-3. **Re-export builds** (🤖) - Existing builds present; re-export after fixes optional.
+3. **Re-export builds** (🤖) - Done 2026-10-18: all three working presets re-exported after the animation library and the audio beds; sizes re-measured, APK signature and manifest re-verified, Windows build relaunched headless, Web build re-run in real headless Chrome (canvas 1254 × 564, 0 console errors) — `docs/EXPORTS.md` §1.2. The APK remains a debug build and has never been installed or launched; that is stated rather than implied done.
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
 6. **Commit expansion** (🤖) - Done: two commits (`Green the suite…`, `Add procedural dish composition…`); working tree clean.
