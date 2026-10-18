@@ -50,10 +50,22 @@ func _ready() -> void:
 		for s in ["chop", "wash", "sizzle", "star", "level_complete", "ui_click"]:
 			if not audio.has_stream(s):
 				missing.append(s)
+		for s in AudioManager.LOOP_NAMES:
+			if not audio.has_stream(s):
+				missing.append(s)
 		if missing.is_empty():
-			print("  audio: procedural streams generated")
+			print("  audio: %d procedural streams, %d sustained beds generated" % [
+				AudioManager.SFX_NAMES.size(), AudioManager.LOOP_NAMES.size()])
 		else:
 			failures.append("audio: missing streams %s" % str(missing))
+		# A bed must start and stop cleanly, and a stop must always clear the intent
+		# so leaving a level can never leave a hiss behind.
+		audio.play_loop("loop_sizzle")
+		if not audio.is_loop_playing("loop_sizzle"):
+			failures.append("audio: starting a sustained bed did not register")
+		audio.stop_all_loops(0.0)
+		if not audio.active_loops().is_empty():
+			failures.append("audio: a bed survived stop_all_loops")
 
 	var save := get_node_or_null("/root/SaveData")
 	if save != null:

@@ -29,6 +29,9 @@ var _progress: ProgressBar = null
 var _ghost: GhostPointer = null
 var _active := false
 var _scrub_cooldown := 0.0
+## Whether the running-water bed is playing, so the gesture only reaches the audio
+## manager when it changes.
+var _watering := false
 
 
 func begin() -> void:
@@ -64,6 +67,25 @@ func replay_demo() -> void:
 
 func abort() -> void:
 	_active = false
+	_set_water(false)
+
+
+func _exit_tree() -> void:
+	# The running water belongs to this step; leaving it always turns the tap off.
+	_set_water(false)
+	super._exit_tree()
+
+
+## Running water sits under the scrub hits while the player is working the board, so
+## the wash reads as a continuous action rather than a series of taps.
+func _set_water(on: bool) -> void:
+	if on == _watering:
+		return
+	_watering = on
+	if on:
+		AudioManager.play_loop("loop_wash", -14.0)
+	else:
+		AudioManager.stop_loop("loop_wash")
 
 
 # --------------------------------------------------------------------- the set ---
@@ -99,6 +121,7 @@ func pointer_pressed(screen_position: Vector2) -> void:
 		return
 	_pressing = true
 	_has_last = false
+	_set_water(true)
 	_scrub(screen_position)
 
 
@@ -111,6 +134,7 @@ func pointer_moved(screen_position: Vector2) -> void:
 func pointer_released(_screen_position: Vector2) -> void:
 	_pressing = false
 	_has_last = false
+	_set_water(false)
 
 
 func _scrub(screen_position: Vector2) -> void:
@@ -166,6 +190,7 @@ func _apply_wear() -> void:
 func _finish() -> void:
 	if settled:
 		return
+	_set_water(false)
 	if _grime != null:
 		_grime.visible = false
 	AudioManager.play_sfx("wash")

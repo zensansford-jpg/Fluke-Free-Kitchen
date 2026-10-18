@@ -18,9 +18,16 @@ const KIND_COOK := "cook_through"
 var _kind := KIND_HOLD
 var _holding := false
 var _active := false
+## Whether the frying bed is currently playing, so `_process` only reaches the
+## audio manager when the gesture changes.
+var _frying := false
 
 var _duration := 2.0
 var _success_sound := "sizzle"
+## The sustained bed for this step: a pot bubbles, a pan hisses. Chosen from the
+## vessel the step was authored with, so the soup and the stir-fry do not sound
+## identical while they cook.
+var _heat_loop := "loop_sizzle"
 
 var _temperature := GameConfig.COOK_START_TEMP_C
 var _safe_temperature := GameConfig.COOK_SAFE_TEMP_C
@@ -55,6 +62,7 @@ func begin() -> void:
 	_kind = str(step.get("kind", KIND_HOLD))
 	_duration = maxf(0.4, float(step.get("duration", 2.0)))
 	_success_sound = str(step.get("success_sound", "sizzle"))
+	_heat_loop = "loop_boil" if str(step.get("vessel", "wok")) == "pot" else "loop_sizzle"
 	_safe_temperature = clampf(float(step.get("safe_temp", GameConfig.COOK_SAFE_TEMP_C)),
 		GameConfig.COOK_START_TEMP_C, GameConfig.COOK_MAX_TEMP_C)
 	_safe_needed = maxf(0.5, float(step.get("hold_seconds", GameConfig.COOK_HOLD_SECONDS)))
@@ -102,6 +110,26 @@ func abort() -> void:
 	_holding = false
 	_burnt = false
 	_served_unsafe = false
+	_set_frying(false)
+
+
+func _exit_tree() -> void:
+	# The frying bed belongs to this step; leaving the step always takes it with it.
+	_set_frying(false)
+	super._exit_tree()
+
+
+## Keeps the frying hiss in step with the gesture: it plays exactly while the player
+## is applying heat and stops the moment they let go. Called with the current want
+## every frame, so only a change reaches the audio manager.
+func _set_frying(on: bool) -> void:
+	if _frying == on:
+		return
+	_frying = on
+	if on:
+		AudioManager.play_loop(_heat_loop)
+	else:
+		AudioManager.stop_loop(_heat_loop)
 
 
 # --------------------------------------------------------------------- panels ---
@@ -198,6 +226,10 @@ func pointer_released(_screen_position: Vector2) -> void:
 
 
 func _process(delta: float) -> void:
+	# Heat is the gesture: the pan hisses for as long as the player holds, and it
+	# stops the instant they let go, so what the player hears matches what the
+	# temperature meter is doing.
+	_set_frying(_active and not settled and _holding)
 	if not _active or settled:
 		return
 

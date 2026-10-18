@@ -61,6 +61,26 @@ effect puffs, and the cook reactions.
 player cares about, that it moved and that it ended where it belongs, plus the refusal
 contract.
 
+## Sustained audio layers (added this session)
+
+Long actions now sound like long actions. `AudioManager` grew a third kind of
+sound beside the one-shot effects and the looping music: **sustained beds** that a
+task fades in while the gesture is happening and fades out when it ends. Three of
+them — `loop_sizzle` (a pan), `loop_boil` (a pot), `loop_wash` (running water) —
+play on their own dedicated players and their own bus, so they layer under the
+chop/tap/star cues instead of replacing them.
+
+The point is that the sound follows the gesture, not the step. `HoldTask` reads
+`step.vessel` to choose a hiss or a bubble, and calls `play_loop`/`stop_loop` from
+`_process` on the same `_holding` flag that drives the heat meter, so the pan
+hisses for exactly as long as the player is holding it. `SwipeCleanTask` runs the
+water while the player is working the board. Every task clears its own bed in
+`_exit_tree`, and leaving a level stops all beds, so a hiss can never outlive the
+action that started it. `play_loop` is a no-op when the level is already set, so
+calling it once per frame is safe; the muted intent is tracked separately from
+the audio device, which is what lets `smoke_test` and `minigame_test` check the
+synchronisation under `--headless`.
+
 ## Procedural dish composition (added this session)
 
 `RecipeDB.generate_recipe(seed)` / `generate_dish(seed)` compose a new dish from the

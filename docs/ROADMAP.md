@@ -86,6 +86,7 @@ python tools\study\analyse_export.py --selftest
 | B13 | Discover browser over the composed pool (paged + de-duplicated + test) | ✅ PASS | `scripts/ui/explore.gd` + scene + `State.EXPLORE`; lazy page composition, `RecipeDB.composition_signature` de-dup, `Game.start_generated`; `recipe_test._check_browse`; `responsive_check` gained the explore screen |
 | B10 | Test-infrastructure fixes (minigame drive-loop race; orchestrator verdict case bug) | ✅ PASS | `minigame_test` guards on `watch["finished"]`/freed task; `run_all_tests.ps1` verdict now the final case-sensitive `PASSED`/`FAILED` line |
 | B14 | Animation library (one shared vocabulary for motion) | ✅ PASS | `scripts/world/anim.gd`; every hand-rolled tween replaced (carried item, flip, cut/scraps, knife, plate snap, drag-to, toasts, puffs, cook reactions); `tests/anim_test` added as the eighth suite |
+| B15 | Sustained audio beds synced to the gesture (fry / boil / wash) | ✅ PASS | `AudioManager.LOOP_NAMES` + `play_loop`/`stop_loop`/`stop_all_loops` (own players, own bus, faded, no-op repeat); `HoldTask` picks hiss/bubble from `step.vessel` and drives it from `_holding`; `SwipeCleanTask` runs water while scrubbing; every task clears its bed in `_exit_tree`; `smoke_test` checks the beds exist and stop cleanly, `minigame_test` checks the bed follows the real hold gesture |
 
 ### C. Baseline Feature Completeness vs Original Brief
 
@@ -143,7 +144,7 @@ Based on the expansion session, the immediate priorities are:
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
 6. **Commit expansion** (🤖) - Done: two commits (`Green the suite…`, `Add procedural dish composition…`); working tree clean.
-7. **Rebuild mandate, remaining slices** (🤖) - Done: procedural dish composition + validation (Free Cook); the player recipe creator + personal cookbook (same real catalogue, saved in the existing v3 file, sanitised on load); and the paged Discover browser over the composed pool (lazy pages, de-duplicated by composition). Still open: an animation-library overhaul, audio layering, and mission-first UI removal.
+7. **Rebuild mandate, remaining slices** (🤖) - Done: procedural dish composition + validation (Free Cook); the player recipe creator + personal cookbook (same real catalogue, saved in the existing v3 file, sanitised on load); and the paged Discover browser over the composed pool (lazy pages, de-duplicated by composition). Still open: mission-first UI removal.
 
 ---
 

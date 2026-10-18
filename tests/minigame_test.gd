@@ -286,10 +286,18 @@ func _drive_hold(task: KitchenTask, kind: String, watch: Dictionary) -> void:
 	print("  %s: letting go early does not finish the step" % kind)
 
 	_push_button(FREE_POINT, true)
+	await _frames(3)
+	# The sustained bed must follow the gesture: on while the player holds the heat,
+	# gone once they let go. This is the audio half of "the pan is hot now".
+	if AudioManager.active_loops().is_empty():
+		failures.append("%s: holding the heat produced no sustained bed" % kind)
 	await _seconds(13.5)
 	_push_button(FREE_POINT, false)
 	await _seconds(1.0)
-	print("  %s: holding long enough finishes the step" % kind)
+	await _frames(3)
+	if not AudioManager.active_loops().is_empty():
+		failures.append("%s: the heat bed outlived the gesture" % kind)
+	print("  %s: holding long enough finishes the step; the heat bed follows the gesture" % kind)
 
 
 ## `drag_to`: each ingredient is dragged to the container the step names.

@@ -22,12 +22,30 @@ var _ambience_player: AudioStreamPlayer
 var _ui_player: AudioStreamPlayer
 var _next_fx := 0
 
+## One dedicated player per sustained bed, so a loop is never stolen by a one-shot
+## and two beds can play at once.
+var _loop_players := {}
+var _loop_tweens := {}
+## Which loops the game currently wants playing, and at what volume. Kept
+## separately from the players so the state is meaningful even under `--headless`,
+## where nothing is rendered, and so start/stop can never be ambiguous.
+var _loops_active := {}
+
+## Silence used as the start and end of a loop fade, so a bed never clicks on.
+const LOOP_SILENT_DB := -60.0
+
 ## Public list of sound names so tests can assert the whole set exists.
 const SFX_NAMES: Array[String] = [
 	"chop", "wash", "scrub", "stir", "sizzle", "bubble", "pour", "sprinkle",
 	"tap_ok", "tap_bad", "star", "star_full", "level_complete", "paper",
 	"sweep", "pop", "ui_click", "ui_back", "page", "error_soft",
 ]
+## Sustained beds for actions that are not a single hit. A frying pan hisses for
+## as long as the player keeps the heat on, a pan of water bubbles, a brush runs
+## water — so these loop, and the task that owns the action fades them in and out
+## underneath the one-shot cues. That layering is what makes holding the stove
+## sound like cooking rather than like pressing a button repeatedly.
+const LOOP_NAMES: Array[String] = ["loop_sizzle", "loop_boil", "loop_wash"]
 const MUSIC_NAMES: Array[String] = ["menu", "kitchen", "result"]
 const AMBIENCE_NAMES: Array[String] = ["kitchen", "village"]
 
@@ -59,6 +77,8 @@ func _exit_tree() -> void:
 	if _ui_player != null:
 		_ui_player.stream = null
 	for p in _fx_players:
+		p.stream = null
+	for p in _loop_players.values():
 		p.stream = null
 
 
@@ -97,6 +117,15 @@ func _setup_players() -> void:
 	_ui_player.bus = Settings.BUS_UI
 	_ui_player.volume_db = -3.0
 	add_child(_ui_player)
+
+	# One player per sustained bed, on the effects bus so the sound setting that
+	# mutes effects mutes these too.
+	for loop_name in LOOP_NAMES:
+		var loop_player := AudioStreamPlayer.new()
+		loop_player.bus = Settings.BUS_SFX
+		loop_player.volume_db = LOOP_SILENT_DB
+		add_child(loop_player)
+		_loop_players[loop_name] = loop_player
 
 
 # ------------------------------------------------------------------ public ---
@@ -146,6 +175,71 @@ func stop_music() -> void:
 	_music_player.stop()
 
 
+# -------------------------------------------------------------- sound layers ---
+## Starts (or re-levels) a sustained bed — a frying hiss, a boil, running water.
+## Safe to call every frame: the same level twice does nothing, and a level change
+## is a short fade rather than a jump. The task that owns the action calls this
+## once per frame while the action is happening, so a bed lasts exactly as long as
+## the gesture and never stacks.
+func play_loop(name: String, volume_db: float = -12.0) -> void:
+	if not _streams.has(name):
+		push_warning("AudioManager: unknown loop '%s'." % name)
+		return
+	var wanted := float(_loops_active.get(name, LOOP_SILENT_DB))
+	_loops_active[name] = volume_db
+	if is_equal_approx(wanted, volume_db):
+		return
+	var player: AudioStreamPlayer = _loop_players.get(name)
+	if not playback_enabled or player == null:
+		return
+	player.stream = _streams[name]
+	if not player.playing:
+		player.volume_db = LOOP_SILENT_DB
+		player.play()
+	_fade_loop(player, name, volume_db, 0.18)
+
+
+## Fades a sustained bed out and stops it. Harmless when the loop is not running.
+func stop_loop(name: String, fade: float = 0.22) -> void:
+	_loops_active.erase(name)
+	var player: AudioStreamPlayer = _loop_players.get(name)
+	if player == null or not player.playing:
+		return
+	var t := _new_loop_tween(name)
+	t.tween_property(player, "volume_db", LOOP_SILENT_DB, fade)
+	t.tween_callback(player.stop)
+
+
+func stop_all_loops(fade: float = 0.22) -> void:
+	for loop_name in LOOP_NAMES:
+		stop_loop(loop_name, fade)
+
+
+## Whether a bed is being asked to play. This is the game's intent, not the audio
+## device state, so it is meaningful under `--headless` too.
+func is_loop_playing(name: String) -> bool:
+	return _loops_active.has(name)
+
+
+func active_loops() -> Array:
+	return _loops_active.keys()
+
+
+func _fade_loop(player: AudioStreamPlayer, name: String, to_db: float, fade: float) -> void:
+	var t := _new_loop_tween(name)
+	t.tween_property(player, "volume_db", to_db, fade)
+
+
+## One fade per bed at a time: re-leveling mid-fade must not fight the old fade.
+func _new_loop_tween(name: String) -> Tween:
+	var previous: Tween = _loop_tweens.get(name)
+	if previous != null and previous.is_valid():
+		previous.kill()
+	var t := create_tween()
+	_loop_tweens[name] = t
+	return t
+
+
 func play_ambience(name: String) -> void:
 	if not _streams.has(name):
 		push_warning("AudioManager: unknown ambience '%s'." % name)
@@ -165,6 +259,7 @@ func stop_ambience() -> void:
 func stop_all() -> void:
 	stop_music()
 	stop_ambience()
+	stop_all_loops(0.0)
 	for p in _fx_players:
 		p.stop()
 	if _ui_player != null:
@@ -176,6 +271,10 @@ func has_stream(name: String) -> bool:
 
 
 func _on_game_state_changed(state: int, _previous: int) -> void:
+	# A sustained bed belongs to the kitchen alone: whenever the game leaves a
+	# level, whatever was still hissing stops with it.
+	if state != Game.State.PLAYING:
+		stop_all_loops()
 	match state:
 		Game.State.PLAYING:
 			play_music("kitchen")
@@ -200,6 +299,8 @@ func _generate_all() -> void:
 		_streams[name] = overrides.get(name, _synth_music(name))
 	for name in AMBIENCE_NAMES:
 		_streams[name] = overrides.get(name, _synth_ambience(name))
+	for name in LOOP_NAMES:
+		_streams[name] = overrides.get(name, _synth_loop(name))
 
 
 func _load_overrides() -> Dictionary:
@@ -276,6 +377,21 @@ func _synth_ambience(name: String) -> AudioStreamWAV:
 			return _looping(_noise_bed(4.0, 340.0, 0.48, 0.12))
 		_:
 			return _looping(_noise_bed(3.0, 500.0, 0.5, 0.08))
+
+
+## A sustained bed for a single ongoing action. Brighter and a little shorter than
+## the room ambience, so a layer reads as the thing in front of the player rather
+## than as part of the room.
+func _synth_loop(name: String) -> AudioStreamWAV:
+	match name:
+		"loop_sizzle":
+			return _looping(_noise_bed(2.4, 3600.0, 0.30, 0.18))
+		"loop_boil":
+			return _looping(_noise_bed(2.8, 900.0, 0.34, 0.24))
+		"loop_wash":
+			return _looping(_noise_bed(2.4, 2000.0, 0.30, 0.16))
+		_:
+			return _looping(_noise_bed(2.0, 1200.0, 0.30, 0.15))
 
 
 # ------------------------------------------------------------- dsp helpers ---

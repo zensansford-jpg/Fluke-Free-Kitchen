@@ -124,9 +124,10 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
 ## Remaining work
 
 ### Software
-1. **M7 — presentation polish (remaining):** sound design is procedural and functional, but the
-   steam/sizzle/chop/splash feedback has not had a dedicated audio review, and no physical device
-   has rendered this game — see the limits list in `docs/RESPONSIVE.md` §7.
+1. **M7 — presentation polish (remaining):** the steam/sizzle/chop/splash feedback is procedural and
+   functional, and long actions now carry sustained beds that follow the gesture (see `docs/ROADMAP.md`
+   B15), but the set has not had a dedicated audio review and no physical device has rendered this game —
+   see the limits list in `docs/RESPONSIVE.md` §7.
 2. **M9 — QA & delivery (remaining):** a manual play-through on a real phone or tablet (every
    result so far comes from window resizing on one laptop, and the APK has never been installed),
    and a final review of the interface strings in both languages by a native Thai reader.
