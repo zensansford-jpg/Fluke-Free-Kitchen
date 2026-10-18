@@ -27,6 +27,7 @@ enum State {
 	FREE_COOK,
 	CUSTOM_COOK,
 	COOKBOOK,
+	EXPLORE,
 }
 
 ## What kind of run is open. The kitchen behaves the same way in all of them; what
@@ -47,6 +48,7 @@ const SCENES := {
 	"free_cook": "res://scenes/main/free_cook.tscn",
 	"custom": "res://scenes/main/custom_cook.tscn",
 	"cookbook": "res://scenes/main/cookbook.tscn",
+	"explore": "res://scenes/main/explore.tscn",
 	"kitchen": "res://scenes/kitchen/kitchen.tscn",
 	"journal": "res://scenes/journal/journal.tscn",
 	"assessment": "res://scenes/assessment/assessment.tscn",
@@ -151,6 +153,8 @@ func _apply_state_for(key: String) -> void:
 			change_state(State.CUSTOM_COOK)
 		"cookbook":
 			change_state(State.COOKBOOK)
+		"explore":
+			change_state(State.EXPLORE)
 		"assessment":
 			change_state(State.ASSESSMENT)
 		"sources":

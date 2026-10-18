@@ -53,17 +53,17 @@ Twelve sizes, all run in one pass. The first column is the name used in the test
 | `ultrawide` | 2560 × 1080 | 21:9 |
 | `uhd` | 3840 × 2160 | 4K |
 
-At each size the tool builds **29 layouts**: the nine menu screens (the main menu, the mode
+At each size the tool builds **30 layouts**: the ten menu screens (the main menu, the mode
 picker, the challenge picker, the dish browser, Free Cook, the recipe creator, the cookbook,
-the journal and the assessment screen), a filled recipe creator and a filled cookbook, the
-settings modal, HUD and task layouts for three story-kitchen steps, and a full recipe walk
-(HUD plus one layout per step). That is **348 layouts** in a full run.
+the Discover browser, the journal and the assessment screen), a filled recipe creator and a
+filled cookbook, the settings modal, HUD and task layouts for three story-kitchen steps, and
+a full recipe walk (HUD plus one layout per step). That is **360 layouts** in a full run.
 
 ---
 
 ## 4. What is asserted
 
-For every one of those 348 layouts, from the real rectangles the engine computed:
+For every one of those 30 layouts per size (360 in a full run), from the real rectangles the engine computed:
 
 1. **The viewport really is the requested size.** Guards against a test that silently
    checks a 64 × 64 default viewport (which is what a headless run gets when scaling is
@@ -88,10 +88,10 @@ godot --headless --path <project> res://tests/responsive_check.tscn
   phone_small (320x568) checked
   ... (12 sizes)
 --- results ---
-RESPONSIVE CHECK PASSED (348 layouts checked)
+RESPONSIVE CHECK PASSED (360 layouts checked)
 ```
 
-**PASS — 348/348 layouts, 2026-10-18, Godot 4.7.2 stable.**
+**PASS — 360/360 layouts, 2026-10-18, Godot 4.7.2 stable.**
 
 The first run of this tool found **157** overflow problems at 320 × 568 and **17** more at
 768 × 1024 and 1024 × 768. The settings modal, added to the tool later, found **14** more on

@@ -45,7 +45,7 @@ godot --headless --path . res://tests/smoke_test.tscn        # content, wiring, 
 godot --headless --path . res://tests/flow_test.tscn         # all three challenges end to end
 godot --headless --path . res://tests/behaviour_test.tscn    # real pointer input (click/drag/swipe/hold)
 godot --headless --path . res://tests/cook_test.tscn         # cooking visuals + outcomes B (unsafe serving) and C (burnt) and their retries
-godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (348 layouts)
+godot --headless --path . res://tests/responsive_check.tscn  # the 12-size responsive matrix (360 layouts)
 godot --headless --path . res://tests/layout_check.tscn      # UI geometry, per step
 godot --path . res://tests/visual_capture.tscn -- l1         # renders states to PNGs
 ```
@@ -78,7 +78,7 @@ single column, labels get the full page width, and the journal's tabs become a d
 rather than three clipped buttons. Twelve window sizes between 320 × 568 and 3840 × 2160,
 across every menu screen (plus a filled creator, a filled cookbook, the settings modal, the
 three kitchens and a full recipe walk), are checked automatically by
-`tests/responsive_check.tscn` (**348/348 passing**). What that does and does not prove — no
+`tests/responsive_check.tscn` (**360/360 passing**). What that does and does not prove — no
 phone has run this build, safe areas and system font scaling are not handled — is written
 out in `docs/RESPONSIVE.md`.
 

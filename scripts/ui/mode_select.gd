@@ -32,6 +32,8 @@ func _build() -> void:
 		Color(0.5, 0.8, 0.95), func() -> void: Game.navigate("free_cook")))
 	grid.add_child(_mode_card("modes.cookbook_title", "modes.cookbook_body", "modes.cookbook_cta",
 		Color(0.85, 0.6, 0.95), func() -> void: Game.navigate("cookbook")))
+	grid.add_child(_mode_card("modes.explore_title", "modes.explore_body", "modes.explore_cta",
+		Color(0.55, 0.9, 0.8), func() -> void: Game.navigate("explore")))
 	column.add_child(centred(grid))
 
 	column.add_child(centred(_records_panel()))

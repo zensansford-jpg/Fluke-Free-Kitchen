@@ -40,7 +40,7 @@ const MATRIX: Array = [
 
 ## Screens built as standalone scenes. The kitchen is handled separately because
 ## its layout depends on which step is on screen.
-const SCREENS: Array = ["menu", "modes", "levels", "dishes", "free_cook", "custom", "cookbook", "journal", "assessment"]
+const SCREENS: Array = ["menu", "modes", "levels", "dishes", "free_cook", "custom", "cookbook", "explore", "journal", "assessment"]
 
 ## A control may stick out by this many pixels before it counts as an overflow: a
 ## panel that is one or two pixels wider than the window is a sub-pixel rounding

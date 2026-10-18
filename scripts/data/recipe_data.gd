@@ -939,6 +939,20 @@ static func _dish_signature(dish: Dictionary) -> String:
 	return "|".join(PackedStringArray(parts))
 
 
+## The composition of a *recipe* as one comparable string (method, plating, fish and
+## the sorted ingredient and garnish ids). Two seeds that roll the same dish share a
+## signature, so a browse list can skip near-duplicates without re-running the
+## validator. Order-independent for the same reason a player-made dish's id is.
+static func composition_signature(recipe: Dictionary) -> String:
+	var parts: Array = [str(recipe.get("method", "")), str(recipe.get("plating", ""))]
+	var fish: Array = recipe.get("fish", [])
+	if not fish.is_empty():
+		parts.append(str(fish[0]))
+	parts.append("|".join(PackedStringArray(_sorted_ids(recipe.get("ingredients", [])))))
+	parts.append("|".join(PackedStringArray(_sorted_ids(recipe.get("garnish", [])))))
+	return "|".join(PackedStringArray(parts))
+
+
 static func _ingredients_with_role(role: String) -> Array:
 	var out: Array = []
 	for entry in ingredients():

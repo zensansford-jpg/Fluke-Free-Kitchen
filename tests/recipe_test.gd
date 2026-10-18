@@ -38,6 +38,7 @@ func _run() -> void:
 	_check_free_cook()
 	_check_generated()
 	_check_custom()
+	_check_browse()
 	_check_save_migration()
 	_check_save_recovery()
 	_check_records_and_achievements()
@@ -457,6 +458,36 @@ func _check_custom() -> void:
 		print("  cookbook: a malformed saved dish is dropped, not played")
 	else:
 		failures.append("cookbook: a malformed save was not sanitised (%d)" % SaveData.saved_recipe_count())
+
+
+# ================================================================= explore ===
+## The Discover browser composes pages lazily and de-duplicates them by composition, so
+## the signature it relies on has to be stable and order-independent. This checks the
+## signature directly: same seed -> same signature, ingredient order does not matter,
+## and a run of seeds yields mostly-distinct dishes.
+func _check_browse() -> void:
+	var a := RecipeDB.generate_recipe(4242)
+	if RecipeDB.composition_signature(a).is_empty():
+		failures.append("browse: a signature came out empty")
+	if RecipeDB.composition_signature(a) != RecipeDB.composition_signature(RecipeDB.generate_recipe(4242)):
+		failures.append("browse: the same seed gave two different signatures")
+
+	# Same fish/method/mix in a different order is the same dish.
+	var reordered := RecipeDB.generate_recipe(4242)
+	var ingredients: Array = (reordered.get("ingredients", []) as Array).duplicate()
+	ingredients.reverse()
+	reordered["ingredients"] = ingredients
+	if RecipeDB.composition_signature(a) != RecipeDB.composition_signature(reordered):
+		failures.append("browse: the signature depends on ingredient order")
+
+	# A page's worth of distinct dishes from 60 consecutive seeds.
+	var seen: Dictionary = {}
+	for seed_value in range(20261018, 20261018 + 60):
+		seen[RecipeDB.composition_signature(RecipeDB.generate_recipe(seed_value))] = true
+	if seen.size() >= 40:
+		print("  browse: %d distinct dishes from 60 seeds, de-duplicated by composition" % seen.size())
+	else:
+		failures.append("browse: only %d distinct dishes from 60 seeds" % seen.size())
 
 
 # ==================================================================== saves ===

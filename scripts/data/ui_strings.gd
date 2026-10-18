@@ -307,7 +307,7 @@ static func table() -> Dictionary:
 
 		# --------------------------------------------------------- game modes --
 		"modes.title": {"en": "Choose how to cook", "th": "เลือกวิธีเล่น"},
-		"modes.subtitle": {"en": "Four ways in. All of them teach the same safety rule.", "th": "สี่โหมด ทุกโหมดสอนกฎความปลอดภัยเดียวกัน"},
+		"modes.subtitle": {"en": "Five ways in. All of them teach the same safety rule.", "th": "ห้าโหมด ทุกโหมดสอนกฎความปลอดภัยเดียวกัน"},
 		"modes.cook_title": {"en": "Let's Cook", "th": "มาทำอาหารกัน"},
 		"modes.cook_body": {"en": "Pick a dish, cook it step by step, and discover new dishes as you go.", "th": "เลือกเมนู ทำทีละขั้น และค้นพบเมนูใหม่ไปเรื่อย ๆ"},
 		"modes.cook_cta": {"en": "Choose a dish", "th": "เลือกเมนู"},
@@ -320,6 +320,9 @@ static func table() -> Dictionary:
 		"modes.cookbook_title": {"en": "My Cookbook", "th": "สมุดสูตรของฉัน"},
 		"modes.cookbook_body": {"en": "Create a dish of your own from real fish and methods, and keep the ones you like.", "th": "สร้างจานของคุณเองจากปลาและวิธีปรุงจริง และเก็บจานที่คุณชอบไว้"},
 		"modes.cookbook_cta": {"en": "Open my cookbook", "th": "เปิดสมุดสูตรของฉัน"},
+		"modes.explore_title": {"en": "Discover", "th": "ค้นพบเมนู"},
+		"modes.explore_body": {"en": "Browse dishes the game composes for you, one page at a time. Unlimited variety, all cooked by the same safe rules.", "th": "เลือกดูจานที่เกมคิดให้ทีละหน้า มีความหลากหลายไม่จำกัด และปรุงตามกฎความปลอดภัยเดียวกัน"},
+		"modes.explore_cta": {"en": "Start discovering", "th": "เริ่มค้นพบ"},
 		"modes.records_title": {"en": "Your records", "th": "สถิติของคุณ"},
 		"modes.record_dishes": {"en": "Dishes discovered", "th": "เมนูที่ค้นพบ"},
 		"modes.record_endless": {"en": "Best endless streak", "th": "สถิติต่อเนื่องสูงสุด"},
@@ -392,6 +395,14 @@ static func table() -> Dictionary:
 		"cookbook.count": {"en": "Saved dishes", "th": "จานที่บันทึกไว้"},
 		"cookbook.ingredients": {"en": "Ingredients", "th": "ส่วนผสม"},
 		"cookbook.made_by_you": {"en": "Made by you", "th": "ฝีมือคุณ"},
+
+		# ---------------------------------------------------------- discover --
+		"explore.title": {"en": "Discover", "th": "ค้นพบเมนู"},
+		"explore.subtitle": {"en": "Dishes the game composes for you. Show as many pages as you like — there is always more.", "th": "จานที่เกมคิดให้คุณ เปิดดูได้เรื่อย ๆ ไม่มีหมด"},
+		"explore.note": {"en": "These are dishes the game invented, not traditional recipes. Each one still has to be cooked safely.", "th": "จานเหล่านี้เกมคิดขึ้น ไม่ใช่สูตรอาหารพื้นบ้าน และยังต้องปรุงให้ปลอดภัยทุกจาน"},
+		"explore.more": {"en": "Show me more", "th": "ขอเพิ่มอีก"},
+		"explore.count": {"en": "Showing", "th": "กำลังแสดง"},
+		"explore.cook": {"en": "Cook this", "th": "ปรุงจานนี้"},
 
 		# ----------------------------------------------------------- endless --
 		"endless.title": {"en": "Endless Kitchen", "th": "ครัวไม่รู้จบ"},

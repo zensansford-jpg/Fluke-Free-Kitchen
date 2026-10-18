@@ -21,7 +21,7 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
 | **M6** | Progression & journal | ✅ | stars, unlocks, per-level best, learning log, knowledge journal, reset progress; journal shows 12 recorded lessons |
 | **M7** | Presentation pass | ✅ | fixed angled camera, cosy kitchen set, feedback, UI polish, screen transitions; **progressive cooking visuals** (raw → cooked → golden → burnt), the burnt outcome with quick retry **and the unsafe-serving outcome (B)** all verified by `cook_test.tscn`; in-game screens verified by `layout_check` and `visual_capture` |
 | **M8** | Education & research pack | 🔄 | in-game pre/post assessment + anonymised export (running); the five documents written; source re-verification and any real study remain |
-| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 132/132 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); five suites green (smoke, flow, behaviour, cook, responsive) and runnable in one command (`tools\run_all_tests.ps1`); remaining: manual play-through checklist on a physical device and a final Thai/English string review |
+| **M9** | QA & delivery | 🔄 | cold-start launch verified with a clean user directory (no errors); Windows build exported (`build/FlukeFreeKitchen.exe`); **responsive matrix passed: 360/360 layouts** (`responsive_check.tscn`, see `docs/RESPONSIVE.md`); seven suites green (smoke, flow, behaviour, cook, recipe, minigame, responsive) and runnable in one command (`tools\run_all_tests.ps1`); remaining: manual play-through checklist on a physical device, re-exported builds and a final Thai/English string review |
 
 ---
 
@@ -42,13 +42,15 @@ Legend: ✅ complete · 🔄 in progress · ⬜ not started
   flow (all three levels), layout (UI geometry, per step), visual capture (renders every state to
   PNG so the presentation can actually be looked at), cooking (progressive browning and the burnt
   outcome with its retry).
-* **The interface survives a 132-layout responsive matrix.** `tests/responsive_check.tscn` walks
-  the menu, the challenge picker, the journal, the assessment screen, the settings modal and three
-  kitchen states across twelve window sizes from 320 × 568 to 3840 × 2160 and fails on any control
-  that leaves the window or any label that is asked to draw more text than its box holds. It
-  reports **132/132 passing**. The whole story — approach, the faults it found and the honest list
-  of what is still untested (no physical device, no safe-area handling, no system font scaling) —
-  is in `docs/RESPONSIVE.md`.
+* **The interface survives a 360-layout responsive matrix.** `tests/responsive_check.tscn` walks
+  every menu screen (the main menu, the mode picker, the challenge picker, the dish browser,
+  Free Cook, the recipe creator, the cookbook, the Discover browser, the journal and the
+  assessment screen), a filled creator and a filled cookbook, the settings modal, three
+  kitchen states and a full recipe walk across twelve window sizes from 320 × 568 to
+  3840 × 2160 and fails on any control that leaves the window or any label that is asked to
+  draw more text than its box holds. It reports **360/360 passing**. The whole story —
+  approach, the faults it found and the honest list of what is still untested (no physical
+  device, no safe-area handling, no system font scaling) — is in `docs/RESPONSIVE.md`.
 * **Cooking looks like cooking.** The fish in the pan walks a five-stop browning ramp as heat goes
   in (raw → opaque → golden → deep brown → burnt), and holds its look between frames because the
   ramp is a pure function of accumulated heat rather than a per-frame nudge. `cook_test.tscn`

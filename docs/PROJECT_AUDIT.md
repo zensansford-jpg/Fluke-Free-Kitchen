@@ -338,7 +338,7 @@ that backs it:
 
 | Area | Verdict | Evidence / what it means |
 |---|---|---|
-| Responsive layout across 12 sizes (320 × 568 → 3840 × 2160) | **PASS** | `tests/responsive_check.tscn`: 132 layouts (menu, challenge picker, journal, assessment, settings modal, three kitchen states), 0 failures. 188 real faults found and fixed across the passes. Details and limits in `docs/RESPONSIVE.md` |
+| Responsive layout across 12 sizes (320 × 568 → 3840 × 2160) | **PASS** | `tests/responsive_check.tscn`: 360 layouts (every menu screen plus a filled creator, a filled cookbook, the settings modal, three kitchen states and a full recipe walk), 0 failures. Real faults were found and fixed across the passes (see the fix log in `docs/RESPONSIVE.md`). Details and limits in `docs/RESPONSIVE.md` |
 | Runtime resize / portrait ↔ landscape / repeated reflow | **PASS (in-run)** | The matrix resizes the window between all twelve sizes in one process, exercising rebuild and in-place reflow every time. A real device rotation event is **NOT TESTED** |
 | Nulls and clipping on a physical phone/tablet | **NOT TESTED** | No phone or tablet has run this build. Every result is from window resizing on one Windows laptop |
 | Safe areas (notch, rounded corners) and system font scaling | **NOT IMPLEMENTED** | Not read from the OS. Documented in `docs/RESPONSIVE.md` §7 |

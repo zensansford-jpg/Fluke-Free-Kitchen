@@ -13,7 +13,7 @@
 | cook_test | ✅ PASS | A/B/C outcomes |
 | recipe_test | ✅ PASS | Catalogue, generator, v3 save migration with quarantine (its one stderr JSON line is the deliberate corrupt-file case) |
 | minigame_test | ✅ PASS | Full generated recipe driven with real pointer input; plate finish race guarded |
-| responsive_check | ✅ PASS | 348 layouts across 12 screen sizes, 0 problems |
+| responsive_check | ✅ PASS | 360 layouts across 12 screen sizes, 0 problems |
 
 **Result:** **7/7 suites PASS.**
 
@@ -84,6 +84,19 @@ honesty and exactly one safe cook step, the refusals (no name / no ingredient / 
 fish / too many), order-independent ids, and a real save → reload → remove round-trip
 including a malformed-save sanitisation case.
 
+## Discover: a paged browser over the composed pool (added this session)
+
+The composed dishes are now browsable. `explore.gd` (*Discover*, a fifth card on the mode
+screen) shows a page of six dishes composed from the same real catalogue and lets the
+player ask for more. It composes lazily — a page at a time, only what has been asked for —
+and de-duplicates across pages by composition (`RecipeDB.composition_signature`), so
+"show me more" never just reshuffles the same handful. Every dish is labelled as a game
+creation (never a traditional recipe), is validated, and carries the same mandatory
+safe-cook step; "Cook this" runs it through `Game.start_generated`. The loaded dishes are
+cached on the instance, so a resize reflows the same page. `recipe_test._check_browse`
+checks the signature is stable, order-independent, and that 60 seeds yield at least 40
+distinct dishes.
+
 ## Expansion Completed
 
 ✅ Data-driven catalogue (11 dishes, 8 real recipes + 3 challenge variations)  
@@ -94,6 +107,7 @@ including a malformed-save sanitisation case.
 ✅ Visual-only quiz integration  
 ✅ Three modes: Let's Cook, Endless Kitchen, Free Cook (experimental)  
 ✅ Player recipe creator + personal cookbook (composed from the real catalogue, saved in v3)  
+✅ Discover: a paged, picture-first browser over the composed dishes  
 ✅ Progression/unlocks (≥2 dishes open at start, all 11 reachable)  
 ✅ v3 save system with v2 migration  
 ✅ Raycast fix to exclude carried items  

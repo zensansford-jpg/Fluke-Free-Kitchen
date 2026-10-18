@@ -34,10 +34,11 @@ python tools\study\analyse_export.py --selftest
 | Check | Result | Evidence |
 |-------|--------|----------|
 | All 7 Godot test suites | ✅ **7/7 PASS** | `tools/run_all_tests.ps1`: smoke, flow, behaviour, cook, recipe, minigame, responsive all PASSED |
-| Responsive layout matrix | ✅ **348/348 layouts, 0 problems** | `tests/responsive_check.gd`: 12 sizes × 9 menu screens + settings modal + 3 kitchens + full recipe walk + filled creator and filled cookbook |
+| Responsive layout matrix | ✅ **360/360 layouts, 0 problems** | `tests/responsive_check.gd`: 12 sizes × 10 menu screens + settings modal + 3 kitchens + full recipe walk + filled creator and filled cookbook |
 | Recipe catalogue (data-driven) | ✅ **11 dishes, 27 ingredients, 8 recipes + 3 challenge variations** | `scripts/data/recipe_data.gd` - validation via `validate_steps`, unlock graph with ≥2 dishes open at start |
 | Procedural dish composition | ✅ **Implemented + tested (200 seeds)** | `RecipeDB.generate_recipe(seed)` / `generate_dish(seed)` / `generated_pool(count, seed)`; every composed dish is validated, labelled a game creation, and carries exactly one safe-cook step; surfaced in Free Cook as a picture-first row + "Surprise me" (`Game.start_generated`); `recipe_test` checks 200 seeds, determinism and a 6-dish pool |
 | Player dish creator + personal cookbook | ✅ **Implemented + tested** | `RecipeDB.custom_recipe` / `build_custom` (same catalogue, same validator); `scripts/ui/custom_cook.gd`, `scripts/ui/cookbook.gd`; `Game.start_custom` / `start_saved`; cookbook persisted in the existing v3 file (`cookbook` array, sanitised on load); *Signature dish* achievement; `recipe_test._check_custom` covers 48 fish×method dishes, refusals, order-independent ids and a real save/reload/remove round-trip |
+| Discover browser (paged) | ✅ **Implemented + tested** | `scripts/ui/explore.gd` composes pages lazily over `RecipeDB.generate_dish`, de-duplicates by `composition_signature` across pages, and runs a dish with `Game.start_generated`; `recipe_test._check_browse` checks the signature is stable, order-independent and that 60 seeds give 40+ distinct dishes |
 | Minigame library (14 interaction kinds wired) | ✅ **Implemented** | `scripts/tasks/task_slice.gd`, `task_stir.gd`, `task_flip.gd`, `task_plate.gd`, `task_serve.gd`, `task_factory.gd` with gesture hints; character reactions integrated |
 | Three modes (Let's Cook, Endless Kitchen, Free Cook) | ✅ **Implemented** | `scenes/main/mode_select.tscn`, `dish_select.tscn`, `free_cook.tscn`, `dish_preview.tscn`; `scripts/ui/*.gd`; Free Cook clearly marked experimental |
 | Endless challenge generator (validated) | ✅ **Implemented** | `scripts/data/challenge_generator.gd` uses shared `RecipeDB.validate_steps`; seeded deterministic with fallbacks |
@@ -74,13 +75,14 @@ python tools\study\analyse_export.py --selftest
 | B2 | Ingredient visuals & visual_for fix | ✅ PASS | `kitchen_props.gd`: `ingredient_mound`, `ingredient_visual`; fixed `visual_for` default crate leak (returns live node) |
 | B3 | Clean debug prints from minigame_test.gd and task_plate.gd | ✅ PASS | Debug diagnostics removed from test and plate task; code cleaned |
 | B4 | Run all 7 test suites end-to-end | ✅ PASS | `tools/run_all_tests.ps1`: 7/7 PASS (`smoke`, `flow`, `behaviour`, `cook`, `recipe`, `minigame`, `responsive`) |
-| B5 | Responsive matrix (12 sizes × 7 menu screens + 3 kitchens + recipe walk) | ✅ PASS | `responsive_check` PASSED, 348 layouts, 0 problems. Root-cause fixes: `bottom_box` content-height guard; `responsive_grid_size(..., inset)` for grid-card buttons (`mode_select`, `dish_select`, `free_cook`); cook/hold panels content-fitted and stacked |
+| B5 | Responsive matrix (12 sizes × 7 menu screens + 3 kitchens + recipe walk) | ✅ PASS | `responsive_check` PASSED, 360 layouts, 0 problems. Root-cause fixes: `bottom_box` content-height guard; `responsive_grid_size(..., inset)` for grid-card buttons (`mode_select`, `dish_select`, `free_cook`); cook/hold panels content-fitted and stacked |
 | B6 | Re-export builds (Windows/Web/Android) | ❌ NOT DONE | Existing builds present; re-export after fixes recommended but not completed |
 | B7 | Full end-to-end play-through across all three modes | 🟡 PARTIAL | Core logic verified via tests (smoke/flow/cook/recipe/minigame integration); manual full play-through not completed in this session |
 | B8 | Update documentation with honest status | ✅ PASS | Updated ROADMAP.md, QA_CHECKLIST.md and FINAL_STATUS.md this session to reflect 7/7 PASS |
 | B9 | Commit expansion if all tests pass | ✅ PASS | Committed once all seven suites were green (`Green the suite: responsive layout, cook/hold panels, test-infra fixes`) |
 | B11 | Procedural dish composition (build + validate + surface + test) | ✅ PASS | `RecipeDB.generate_recipe`/`generate_dish`/`generated_pool`; `Game.start_generated`; Free Cook composed-dish row + "Surprise me"; `recipe_test._check_generated` (200 seeds, determinism, pool) |
 | B12 | Player dish creator + personal cookbook (build + validate + persist + test) | ✅ PASS | `RecipeDB.custom_recipe`/`build_custom`; `scripts/ui/custom_cook.gd` + `cookbook.gd` + scenes; `Game.start_custom`/`start_saved`; `cookbook` array in the v3 save (sanitised on load, compositions only); *Signature dish* achievement; `recipe_test._check_custom` (48 fish×method dishes, refusals, order-independent ids, save/reload/remove, malformed-save case); `responsive_check` gained filled creator + filled cookbook |
+| B13 | Discover browser over the composed pool (paged + de-duplicated + test) | ✅ PASS | `scripts/ui/explore.gd` + scene + `State.EXPLORE`; lazy page composition, `RecipeDB.composition_signature` de-dup, `Game.start_generated`; `recipe_test._check_browse`; `responsive_check` gained the explore screen |
 | B10 | Test-infrastructure fixes (minigame drive-loop race; orchestrator verdict case bug) | ✅ PASS | `minigame_test` guards on `watch["finished"]`/freed task; `run_all_tests.ps1` verdict now the final case-sensitive `PASSED`/`FAILED` line |
 
 ### C. Baseline Feature Completeness vs Original Brief
@@ -133,13 +135,13 @@ python tools\study\analyse_export.py --selftest
 
 Based on the expansion session, the immediate priorities are:
 
-1. **Test suite green** (🤖) - Done: **7/7 PASS**, including `minigame_test` and `responsive_check` (348 layouts).
+1. **Test suite green** (🤖) - Done: **7/7 PASS**, including `minigame_test` and `responsive_check` (360 layouts).
 2. **Responsive matrix verification** (🤖) - Done: 0 problems; fixes were root-cause (layout primitives), not per-screen offsets.
 3. **Re-export builds** (🤖) - Existing builds present; re-export after fixes optional.
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
 6. **Commit expansion** (🤖) - Done: two commits (`Green the suite…`, `Add procedural dish composition…`); working tree clean.
-7. **Rebuild mandate, remaining slices** (🤖) - Done this session: procedural dish composition + validation, surfaced in Free Cook; and the player recipe creator + personal cookbook (built from the same real catalogue, saved in the existing v3 file, sanitised on load). Still open: a virtualised/paged picture-first browser over the composed pool, an animation-library overhaul, audio layering, and mission-first UI removal.
+7. **Rebuild mandate, remaining slices** (🤖) - Done: procedural dish composition + validation (Free Cook); the player recipe creator + personal cookbook (same real catalogue, saved in the existing v3 file, sanitised on load); and the paged Discover browser over the composed pool (lazy pages, de-duplicated by composition). Still open: an animation-library overhaul, audio layering, and mission-first UI removal.
 
 ---
 
