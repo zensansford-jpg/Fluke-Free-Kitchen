@@ -136,7 +136,7 @@ Based on the expansion session, the immediate priorities are:
 3. **Re-export builds** (🤖) - Existing builds present; re-export after fixes optional.
 4. **Full end-to-end play-through** (🤖) - Core validated via tests; manual play-through recommended.
 5. **Update documentation** (🤖) - Done (ROADMAP.md, QA_CHECKLIST.md, FINAL_STATUS.md).
-6. **Commit expansion** (🤖) - Ready to commit with summary; all tests green.
+6. **Commit expansion** (🤖) - Done: two commits (`Green the suite…`, `Add procedural dish composition…`); working tree clean.
 7. **Rebuild mandate, remaining slices** (🤖) - Done this session: procedural dish composition + validation, surfaced in Free Cook. Still open: a virtualised/paged picture-first browser over the composed pool, a player recipe creator + personal cookbook (save schema), an animation-library overhaul, audio layering, and mission-first UI removal.
 
 ---
