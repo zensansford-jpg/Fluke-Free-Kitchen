@@ -41,6 +41,10 @@ Two test-infrastructure defects were fixed this session so the summary is trustw
   `content_sheet` machinery) and the cook panel stacks its labels instead of forcing a
   385 px row, so both fit a 320 px phone.
 
+The same matrix was re-run with a real window on 2026-10-18 (NVIDIA GPU, Forward+), which also
+writes one PNG per screen per size: **360/360 layouts, 0 problems, 300 screenshots** across the
+12 sizes from 320 × 568 to 3840 × 2160.
+
 ## Animation library (added this session)
 
 All of the kitchen short-form motion now comes from one place, `scripts/world/anim.gd`
@@ -155,6 +159,14 @@ distinct dishes.
 ✅ Ingredient visuals & visual_for fix  
 ✅ Debug prints cleaned from test and plate task  
 ✅ 8 test suites integrated into run_all_tests.ps1  
+✅ Shared animation library (`Anim`) — one rhythm for all kitchen motion  
+✅ Sustained audio beds synced to the gesture (fry / boil / wash)  
+✅ Windows / Web / Android re-exported and re-verified (2026-10-18)  
+
+**Verified state:** the eight suites at the top of this file pass on `main`. The last change to any
+game code was commit `e6741f3` ("Give long actions a sustained voice"); the two commits after it
+touch documentation only. The suite was re-run on the final tree (2026-10-18) and the three
+working exports were rebuilt from that same source.
 
 ## Known Issues
 
@@ -164,9 +176,10 @@ competition paperwork.
 
 ## Remaining (optional polish)
 
-- Full manual play-through across all three modes
-- Re-export builds after any UI fixes
-- Commit expansion
+- Full manual play-through across all three modes on the demo machine (checklist in `docs/QA_CHECKLIST.md` §2)
+- An on-device Android run (the APK builds and verifies but has never been installed)
+- A native-Thai-speaker string review
+
 ## Conclusion
 
 The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all eight automated suites

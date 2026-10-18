@@ -45,6 +45,10 @@ Play on the machine you will demo on, in **Thai**, then flip to **EN** mid-sessi
 - [ ] **Outcome C** — hold the heat until the fish burns: the burnt outcome appears with a retry
 - [ ] After B or C, the mistake is still counted (a retry must not erase it)
 - [ ] The panel that says a golden colour is not a safety check is on screen while cooking
+- [ ] Holding the heat makes the pan **hiss continuously** and letting go stops it; a pot recipe
+      bubbles instead of hissing; washing the board runs water only while you scrub
+- [ ] Nothing teleports: the fish visibly browns as it heats, and carried items, the flip, the cut
+      and the knife all move smoothly rather than jumping
 - [ ] Settings: pause really pauses; closing a dialog does not lose the attempt
 - [ ] Turning the language to EN and back does **not** restart or lose the challenge
 - [ ] Nothing overlaps or is cut off at the demo window size, in both languages
@@ -63,7 +67,8 @@ godot --path . res://tests/responsive_check.tscn -- 3840 2160 shots
 ```
 
 - [ ] Open the screenshots the run writes to `%TEMP%\opencode\responsive` and confirm nothing is
-      squeezed to a sliver, clipped, or overlapping
+      squeezed to a sliver, clipped, or overlapping (the full 12-size set was regenerated on
+      2026-10-18 with a real GPU: 360/360 layouts, 300 PNGs)
 - [ ] Rotate the window from landscape to portrait while a challenge is running: the panel reflows
       and the wok stays framed
 - [ ] Increase the OS text size / display scaling and repeat step 2's "nothing overlaps" line
@@ -80,6 +85,7 @@ godot --headless --path . --export-debug  "Android" build/android/FlukeFreeKitch
 
 - [ ] Windows `.exe` launches and plays
 - [ ] Web build served over HTTP (`python tools/serve_web.py`) plays in a browser; console clean
+      (re-verified 2026-10-18 on the re-exported build: canvas 1254 × 564, 0 console errors)
 - [ ] Android APK verifies: `apksigner verify --verbose build/android/FlukeFreeKitchen.apk` → v2/v3 true
 - [ ] Android APK **installed on a real phone** (`adb install -r …`) and played once — this is the
       step that has *not* been done yet
