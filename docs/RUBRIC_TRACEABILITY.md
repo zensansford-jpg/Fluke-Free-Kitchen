@@ -129,8 +129,9 @@ were corrected.
 * A documented build/run/test path (`README.md`) and screen captures produced by
   `tests/visual_capture.tscn`.
 * The written report set is drafted in `docs/report/`: chapters 1–5 in Thai, abstract/proposal/
-  summary, a numbered reference list, a ≤ 7-minute video script, a display-board plan and a
-  logbook template, written to the announcement's format (A4, TH SarabunPSK 16 pt, ≤ 20 pages).
+  summary, a numbered reference list, a ≤ 7-minute video script, a ≤ 5-minute oral script with Q&A
+  preparation, a display-board plan and a logbook template, written to the announcement's format
+  (A4, TH SarabunPSK 16 pt, ≤ 20 pages).
 
 **Status:** ⚠️ The text is drafted and the video/board are scripted; **typesetting, real
 screenshots, the recording and the board build remain to be done**, and Chapter 4's learning
@@ -162,7 +163,7 @@ section is a marked placeholder until a study is run.
 | Full report, chapters 1–5 | A4, Thai SarabunPSK 16 pt, ≤ 20 pages, references/appendices within the stated limits | 🟡 drafted (`docs/report/ch1…ch5`, `references.md`); typesetting to the font/page limit and real screenshots remain |
 | Presentation video | ≤ 7 minutes, YouTube/Drive, "anyone with the link can view" | 🟡 scripted (`docs/report/video_script.md`); not recorded |
 | Display board | provided 150 cm foam board; logbook, model/props | 🟡 planned (`docs/report/board_layout.md`); not built |
-| Oral presentation | ≤ 5 minutes + ≤ 10 minutes Q&A | ❌ to rehearse |
+| Oral presentation | ≤ 5 minutes + ≤ 10 minutes Q&A | 🟡 scripted (`docs/report/oral_script.md`); the team must rehearse |
 | Logbook | kept honestly from the start | 🟡 template started (`docs/report/logbook.md`); the team must keep it and fill in real dates |
 
 ---

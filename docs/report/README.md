@@ -27,6 +27,7 @@ importantly — **what is still missing and must not be faked**.
 | `ch5_discussion.md` | บทที่ 5 สรุปและอภิปรายผล | drafted |
 | `references.md` | เอกสารอ้างอิง (numbered, matches `docs/REFERENCES.md`) | ready |
 | `video_script.md` | script/storyboard for the ≤ 7-minute presentation video | drafted |
+| `oral_script.md` | script and Q&A preparation for the ≤ 5-minute oral presentation | drafted |
 | `board_layout.md` | plan for the 150 cm display board | drafted |
 | `logbook.md` | โครงการ/บันทึกการทำงาน (logbook) — a scored deliverable | drafted |
 
@@ -72,4 +73,5 @@ placeholders in `ch4_results.md` §4.5 and write the corresponding discussion in
 3. Fill in the team's names, school, advisor and the logbook dates from real work.
 4. Add the study results **only if the study was actually run** with prior ethics approval.
 5. Re-check the reference URLs (`docs/REFERENCES.md` §5) and the citation style.
-6. Record the video and build the board to `video_script.md` and `board_layout.md`.
+6. Record the video and build the board to `video_script.md` and `board_layout.md`, and rehearse
+   the oral presentation to `oral_script.md`.
