@@ -182,9 +182,7 @@ func _accept(item: InteractiveItem, zone: DropZone) -> void:
 	item.release()
 	item.set_pickable(false)
 	var target := zone.position + Vector3(0, 0.14, 0)
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(item, "position", target, 0.22)
+	Anim.move_to(item, target, 0.22)
 
 	if not _placed.has(item.item_id):
 		_placed.append(item.item_id)

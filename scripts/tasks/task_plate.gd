@@ -216,9 +216,7 @@ func _snap(item: InteractiveItem) -> void:
 	item.release()
 	item.set_pickable(false)
 	var slot: Vector3 = _slots[mini(_placed, _slots.size() - 1)] if not _slots.is_empty() else _plate.position
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(item, "position", slot, 0.26)
+	Anim.settle(item, slot)
 
 	_placed += 1
 	register_attempt()

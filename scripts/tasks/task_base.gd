@@ -432,11 +432,7 @@ func flash_message(text: String, colour: Color = UIFactory.TEXT_BRIGHT) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast.add_child(label)
 	add_child(toast)
-	var tween := create_tween()
-	tween.tween_property(toast, "modulate:a", 1.0, 0.1)
-	tween.tween_interval(1.7)
-	tween.tween_property(toast, "modulate:a", 0.0, 0.4)
-	tween.tween_callback(toast.queue_free)
+	Anim.toast(toast)
 
 
 ## A short written correction shown just under the instruction bar. Physical tasks
@@ -455,7 +451,4 @@ func show_reason(text: String, colour: Color = UIFactory.BAD) -> void:
 	panel.add_child(text_label)
 	_prompt_area.add_child(panel)
 	_reason_panel = panel
-	var tween := create_tween()
-	tween.tween_interval(3.0)
-	tween.tween_property(panel, "modulate:a", 0.0, 0.5)
-	tween.tween_callback(panel.queue_free)
+	Anim.toast(panel, 3.0, 0.5)

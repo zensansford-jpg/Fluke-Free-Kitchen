@@ -67,6 +67,7 @@ if (-not $imp.WaitForExit(600000)) { try { $imp.Kill() } catch {} }
 
 $suites = @(
     'res://tests/smoke_test.tscn',
+    'res://tests/anim_test.tscn',
     'res://tests/flow_test.tscn',
     'res://tests/behaviour_test.tscn',
     'res://tests/cook_test.tscn',

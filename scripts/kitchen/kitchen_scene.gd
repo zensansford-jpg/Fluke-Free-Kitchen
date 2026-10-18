@@ -372,11 +372,7 @@ func _puff(count: int, at: Vector3, colour: Color, spread: float, rise: float, s
 			rng.randf_range(-spread, spread),
 			rise * rng.randf_range(0.6, 1.4),
 			rng.randf_range(-spread, spread) * 0.5)
-		var tween := create_tween()
-		tween.set_parallel(true)
-		tween.tween_property(bit, "position", target, rng.randf_range(0.45, 0.85))
-		tween.tween_property(bit, "scale", Vector3.ONE * size * 0.25, rng.randf_range(0.45, 0.85))
-		tween.chain().tween_callback(bit.queue_free)
+		Anim.drift_away(bit, target, rng.randf_range(0.45, 0.85))
 
 
 ## A small camera nudge, used when something goes wrong. Never motion-sickness

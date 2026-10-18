@@ -8,6 +8,7 @@
 | Suite | Status | Notes |
 |---|---|---|
 | smoke_test | ✅ PASS | Core smoke checks |
+| anim_test | ✅ PASS | The kitchen motion library: each verb moves a node and leaves it where it belongs, and a missing or loose node is refused |
 | flow_test | ✅ PASS | Full level flow |
 | behaviour_test | ✅ PASS | Gestures and cooking behaviour |
 | cook_test | ✅ PASS | A/B/C outcomes |
@@ -15,7 +16,7 @@
 | minigame_test | ✅ PASS | Full generated recipe driven with real pointer input; plate finish race guarded |
 | responsive_check | ✅ PASS | 360 layouts across 12 screen sizes, 0 problems |
 
-**Result:** **7/7 suites PASS.**
+**Result:** **8/8 suites PASS.**
 
 Two test-infrastructure defects were fixed this session so the summary is trustworthy:
 
@@ -39,6 +40,26 @@ Two test-infrastructure defects were fixed this session so the summary is trustw
 - The cook/press-and-hold panels now size themselves from their content (the existing
   `content_sheet` machinery) and the cook panel stacks its labels instead of forcing a
   385 px row, so both fit a 320 px phone.
+
+## Animation library (added this session)
+
+All of the kitchen short-form motion now comes from one place, `scripts/world/anim.gd`
+(class_name `Anim`): the fish turning in the pan, an ingredient settling onto a plate,
+the knife crossing the board, a puff of steam rising, a toast fading out. Instead of
+each script opening its own tween, the tasks call a small library of verbs, and the
+library owns the one rhythm (TAP, NUDGE, SETTLE, POP) the whole kitchen shares.
+
+The library is careful in two ways. A helper returns the tween it started, so a caller
+can await it or add a step; and a helper asked to animate a node that is missing, loose
+or freed returns nothing at all, so the game can never open a tween on something that is
+going away. Every previous hand-rolled tween now goes through it: the carried item and
+its lift, the flip arc, the cut and its scraps, the knife crossing the board, snapping
+onto a plate, dropping onto a target, the encouragement and correction toasts, the
+effect puffs, and the cook reactions.
+
+`tests/anim_test.tscn` (the eighth suite) drives each verb and checks the two things a
+player cares about, that it moved and that it ended where it belongs, plus the refusal
+contract.
 
 ## Procedural dish composition (added this session)
 
@@ -113,7 +134,7 @@ distinct dishes.
 ✅ Raycast fix to exclude carried items  
 ✅ Ingredient visuals & visual_for fix  
 ✅ Debug prints cleaned from test and plate task  
-✅ 7 test suites integrated into run_all_tests.ps1  
+✅ 8 test suites integrated into run_all_tests.ps1  
 
 ## Known Issues
 
@@ -128,6 +149,6 @@ competition paperwork.
 - Commit expansion
 ## Conclusion
 
-The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all seven automated suites
+The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all eight automated suites
 pass**. Core gameplay, catalogue, minigames, modes, validation, layout reflow and the save
 system are implemented and verified by passing tests.

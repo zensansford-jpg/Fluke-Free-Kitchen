@@ -12,7 +12,7 @@ Legend: 🤖 run it · 👁 look at it · 👤 needs a person
 ## 1. Run the checks (🤖, ~10 minutes)
 
 ```powershell
-# 1. Every Godot suite, one summary line each. Expect: 7/7 suites passed.
+# 1. Every Godot suite, one summary line each. Expect: 8/8 suites passed.
 powershell -ExecutionPolicy Bypass -File tools\run_all_tests.ps1
 
 # 2. The study data pipeline, on synthetic records only. Expect: SELFTEST PASSED.

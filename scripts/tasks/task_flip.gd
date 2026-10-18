@@ -118,18 +118,11 @@ func _do_flip() -> void:
 	if _fish == null or not is_instance_valid(_fish):
 		_on_flip_done()
 		return
-	var start_y := _fish.position.y
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(_fish, "position:y", 0.62, 0.26)
-	tween.parallel().tween_property(_fish, "position:z", -0.10, 0.26)
-	tween.parallel().tween_property(_fish, "rotation:x", -PI, 0.26)
-	tween.set_ease(Tween.EASE_IN)
-	tween.tween_property(_fish, "position:y", start_y, 0.24)
-	tween.parallel().tween_property(_fish, "position:z", 0.0, 0.24)
-	tween.parallel().tween_property(_fish, "rotation:x", -TAU, 0.24)
-	tween.tween_callback(_on_flip_done)
+	var tween := Anim.flip(_fish, 0.62)
+	if tween == null:
+		_on_flip_done()
+	else:
+		tween.tween_callback(_on_flip_done)
 
 
 func _on_flip_done() -> void:

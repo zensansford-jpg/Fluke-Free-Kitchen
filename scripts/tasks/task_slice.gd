@@ -202,10 +202,8 @@ func _scatter(z: float) -> void:
 		piece.scale = Vector3(0.07, 0.05, 0.07)
 		piece.position = Vector3(side * 0.18, 0.09, z)
 		_board.add_child(piece)
-		var tween := create_tween()
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_property(piece, "position",
-			piece.position + Vector3(side * 0.12, -0.03, 0.05), 0.25)
+		Anim.prop(piece, "position",
+			piece.position + Vector3(side * 0.12, -0.03, 0.05), 0.25, Tween.TRANS_QUAD, Tween.EASE_OUT)
 
 
 func _animate_knife() -> void:
@@ -215,10 +213,9 @@ func _animate_knife() -> void:
 	var base := kitchen.centre_slot()
 	_knife.position = base + Vector3(-0.5, 0.34, 0.28)
 	_knife.rotation_degrees = Vector3(0, 90, -20)
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(_knife, "position", base + Vector3(0.5, 0.16, 0.28), 0.22)
-	tween.tween_callback(func() -> void: _knife.visible = false)
+	var t := Anim.move_to(_knife, base + Vector3(0.5, 0.16, 0.28), 0.22, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	if t != null:
+		t.tween_callback(func() -> void: _knife.visible = false)
 
 
 func _finish() -> void:
@@ -226,9 +223,7 @@ func _finish() -> void:
 		return
 	_busy = true
 	_band.visible = false
-	var split := create_tween()
-	split.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	split.tween_property(_food, "scale", _food.scale * Vector3(0.96, 0.9, 1.04), 0.3)
+	Anim.scale_to(_food, _food.scale * Vector3(0.96, 0.9, 1.04), 0.3, Tween.TRANS_BACK, Tween.EASE_OUT)
 	AudioManager.play_sfx("tap_ok")
 	kitchen.play_effect("sparkle", _food.global_position + Vector3(0, 0.3, 0))
 	flash_message(Loc.t("feedback.prepped"), UIFactory.GOOD)

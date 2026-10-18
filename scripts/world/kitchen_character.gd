@@ -78,8 +78,10 @@ func react(kind: String) -> void:
 		return
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
+	_tween = Anim.begin(self)
+	if _tween == null:
+		return
 	_reacting = true
-	_tween = create_tween()
 	match kind:
 		"happy":
 			_happy()

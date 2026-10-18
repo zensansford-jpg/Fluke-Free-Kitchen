@@ -118,9 +118,7 @@ func return_home(animated: bool = true) -> void:
 	if not animated:
 		position = home_position
 		return
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "position", home_position, 0.28)
+	Anim.move_to(self, home_position, 0.28)
 
 
 func localised_name() -> String:
@@ -130,13 +128,10 @@ func localised_name() -> String:
 func _apply_lift() -> void:
 	if _visual == null:
 		return
-	var tween := create_tween()
-	tween.tween_property(_visual, "position:y", _lift, 0.12)
+	Anim.prop(_visual, "position:y", _lift, 0.12)
 
 
 func _tween_scale(target: float) -> void:
 	if _visual == null:
 		return
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_visual, "scale", Vector3.ONE * target, 0.14)
+	Anim.scale_to(_visual, Vector3.ONE * target, 0.14, Tween.TRANS_BACK, Tween.EASE_OUT)
