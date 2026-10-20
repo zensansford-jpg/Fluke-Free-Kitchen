@@ -1,10 +1,12 @@
 class_name DishSelect
 ## The dish browser for Let's Cook.
 ##
-## Every dish is a card with a picture drawn from the catalogue, whether it is a
-## real Thai dish or a game challenge (the two are labelled differently on purpose).
-## Locked dishes are shown, dimmed, so the player can see what is coming without
-## being told it exists for no reason.
+## Every dish is a card with a picture drawn from the catalogue, and every card
+## carries its **provenance grade** in plain words: a documented dish, a regional
+## variation, a fusion dish or a game composition. The four are different claims
+## about the world, so they are never allowed to look alike. Locked dishes are
+## shown, dimmed, so the player can see what is coming without being told it exists
+## for no reason.
 ##
 ## Nothing is unlocked by grinding: a dish opens when the dish it comes from has
 ## been finished. The first dishes have no dependency at all, so there is always
@@ -68,7 +70,11 @@ func _sorted_recipes() -> Array:
 		var db := int(b.get("difficulty", 1))
 		if da != db:
 			return da < db
-		return bool(a.get("real", true)) and not bool(b.get("real", true)))
+		# Within a difficulty, the better-attested dishes come first, so the list
+		# reads as a progression from documented tradition to game composition.
+		var grade_a := RecipeDB.PROVENANCE_ORDER.find(RecipeDB.provenance(a))
+		var grade_b := RecipeDB.PROVENANCE_ORDER.find(RecipeDB.provenance(b))
+		return grade_a < grade_b)
 	return out
 
 
@@ -113,17 +119,20 @@ func _recipe_card(recipe: Dictionary, discovered: Array) -> PanelContainer:
 	v.add_child(UIFactory.wrap(RecipeDB.title(recipe), 23, UIFactory.TEXT_BRIGHT, true))
 
 	# The facts that let a player choose: where the dish is from, how it is
-	# cooked, and whether it is a documented dish or a game variation. Each is a
+	# cooked, and — in plain words — how well attested the dish is. Each is a
 	# capsule now, so the differences are visible at a glance instead of being
 	# three lines of small grey text in a row. They wrap, because three Thai
 	# capsules on one unbending line are wider than a phone screen.
+	#
+	# The provenance grade replaces the old real/not flag: a documented dish, a
+	# regional variation, a fusion dish and a game composition are four different
+	# claims, and the card now says which one it is making.
 	var badges := UIFactory.tag_row(6)
 	badges.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var real := bool(recipe.get("real", true))
+	var grade := RecipeDB.provenance(recipe)
 	badges.add_child(UIFactory.chip(
-		Loc.t("dishes.real") if real else Loc.t("dishes.variation_short"),
-		UIFactory.ACCENT if real else Color(0.62, 0.72, 0.92), true))
-	if not real and not _cooked_on_a_stove(recipe):
+		RecipeDB.provenance_label(recipe), _provenance_colour(grade), true))
+	if not RecipeDB.is_traditional(recipe) and not _cooked_on_a_stove(recipe):
 		badges.add_child(UIFactory.chip(Loc.t("dishes.no_heat"), Color(0.62, 0.72, 0.92)))
 	var region := RecipeDB.region_of(recipe)
 	if not region.is_empty():
@@ -131,6 +140,7 @@ func _recipe_card(recipe: Dictionary, discovered: Array) -> PanelContainer:
 	v.add_child(badges)
 
 	v.add_child(UIFactory.wrap(RecipeDB.about(recipe), 16, UIFactory.TEXT_DIM))
+	v.add_child(UIFactory.wrap(RecipeDB.provenance_note(recipe), 15, UIFactory.TEXT_DIM))
 
 	var difficulty := int(recipe.get("difficulty", 1))
 	v.add_child(UIFactory.label(
@@ -194,6 +204,23 @@ func _cooked_on_a_stove(recipe: Dictionary) -> bool:
 		if step is Dictionary and str(step.get("kind", "")) in ["hold", "cook_through", "stir", "flip"]:
 			return true
 	return false
+
+
+## The capsule colour for a provenance grade, so the four claims are told apart by
+## more than the words: warm gold for a documented dish, cooler tints as the claim
+## gets weaker. Colour is never the only signal — the label is always beside it.
+func _provenance_colour(grade: String) -> Color:
+	match grade:
+		RecipeDB.DOCUMENTED:
+			return UIFactory.ACCENT
+		RecipeDB.REGIONAL:
+			return Color(0.62, 0.86, 0.62)
+		RecipeDB.FUSION:
+			return Color(0.80, 0.68, 0.92)
+		RecipeDB.CREATED:
+			return Color(0.96, 0.72, 0.52)
+		_:
+			return Color(0.62, 0.72, 0.92)
 
 
 func _difficulty_text(difficulty: int) -> String:

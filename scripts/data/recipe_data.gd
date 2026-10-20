@@ -394,6 +394,138 @@ static func recipes() -> Array:
 			"note": {"en": "Cooked version only: the raw preparation is the transmission route.",
 				"th": "เฉพาะแบบปรุงสุกเท่านั้น เพราะแบบดิบคือเส้นทางติดพยาธิ"},
 		},
+		{
+			"id": "tom_kloeng_pla",
+			"real": true,
+			"provenance": "regional",
+			"name": {"en": "Spicy sour fish soup (central style)", "th": "ต้มโคล้งปลา"},
+			"about": {
+				"en": "A tamarind-soured soup, drier and sharper than tom yum. Grilled fish is often used, so the fish is cooked twice: once over the fire, then again in the broth. Both matter.",
+				"th": "ซุปเปรี้ยวมะขาม รสจัดและน้ำน้อยกว่าต้มยำ มักใช้ปลาย่าง จึงปรุงสองครั้ง ทั้งบนไฟและในน้ำแกง ทั้งสองขั้นตอนสำคัญ",
+			},
+			"method": "boil",
+			"fish": ["pla_chon", "pla_nil"],
+			"ingredients": ["tamarind", "chilli", "shallot", "garlic", "fish_sauce", "palm_sugar", "mushroom"],
+			"garnish": ["coriander", "spring_onion"],
+			"plating": "bowl",
+			"difficulty": 2,
+			"unlock": "lab_pla",
+			"tags": ["soup", "tamarind", "regional"],
+			"quiz": ["q_l2_cook", "q_l2_lime"],
+			"lessons": ["cook_thoroughly", "no_substitute"],
+			"note": {"en": "Central-style variation: recipes differ between kitchens, and this is one common form.",
+				"th": "สูตรภาคกลาง สูตรต่างกันไปตามครัว นี่เป็นรูปแบบที่นิยมแบบหนึ่ง"},
+		},
+		{
+			"id": "pla_phat_khing",
+			"real": true,
+			"provenance": "regional",
+			"name": {"en": "Fish stir-fried with ginger", "th": "ปลาผัดขิง"},
+			"about": {
+				"en": "Fish stir-fried with slivered ginger, spring onion and a little fermented bean paste. A quick dish, which makes it easy to pull off the heat while the middle of a thick piece is still raw.",
+				"th": "ปลาผัดกับขิงซอย ต้นหอม และเต้าเจี้ยวเล็กน้อย เป็นเมนูเร็ว จึงถอดออกจากไฟได้ง่ายขณะที่เนื้อปลาชิ้นหนายังดิบอยู่ตรงกลาง",
+			},
+			"method": "stir_fry",
+			"fish": ["pla_nil", "pla_chon", "pla_duk"],
+			"ingredients": ["garlic", "chilli", "fish_sauce", "palm_sugar", "spring_onion"],
+			"garnish": ["coriander", "spring_onion"],
+			"plating": "plate",
+			"difficulty": 2,
+			"unlock": "pla_duk_phat_phet",
+			"tags": ["stir-fry", "regional"],
+			"quiz": ["q_l2_cook"],
+			"lessons": ["cook_thoroughly"],
+			"note": {"en": "A home-style variation: the seasoning differs from kitchen to kitchen.",
+				"th": "สูตรตามบ้าน เครื่องปรุงต่างกันไปในแต่ละครัว"},
+		},
+		{
+			"id": "pla_hor_mok",
+			"real": true,
+			"provenance": "regional",
+			"name": {"en": "Steamed fish curry custard", "th": "ปลาฮ่อม๊ก"},
+			"about": {
+				"en": "A northern-style fish curry set with egg and steamed in a banana-leaf cup. The egg sets before the fish necessarily does, so the fish needs the full steaming time, not just a set surface.",
+				"th": "แกงปลาแบบเหนือ ใส่ไข่แล้วนึ่งในกระทงใบตอง ไข่จะเซ็ตตัวก่อนที่ปลาจะสุกเสมอ ปลาจึงต้องนึ่งให้ครบเวลา ไม่ใช่แค่ผิวหน้าเซ็ตตัว",
+			},
+			"method": "steam",
+			"fish": ["pla_nil", "pla_chon", "pla_duk"],
+			"ingredients": ["red_curry_paste", "coconut_milk", "egg", "kaffir_lime", "fish_sauce", "basil"],
+			"garnish": ["basil", "chilli_slices"],
+			"plating": "bowl",
+			"difficulty": 3,
+			"unlock": "tom_kloeng_pla",
+			"tags": ["steamed", "northern", "regional"],
+			"quiz": ["q_l2_cook", "q_l2_lime"],
+			"lessons": ["cook_thoroughly", "no_substitute"],
+			"note": {"en": "Northern-style variation: the paste and the cooking vessel differ by household.",
+				"th": "สูตรภาคเหนือ พริกแกงและภาชนะนึ่งต่างกันไปตามครัวเรือน"},
+		},
+		{
+			"id": "pla_sam_rot",
+			"real": true,
+			"provenance": "fusion",
+			"name": {"en": "Three-flavour crispy fish (restaurant style)", "th": "ปลาสามรส (สไตล์ร้านอาหาร)"},
+			"about": {
+				"en": "Crisp-fried fish in a sweet-sour-spicy sauce. The three-flavour sauce is a restaurant development rather than an old village dish, and this game does not present it as one — but the fish still has to be fried until it is cooked through before the sauce goes on.",
+				"th": "ปลาทอดกรอบราดซอสเปรี้ยวหวานเผ็ด ซอสสามรสเป็นพัฒนาการของร้านอาหาร ไม่ใช่กับข้าวพื้นบ้านเก่าแก่ และเกมนี้ไม่ได้นำเสนอเช่นนั้น แต่ปลายังต้องทอดจนสุกทั่วก่อนราดซอส",
+			},
+			"method": "fry",
+			"fish": ["pla_nil", "pla_nil_red", "pla_thu"],
+			"ingredients": ["garlic", "chilli", "tamarind", "palm_sugar", "fish_sauce"],
+			"garnish": ["coriander", "spring_onion", "chilli_slices"],
+			"plating": "plate",
+			"difficulty": 3,
+			"unlock": "pla_thot_nam_pla",
+			"tags": ["fried", "fusion", "sweet-sour"],
+			"quiz": ["q_l2_cook"],
+			"lessons": ["cook_thoroughly"],
+			"note": {"en": "A modern restaurant preparation, not a village recipe.",
+				"th": "เมนูร้านอาหารสมัยใหม่ ไม่ใช่กับข้าวพื้นบ้าน"},
+		},
+		{
+			"id": "mok_pa_lao",
+			"real": true,
+			"provenance": "regional",
+			"name": {"en": "Lao steamed fish in banana leaf", "th": "หมกปลา (ลาว)"},
+			"about": {
+				"en": "A Lao preparation: fish mixed with herbs and sticky rice, wrapped in banana leaf and steamed. Wrapping it hides the fish, which is exactly why it needs the full time rather than a look at the outside.",
+				"th": "อาหารลาว นำปลาคลุกสมุนไพรและข้าวเหนียว ห่อใบตองแล้วนึ่ง การห่อทำให้มองไม่เห็นตัวปลา จึงต้องนึ่งให้ครบเวลา ไม่ใช่ดูแค่ภายนอก",
+			},
+			"method": "steam",
+			"fish": ["pla_chon", "pla_duk", "pla_nil"],
+			"ingredients": ["lemongrass", "galangal", "kaffir_lime", "chilli", "fish_sauce", "sticky_rice", "spring_onion"],
+			"garnish": ["mint", "chilli_slices"],
+			"plating": "banana_leaf",
+			"difficulty": 3,
+			"unlock": "pla_hor_mok",
+			"tags": ["steamed", "lao", "regional"],
+			"quiz": ["q_l2_cook", "q_l2_lime"],
+			"lessons": ["cook_thoroughly", "no_substitute"],
+			"note": {"en": "A Lao dish. The same freshwater-fluke rule applies across the region.",
+				"th": "เมนูลาว หลักการเรื่องพยาธิใบไม้ตับในปลาน้ำจืดใช้เหมือนกันทั้งภูมิภาค"},
+		},
+		{
+			"id": "cha_ca_la_vong",
+			"real": true,
+			"provenance": "regional",
+			"name": {"en": "Vietnamese turmeric fish with dill", "th": "ปลา turmeric กับผักชีลาว (เวียดนาม)"},
+			"about": {
+				"en": "A Vietnamese dish: fish marinated in turmeric and fish sauce, then pan-fried with dill and spring onion. The marinade colours the surface long before the middle is cooked, so colour is not a guide here.",
+				"th": "อาหารเวียดนาม ปลาหมักขมิ้นและน้ำปลา แล้วทอดในกระทะกับผักชีลาวและต้นหอม น้ำหมักทำให้ผิวเหลืองก่อนที่เนื้อในจะสุก สีจึงใช้บอกความสุกไม่ได้",
+			},
+			"method": "fry",
+			"fish": ["pla_duk", "pla_nil", "pla_chon"],
+			"ingredients": ["garlic", "chilli", "fish_sauce", "palm_sugar", "spring_onion", "coriander"],
+			"garnish": ["coriander", "spring_onion", "lime_wedge"],
+			"plating": "plate",
+			"difficulty": 2,
+			"unlock": "pla_phat_khing",
+			"tags": ["fried", "vietnamese", "regional"],
+			"quiz": ["q_l2_cook"],
+			"lessons": ["cook_thoroughly"],
+			"note": {"en": "A Vietnamese dish. Marinated fish can look cooked while still raw inside.",
+				"th": "เมนูเวียดนาม ปลาหมักอาจดูเหมือนสุกแต่ข้างในยังดิบ"},
+		},
 
 		# ------------------------------------------- game challenge variations --
 		{
@@ -523,11 +655,134 @@ const REGIONS := {
 	"pla_duk_phat_phet": {"en": "Central Thai", "th": "ภาคกลาง"},
 	"thot_man_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
 	"lab_pla": {"en": "Northeastern Thai", "th": "ภาคอีสาน"},
+	"tom_kloeng_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"pla_phat_khing": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"pla_hor_mok": {"en": "Northern Thai", "th": "ภาคเหนือ"},
+	"pla_sam_rot": {"en": "Thai restaurant", "th": "ร้านอาหารไทย"},
+	"mok_pa_lao": {"en": "Lao", "th": "ลาว"},
+	"cha_ca_la_vong": {"en": "Vietnamese", "th": "เวียดนาม"},
 }
 
 
 static func about(recipe: Dictionary) -> String:
 	return LessonDB.text(recipe, "about", Loc.language)
+
+
+# ============================================================== provenance ===
+## How well attested a dish is, which is not the same question as "is it real".
+##
+## The catalogue grew from a handful of Thai dishes to a broad one, and "real or
+## not" stopped being enough: a dish that is documented tradition and a dish that
+## is a plausible modern restaurant variation are both real food, but they are not
+## the same *claim*, and the project must not blur them. So every dish carries one
+## of five grades, and the card says which one in plain words.
+##
+##   documented  — a dish with a known tradition and a written source. The game
+##                 describes its method as accurately as it can and stands behind
+##                 it (docs/REFERENCES.md).
+##   regional    — a recognised dish whose *modern* form varies by kitchen: a
+##                 common variation, honestly labelled as a variation.
+##   fusion      — a dish that deliberately mixes traditions. It is real cooking,
+##                 but it is not presented as anybody's traditional recipe.
+##   generated   — composed by the game from its own ingredients and methods. Not
+##                 a claim about any real cuisine at all.
+##   challenge   — a skills run built on a real cooking method. Not a dish anyone
+##                 eats; the game says so on its own card.
+##   created     — made by the player in Free Cook or the recipe builder.
+##
+## Everything is derived from the recipe itself — its own `provenance` field when it
+## has one, and otherwise from `real` and `tags` — so no recipe has to be rewritten
+## to gain a grade, and a new recipe cannot accidentally ship unlabelled.
+const DOCUMENTED := "documented"
+const REGIONAL := "regional"
+const FUSION := "fusion"
+const GENERATED := "generated"
+const CHALLENGE := "challenge"
+const CREATED := "created"
+
+## The order the grades are listed in, most strongly attested first.
+const PROVENANCE_ORDER := [DOCUMENTED, REGIONAL, FUSION, GENERATED, CHALLENGE, CREATED]
+
+const PROVENANCE_LABELS := {
+	DOCUMENTED: {"en": "Documented dish", "th": "เมนูที่มีเอกสารยืนยัน"},
+	REGIONAL: {"en": "Regional variation", "th": "สูตรท้องถิ่นแบบร่วมสมัย"},
+	FUSION: {"en": "Fusion dish", "th": "เมนูผสมผสาน"},
+	GENERATED: {"en": "Composed by the game", "th": "เกมสร้างขึ้น"},
+	CHALLENGE: {"en": "Skill challenge", "th": "ด่านฝึกฝีมือ"},
+	CREATED: {"en": "Your own creation", "th": "ผลงานของคุณ"},
+}
+
+## One plain sentence per grade, for the dish card. These are deliberately not
+## interchangeable: a documented dish and a fusion dish must not read the same.
+const PROVENANCE_NOTES := {
+	DOCUMENTED: {
+		"en": "A dish with a recorded tradition. Its fish, ingredients and method are described as accurately as this project can manage.",
+		"th": "เมนูที่มีตำรับบันทึกไว้ ปลา เครื่องปรุง และวิธีปรุง อธิบายอย่างถูกต้องที่สุดเท่าที่โครงการนี้ทำได้",
+	},
+	REGIONAL: {
+		"en": "A recognised dish whose modern form differs between kitchens. This is one common variation, and it is shown as a variation rather than as the original.",
+		"th": "เมนูที่รู้จักกันดี แต่สูตรปัจจุบันต่างกันไปตามครัว นี่เป็นอีกหนึ่งสูตรที่นิยม และแสดงไว้ในฐานะสูตรท้องถิ่น ไม่ใช่ต้นตำรับ",
+	},
+	FUSION: {
+		"en": "A dish that deliberately mixes more than one cooking tradition. It is real cooking, but it is not presented as anyone's traditional recipe.",
+		"th": "เมนูที่ผสมผสานหลายวัฒนธรรมการปรุงเข้าด้วยกัน เป็นอาหารที่ทำได้จริง แต่ไม่ได้นำเสนอว่าเป็นสูตรพื้นบ้านของใคร",
+	},
+	GENERATED: {
+		"en": "Composed by the game from its own fish, ingredients and methods. It is not a claim about any real cuisine, and it still has to be cooked safely.",
+		"th": "เกมประกอบขึ้นจากปลา เครื่องปรุง และวิธีปรุงในเกมเอง ไม่ได้อ้างอิงว่าเป็นอาหารของชาติใด และยังต้องปรุงให้ปลอดภัยเช่นเดิม",
+	},
+	CHALLENGE: {
+		"en": "Not a dish — a skills run built on a real cooking method. Nobody eats this; it is here to practise the technique safely.",
+		"th": "ไม่ใช่เมนู แต่เป็นด่านฝึกฝีมือที่สร้างจากวิธีปรุงจริง ไม่มีใครกินสิ่งนี้ มันมีไว้เพื่อฝึกทักษะอย่างปลอดภัย",
+	},
+	CREATED: {
+		"en": "A dish you put together yourself. It is your own creation, not a traditional recipe — and it still has to reach a safe temperature inside.",
+		"th": "จานที่คุณคิดขึ้นเอง เป็นผลงานของคุณ ไม่ใช่สูตรอาหารพื้นบ้าน และยังต้องปรุงให้สุกถึงอุณหภูมิปลอดภัย",
+	},
+}
+
+
+## The provenance grade of a dish. A recipe that names its own grade keeps it;
+## otherwise a `real` dish is documented, a tagged skill run is a challenge, and
+## anything else is composed by the game.
+static func provenance(recipe: Dictionary) -> String:
+	var declared := str(recipe.get("provenance", ""))
+	if PROVENANCE_ORDER.has(declared):
+		return declared
+	if bool(recipe.get("real", false)):
+		return DOCUMENTED
+	for tag in recipe.get("tags", []):
+		if str(tag) == "challenge":
+			return CHALLENGE
+	return GENERATED
+
+
+static func provenance_label(recipe: Dictionary) -> String:
+	return LessonDB.local(PROVENANCE_LABELS.get(provenance(recipe), {}))
+
+
+static func provenance_note(recipe: Dictionary) -> String:
+	return LessonDB.local(PROVENANCE_NOTES.get(provenance(recipe), {}))
+
+
+## True for the grades that describe real food rather than a composition. Used to
+## decide how strongly a card may word its claim, never to hide the grade.
+static func is_traditional(recipe: Dictionary) -> bool:
+	return provenance(recipe) in [DOCUMENTED, REGIONAL, FUSION]
+
+
+## How many dishes carry each grade. Reported by the Discover page and by the
+## catalogue test, so the breadth of the catalogue is a measured number rather than
+## a description.
+static func provenance_counts() -> Dictionary:
+	var counts := {}
+	for grade in PROVENANCE_ORDER:
+		counts[grade] = 0
+	for recipe in recipes():
+		var grade := provenance(recipe)
+		counts[grade] = int(counts.get(grade, 0)) + 1
+	return counts
+
 
 
 static func local(pair: Variant) -> String:
@@ -792,6 +1047,7 @@ static func build_free_cook(fish_id: String, method_id: String, difficulty: int 
 			"th": "ปรุงจานของคุณเองอย่างปลอดภัย",
 		},
 		"real": false,
+		"provenance": CREATED,
 		"free_cook": true,
 		"difficulty": level,
 		"steps": steps,
@@ -872,6 +1128,7 @@ static func generate_recipe(seed_value: int) -> Dictionary:
 	return {
 		"id": "gen_%d" % seed_value,
 		"real": false,
+		"provenance": GENERATED,
 		"name": {
 			"en": "Kitchen experiment: %s, %s" % [str(fish_name.get("en", "Fish")), str(method_name.get("en", method_id))],
 			"th": "จานทดลองครัว: %s %s" % [str(fish_name.get("th", "ปลา")), str(method_name.get("th", method_id))],
@@ -1086,6 +1343,7 @@ static func custom_recipe(name_text: String, fish_id: String, method_id: String,
 	return {
 		"id": "custom_%d" % abs(hash(signature)),
 		"real": false,
+		"provenance": CREATED,
 		"custom": true,
 		"name": {"en": dish_name, "th": dish_name},
 		"about": {

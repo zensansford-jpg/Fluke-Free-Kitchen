@@ -102,6 +102,11 @@ func _dish_card(entry: Dictionary) -> PanelContainer:
 	v.add_child(preview)
 
 	v.add_child(UIFactory.wrap(RecipeDB.local(recipe.get("name", {})), 21, UIFactory.TEXT_BRIGHT, true))
+	var badges := UIFactory.tag_row(6)
+	badges.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	badges.add_child(UIFactory.chip(
+		RecipeDB.provenance_label(recipe), Color(0.62, 0.72, 0.92), true))
+	v.add_child(badges)
 	v.add_child(UIFactory.wrap(RecipeDB.local(recipe.get("about", {})), 15, UIFactory.TEXT_DIM))
 	v.add_child(UIFactory.wrap(Loc.t("explore.note"), 14, Color(0.62, 0.72, 0.92)))
 

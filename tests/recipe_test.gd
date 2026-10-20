@@ -68,6 +68,40 @@ func _check_catalogue() -> void:
 	else:
 		failures.append("catalogue: %d variations do not say they are not traditional dishes" % mislabelled)
 
+	# Every dish must carry a provenance grade the UI can show, and the grade must
+	# not contradict the data. This is the check behind the promise that a
+	# documented dish, a regional variation, a fusion dish and a game composition
+	# never look alike.
+	var counts := RecipeDB.provenance_counts()
+	var ungraded := 0
+	for recipe in RecipeDB.recipes():
+		var grade := RecipeDB.provenance(recipe)
+		if not RecipeDB.PROVENANCE_ORDER.has(grade):
+			ungraded += 1
+			failures.append("catalogue: '%s' has no provenance grade" % str(recipe.get("id", "")))
+			continue
+		# A dish claiming documented tradition must not be a game composition, and
+		# a game composition must not claim to be real food.
+		if grade in [RecipeDB.DOCUMENTED, RecipeDB.REGIONAL, RecipeDB.FUSION] and not bool(recipe.get("real", false)):
+			failures.append("catalogue: '%s' is marked %s but not real" % [str(recipe.get("id", "")), grade])
+		if grade in [RecipeDB.GENERATED, RecipeDB.CREATED] and bool(recipe.get("real", false)):
+			failures.append("catalogue: '%s' is marked %s but claims to be real" % [str(recipe.get("id", "")), grade])
+		if RecipeDB.provenance_label(recipe).is_empty() or RecipeDB.provenance_note(recipe).is_empty():
+			failures.append("catalogue: '%s' has no label or note for its grade" % str(recipe.get("id", "")))
+	if ungraded == 0:
+		var parts: Array = []
+		for grade in RecipeDB.PROVENANCE_ORDER:
+			parts.append("%s %d" % [grade, int(counts.get(grade, 0))])
+		print("  catalogue: provenance graded — %s" % ", ".join(parts))
+
+	# The shipped catalogue is the *fixed* one, so it may only contain grades the
+	# game can honestly stand behind. Generated and player-made dishes get their
+	# grades from the composers and never live in this list.
+	for recipe in RecipeDB.recipes():
+		var grade := RecipeDB.provenance(recipe)
+		if grade in [RecipeDB.GENERATED, RecipeDB.CREATED]:
+			failures.append("catalogue: shipped recipe '%s' claims the grade '%s'"
+				% [str(recipe.get("id", "")), grade])
 	# A fish that is a colour variety must point at the species it belongs to.
 	var dishonest := 0
 	for fish in RecipeDB.fish():
