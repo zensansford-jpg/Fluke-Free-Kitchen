@@ -1,14 +1,33 @@
 # Final Status Summary - Fluke Free Kitchen (Fluke Free Fighters)
 
-**Date:** 2026-10-18 · **Updated:** 2026-10-20 (interface pass)  
+**Date:** 2026-10-18 · **Updated:** 2026-10-20 (catalogue, search, 3D arrangement)  
 **Godot Version:** 4.7.2.stable.official.ed1daf0bf
+
+## Catalogue, search and the arranged kitchen (added this session)
+
+Four changes went in this session; each was driven by the project being run, not by reading
+it. Everything below is verified by the ten suites (10/10 PASS, 360 layouts, 0 problems).
+
+- **Every dish now carries a provenance grade** and the card says which claim it is making:
+  documented, regional, fusion, game-composed, skill challenge, or player-created. The grade
+  is read from the recipe's own field when it has one and derived from `real` and `tags`
+  otherwise, so no dish can ship unlabelled. Five regional dishes and one fusion dish were
+  added alongside it, so the grades are used rather than an empty vocabulary.
+- **The dish list is searchable** — by name in both languages, fish, ingredient, garnish, tag
+  or region — with filters (All / Ready to cook / Favourites / Documented / Regional / Game
+  dishes) and a "Surprise me" random pick drawn from what is currently on screen.
+- **The 3D kitchen is arranged from one station table** and measured by a real geometry
+  probe, which found and fixed four defects (see "Arranged 3D workspace" below).
+- **The knowledge check is a gate only in the story challenges** (see "Knowledge-check gate,
+  by mode" below).
 
 ## Interface and art pass (added this session)
 
 The interface was rebuilt for presence rather than flatness, and two genuine layout bugs
-surfaced and were fixed in the process. Everything below is verified by the eight suites
-(8/8 PASS, 360 layouts, 0 problems) and by the regenerated captures in
-`build/screenshots/visual/` (46) and `build/screenshots/responsive/` (300).
+surfaced and were fixed in the process. Everything below is verified by the suites
+(the full run at the time was 8/8 PASS; the current run is 10/10 — see the test table) and by
+the regenerated captures in `build/screenshots/visual/` (46) and
+`build/screenshots/responsive/` (300).
 
 **New drawing, all in code (no external art):**
 
@@ -66,9 +85,11 @@ rather than guessing, and no dish claims a region it is not known for.
 | cook_test | ✅ PASS | A/B/C outcomes |
 | recipe_test | ✅ PASS | Catalogue, generator, v3 save migration with quarantine (its one stderr JSON line is the deliberate corrupt-file case) |
 | minigame_test | ✅ PASS | Full generated recipe driven with real pointer input; plate finish race guarded |
+| quiz_gate_test | ✅ PASS | The knowledge-check gate, by mode: open modes credited on cooking alone, story challenges withheld until answered, revisiting a question scored once |
+| kitchen_probe | ✅ PASS | 3D arrangement: nothing floats, sinks or intersects on the bench; pan and board inside the camera frame |
 | responsive_check | ✅ PASS | 360 layouts across 12 screen sizes, 0 problems |
 
-**Result:** **8/8 suites PASS** (re-run 2026-10-20 from `tools/run_all_tests.ps1`, which now
+**Result:** **10/10 suites PASS** (re-run 2026-10-20 from `tools/run_all_tests.ps1`, which now
 writes its verdict logs to `build/test_runs/`).
 
 Two test-infrastructure defects were fixed this session so the summary is trustworthy:
@@ -205,33 +226,65 @@ distinct dishes.
 
 ## Expansion Completed
 
-✅ Data-driven catalogue (11 dishes, 8 real recipes + 3 challenge variations)  
+✅ Data-driven catalogue (17 dishes: 8 documented Thai dishes, 5 regional dishes, 1 fusion
+  dish, 3 skill challenges)  
+✅ Provenance grading — every dish says which claim it is making (documented / regional /
+  fusion / game-composed / skill challenge / player-created)  
+✅ Searchable dish browser — search by name (both languages), fish, ingredient, garnish, tag
+  or region, plus filters (All / Ready to cook / Favourites / Documented / Regional / Game
+  dishes) and a "Surprise me" random pick  
 ✅ Reusable minigame library (14 interaction kinds, real input required)  
 ✅ Zero-reading tutorial system with teach-once-per-session demo gating  
 ✅ Character reactions integrated  
 ✅ Endless challenge generator (seeded, validated, with fallbacks)  
-✅ Visual-only quiz integration  
+✅ Visual-only quiz integration; the knowledge check is a gate only in the story challenges  
 ✅ Three modes: Let's Cook, Endless Kitchen, Free Cook (experimental)  
 ✅ Player recipe creator + personal cookbook (composed from the real catalogue, saved in v3)  
 ✅ Discover: a paged, picture-first browser over the composed dishes  
-✅ Progression/unlocks (≥2 dishes open at start, all 11 reachable)  
+✅ A station table the 3D kitchen is arranged from, checked by a real geometry probe  
+✅ Progression/unlocks (2 dishes open at start, all 17 reachable)  
 ✅ v3 save system with v2 migration  
 ✅ Raycast fix to exclude carried items  
 ✅ Ingredient visuals & visual_for fix  
 ✅ Debug prints cleaned from test and plate task  
-✅ 8 test suites integrated into run_all_tests.ps1  
+✅ 10 test suites integrated into run_all_tests.ps1  
 ✅ Shared animation library (`Anim`) — one rhythm for all kitchen motion  
 ✅ Sustained audio beds synced to the gesture (fry / boil / wash)  
-✅ Windows / Web / Android re-exported and re-verified (2026-10-18; re-exported after the
-  interface pass — see `docs/EXPORTS.md`)
 ✅ Interface and art pass: drawn icon set, ambient background, plate and fish art, shadows,
   staggered entrances, instinct-level pointer feedback, and two real overflow bugs fixed  
 
-**Verified state:** the eight suites at the top of this file pass on `main` (re-run
-2026-10-20 after the interface and art pass). The interface/art pass changed game code under
-`scripts/`, so the three working exports built from `e6741f3` **no longer match what runs**:
-Windows / Web / Android were re-exported and re-verified after this pass — see
-`docs/EXPORTS.md` for the build times and the checks that were run against each.
+## Arranged 3D workspace (added this session)
+
+The worktop was laid out as loose coordinates at the call sites, so nothing stopped two
+props being given the same patch of bench. `tests/kitchen_probe.gd` is a headless geometry
+probe that measures the *real* world-space arrangement — the camera's actual view of the
+bench plane, every prop's world position and bounding box — and fails on anything floating,
+sunk, out of frame, or overlapping. It found four genuine defects, all fixed at the cause
+rather than nudged per call site: a herb bunch built 14 cm above its anchor (so a bunch on
+the worktop read as levitating), the same bunch then sinking 22 mm into the bench, the
+level-3 village model standing inside the water jar, and the wash and prep stations claiming
+an overlapping 60 mm strip of bench where the sink and the board would fight.
+
+`KitchenStations` is now the single table the kitchen is arranged from — a left-to-right
+workflow (wash, prep, heat, rest, village) with a `validate()` that checks the table against
+itself. `KitchenScene.BOARD_ANCHOR` is read from it, so the board and the prep station cannot
+drift apart. The probe is wired in as a ninth suite, so the arrangement can no longer regress
+silently.
+
+## Knowledge-check gate, by mode (added this session)
+
+Whether a health question must be answered before a challenge counts is now a property of
+the mode, not of the question. The three story challenges still gate, because the competition
+rubric asks for a level to require the answer before it is passed. Let's Cook, Endless Kitchen
+and Free Cook ask the same questions and show the same explanations, but no longer block on
+them — a player who came to cook finishes cooking, and the questions are offered with the
+rest of the result. `tests/quiz_gate_test.gd` tests the rule in both directions.
+
+**Verified state:** the ten suites at the top of this file pass on `main` (re-run
+2026-10-20 after this session's changes). These changes touched game code under `scripts/`
+and the data under `scripts/data/`, so the three working exports built earlier **no longer
+match what runs** — Windows / Web / Android must be re-exported and re-verified before any
+claim about the shipped builds; see `docs/EXPORTS.md`.
 
 ## Known Issues
 
@@ -239,14 +292,22 @@ None open in the automated suites. The remaining real gaps are outside the code 
 below): a native-Thai-speaker review, an on-device Android run, an iOS build, and the
 competition paperwork.
 
+The catalogue is honest about its own limits: the shipped dishes are all graded, and no dish
+is presented as more strongly attested than it is. The catalogue is *not* an exhaustive
+statement about world cuisine — it is one region's documented dishes plus a small number of
+honestly-labelled regional and fusion dishes, and an unbounded pool of dishes composed by the
+game. Every composed dish is labelled as a game creation, never as anyone's traditional
+recipe.
+
 ## Remaining (optional polish)
 
 - Full manual play-through across all three modes on the demo machine (checklist in `docs/QA_CHECKLIST.md` §2)
 - An on-device Android run (the APK builds and verifies but has never been installed)
 - A native-Thai-speaker string review
+- Re-export Windows / Web / Android after this session's code changes (see `docs/EXPORTS.md`)
 
 ## Conclusion
 
-The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all eight automated suites
-pass**. Core gameplay, catalogue, minigames, modes, validation, layout reflow and the save
-system are implemented and verified by passing tests.
+The CRITICAL GAMEPLAY EXPANSION is functionally complete and **all ten automated suites
+pass**. Core gameplay, catalogue, minigames, modes, validation, layout reflow, the 3D
+arrangement and the save system are implemented and verified by passing tests.
