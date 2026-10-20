@@ -9,6 +9,10 @@ const TestWindow := preload("res://tests/test_window.gd")
 
 
 func _ready() -> void:
+	# Entrance animations only touch opacity and scale, never layout, but the
+	# numbers printed here are meant to describe a settled screen — so the
+	# interface's motion is off while they are read.
+	UIFactory.set_motion_enabled(false)
 	# Stretch mode is disabled: a headless run starts with a 64x64 viewport unless
 	# it says otherwise. The size can also be given on the command line so the same
 	# dump can be taken at several screen sizes:

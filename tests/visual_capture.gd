@@ -20,6 +20,9 @@ var out_dir := ""
 
 
 func _ready() -> void:
+	# Screens stagger their content in when they open; a capture would record
+	# that as a half-faded page, so the interface's motion is off for this run.
+	UIFactory.set_motion_enabled(false)
 	# An explicit size: with stretch mode disabled the shots must be taken at a
 	# stated pixel size, not whenever the desktop window happens to be.
 	TestWindow.use(1280, 720)

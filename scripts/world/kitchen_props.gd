@@ -259,24 +259,63 @@ static func soap(parent: Node3D, pos: Vector3) -> Node3D:
 
 
 # ------------------------------------------------------------------------- food ---
-## A whole freshwater fish: body, tail, fins and a dark eye.
+## A whole freshwater fish: head, tapering body, dorsal and pectoral fins, a forked
+## tail, and a dark eye.
 ##
-## The body and the fins are tagged `food_surface` so the kitchen can colour them
-## as they cook. The eyes are left untagged on purpose: they are already dark, and
-## a fish whose eye has "burnt" would read as burnt long before it is.
-## A whole fish. The body is lifted so the fish's belly rests on its anchor: the
-## unscaled mesh used to sit 4 cm below the origin, which half-buried every fish laid
-## on the board. The same visual is dropped into the pan by `place_fish_in_wok`.
+## Every part that reads as flesh is tagged `food_surface` so the kitchen can colour
+## it as it cooks, from raw through opaque to browned. The eyes are left untagged on
+## purpose: they are already dark, and a fish whose eye has "burnt" would read as
+## burnt long before it is.
+##
+## The parts are placed so the fish's belly rests on its anchor: the anchor sits on
+## the surface the fish is lying on, and everything is built above y = 0. That is
+## what stops a fish half-burying itself in the chopping board or the pan, and it is
+## why no caller has to nudge the fish up afterwards.
+##
+## The body is built from four overlapping segments rather than one stretched
+## sphere: a sphere scaled 3:1 on its own reads as a balloon, while tapering
+## segments give the fish a thick shoulder and a narrow tail like the real animal.
 static func fish(parent: Node3D, pos: Vector3, mat_name: String = "fish_raw") -> Node3D:
 	var node := Node3D.new()
 	node.name = "Fish"
 	node.position = pos
 	parent.add_child(node)
-	_tag_food_surface(PropFactory.sphere(node, 0.16, mat_name, Vector3(0, 0.10, 0), Vector3(1.0, 0.62, 3.0)))
-	_tag_food_surface(PropFactory.prism(node, Vector3(0.22, 0.18, 0.02), mat_name, Vector3(0, 0.10, -0.46), Vector3(0, 0, 90)))
-	_tag_food_surface(PropFactory.prism(node, Vector3(0.16, 0.12, 0.02), mat_name, Vector3(0, 0.20, 0.06), Vector3(0, 0, 0)))
-	PropFactory.sphere(node, 0.028, "hair", Vector3(0.09, 0.15, 0.40))
-	PropFactory.sphere(node, 0.028, "hair", Vector3(-0.09, 0.15, 0.40))
+
+	# Body: shoulder, middle, waist, tail root — each a little smaller and higher
+	# than the last, so the back arches away from the board.
+	_tag_food_surface(PropFactory.sphere(node, 0.155, mat_name, Vector3(0, 0.105, 0.16), Vector3(1.02, 0.70, 1.25)))
+	_tag_food_surface(PropFactory.sphere(node, 0.145, mat_name, Vector3(0, 0.100, -0.06), Vector3(0.98, 0.66, 1.30)))
+	_tag_food_surface(PropFactory.sphere(node, 0.112, mat_name, Vector3(0, 0.093, -0.30), Vector3(0.82, 0.58, 1.35)))
+	_tag_food_surface(PropFactory.sphere(node, 0.070, mat_name, Vector3(0, 0.085, -0.50), Vector3(0.60, 0.44, 1.20)))
+	# Head: a slightly flattened taper in front of the shoulder.
+	_tag_food_surface(PropFactory.sphere(node, 0.125, mat_name, Vector3(0, 0.108, 0.44), Vector3(0.86, 0.64, 1.10)))
+	_tag_food_surface(PropFactory.sphere(node, 0.078, mat_name, Vector3(0, 0.100, 0.58), Vector3(0.70, 0.52, 1.00)))
+
+	# Dorsal fin: a raked triangle along the back, then a small second fin further
+	# back, which is what a tilapia or a snakehead actually has.
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.20, 0.13, 0.015), mat_name,
+		Vector3(0, 0.20, 0.10), Vector3(0, 0, 90)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.11, 0.07, 0.012), mat_name,
+		Vector3(0, 0.16, -0.30), Vector3(0, 0, 90)))
+	# Pectoral fin, angled out from the flank.
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.12, 0.09, 0.012), mat_name,
+		Vector3(0.09, 0.07, 0.28), Vector3(0, 42, 70)))
+
+	# Tail: a stalk and a forked fin, so the silhouette ends in a V rather than a
+	# paddle.
+	_tag_food_surface(PropFactory.sphere(node, 0.035, mat_name, Vector3(0, 0.085, -0.58), Vector3(0.7, 0.5, 1.6)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.20, 0.19, 0.014), mat_name,
+		Vector3(0, 0.105, -0.72), Vector3(0, 90, 90)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.13, 0.15, 0.012), mat_name,
+		Vector3(0.055, 0.105, -0.66), Vector3(20, 90, 64)))
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.13, 0.15, 0.012), mat_name,
+		Vector3(-0.055, 0.105, -0.66), Vector3(20, 90, 116)))
+
+	# Gill line and eyes: dark detail that is never recoloured by cooking.
+	_tag_food_surface(PropFactory.prism(node, Vector3(0.20, 0.20, 0.010), "fish_gill",
+		Vector3(0, 0.108, 0.32), Vector3(0, 0, 90)))
+	PropFactory.sphere(node, 0.026, "hair", Vector3(0.072, 0.135, 0.50))
+	PropFactory.sphere(node, 0.026, "hair", Vector3(-0.072, 0.135, 0.50))
 	return node
 
 

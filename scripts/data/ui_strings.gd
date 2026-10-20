@@ -333,6 +333,8 @@ static func table() -> Dictionary:
 		"dishes.subtitle": {"en": "Real Thai dishes and skill challenges. Get the fish cooked through and the rest is flavour.", "th": "เมนูไทยจริงและด่านฝึกฝีมือ ทำให้ปลาสุกทั่วถึง ส่วนที่เหลือคือรสชาติ"},
 		"dishes.real": {"en": "Real dish", "th": "เมนูจริง"},
 		"dishes.variation": {"en": "Game challenge — not a traditional dish", "th": "ด่านในเกม ไม่ใช่เมนูพื้นบ้าน"},
+		"dishes.variation_short": {"en": "Game challenge", "th": "ด่านในเกม"},
+		"dishes.no_heat": {"en": "No cooking step", "th": "ไม่มีขั้นตอนปรุงด้วยไฟ"},
 		"dishes.locked": {"en": "Locked", "th": "ยังไม่ปลดล็อก"},
 		"dishes.locked_hint": {"en": "Finish the dish it comes from to unlock this one.", "th": "ทำเมนูต้นทางให้สำเร็จเพื่อปลดล็อกเมนูนี้"},
 		"dishes.cook": {"en": "Cook this", "th": "ทำเมนูนี้"},

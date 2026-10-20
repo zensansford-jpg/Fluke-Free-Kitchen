@@ -176,6 +176,11 @@ static func _build(name: String) -> StandardMaterial3D:
 			return _colored(name, Color(0.78, 0.60, 0.32), 0.6, 0.0)
 		"fish_grilled":
 			return _colored(name, Color(0.45, 0.30, 0.18), 0.75, 0.0)
+		"fish_gill":
+			# The dark line behind the head. It is deliberately *not* a food
+			# surface, so cooking never washes it out: it is what keeps the fish
+			# readable as a fish once the flesh has browned.
+			return _colored(name, Color(0.20, 0.09, 0.09), 0.45, 0.0)
 		"meat":
 			return _colored(name, Color(0.62, 0.26, 0.24), 0.5, 0.0)
 		"veg_green":

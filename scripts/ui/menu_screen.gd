@@ -187,7 +187,10 @@ func gap(height: int) -> Control:
 
 func title_block(title_key: String, subtitle_key: String) -> VBoxContainer:
 	var v := UIFactory.vbox(6)
-	v.add_child(centred(UIFactory.title(Loc.t(title_key), 46)))
+	var heading := UIFactory.hero(Loc.t(title_key), 46)
+	v.add_child(centred(heading))
 	if not subtitle_key.is_empty():
-		v.add_child(centred(UIFactory.wrap(Loc.t(subtitle_key), 19, UIFactory.TEXT_DIM)))
+		var sub := UIFactory.wrap(Loc.t(subtitle_key), 19, UIFactory.TEXT_DIM)
+		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(centred(sub))
 	return v

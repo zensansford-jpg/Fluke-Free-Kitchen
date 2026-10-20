@@ -41,6 +41,8 @@ var shot_dir := ""
 
 
 func _ready() -> void:
+	# Captures of the HUD must be of a settled screen, not mid-entrance.
+	UIFactory.set_motion_enabled(false)
 	shots = OS.get_cmdline_user_args().has("shots")
 	if shots:
 		shot_dir = Captures.open("cook")

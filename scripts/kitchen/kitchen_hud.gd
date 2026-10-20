@@ -28,6 +28,9 @@ var _step_text := ""
 var _info: PanelContainer = null
 var _buttons: HBoxContainer = null
 var _step_label: Label = null
+var _pips: HBoxContainer = null
+var _pip_index := 0
+var _pip_total := 0
 var _compact := false
 
 
@@ -44,8 +47,11 @@ func setup(level: Dictionary) -> void:
 
 func set_step(index: int, total: int) -> void:
 	_step_text = "%s %d / %d" % [Loc.t("hud.step"), index, total]
+	_pip_index = index
+	_pip_total = total
 	if _step_label != null and is_instance_valid(_step_label):
 		_step_label.text = _step_text
+	_refresh_pips()
 
 
 ## Empties the instruction-bar area. The step runner calls this between steps so a
@@ -162,18 +168,27 @@ func _build() -> void:
 	prompt_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(prompt_slot)
 
+	# The strip settles in just after the kitchen's own fade, so the first thing
+	# the player sees is the worktop and then the two controls, not a wall of UI
+	# arriving on the same frame as the scene.
+	UIFactory.entrance(_info, 0.22)
+	UIFactory.entrance(_buttons, 0.28)
+
 	apply_layout()
 
 
-## The card content is different in the two layouts: three stacked lines when
-## there is room, one line when there is not.
+## The card content is different in the two layouts: the dish, then either the
+## row of step dots or one plain line when there is no room for dots.
 func _rebuild_info() -> void:
 	for child in _info.get_children():
 		_info.remove_child(child)
 		child.queue_free()
 	_step_label = null
+	_pips = null
 
 	if _compact:
+		# One line, as before: on a phone the card is 78 pixels tall and holds the
+		# dish and the count. The dot row is a wide-layout luxury.
 		var row := UIFactory.hbox(8)
 		_info.add_child(row)
 		var name_label := UIFactory.label(LevelDB.title(_level), 18, UIFactory.TEXT_BRIGHT, true)
@@ -182,15 +197,70 @@ func _rebuild_info() -> void:
 		name_label.clip_text = true
 		row.add_child(name_label)
 		_step_label = UIFactory.label(_step_text, 15, UIFactory.ACCENT, true)
+		_step_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(_step_label)
 		return
 
-	var v := UIFactory.vbox(2)
+	var v := UIFactory.vbox(6)
 	_info.add_child(v)
-	v.add_child(UIFactory.label(Loc.t("hud.challenge"), 15, UIFactory.TEXT_DIM))
+
+	var caption := UIFactory.hbox(7)
+	caption.add_child(UIFactory.icon("chef", 17.0, UIFactory.ACCENT))
+	caption.add_child(UIFactory.label(Loc.t("hud.challenge"), 15, UIFactory.TEXT_DIM))
+	v.add_child(caption)
+
 	var wide_name := UIFactory.label(LevelDB.title(_level), 19, UIFactory.TEXT_BRIGHT, true)
 	wide_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	wide_name.clip_text = true
 	v.add_child(wide_name)
-	_step_label = UIFactory.label(_step_text, 16, UIFactory.ACCENT, true)
-	v.add_child(_step_label)
+
+	# Progress as a row of dots: the step that is running is ringed in amber,
+	# the ones behind it are filled, the ones ahead are faint. The plain count
+	# stays beside them for anyone who prefers the number.
+	var progress := UIFactory.hbox(8)
+	_pips = UIFactory.hbox(6)
+	_pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress.add_child(_pips)
+	_step_label = UIFactory.label(_step_text, 14, UIFactory.TEXT_DIM)
+	_step_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_step_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress.add_child(_step_label)
+	v.add_child(progress)
+	_refresh_pips()
+
+
+## Brings the dot row to the state `set_step` was last given: dots are added or
+## removed when a challenge changes shape, and each one is re-styled by its
+## relation to the step now running.
+func _refresh_pips() -> void:
+	if _pips == null or not is_instance_valid(_pips):
+		return
+	while _pips.get_child_count() > _pip_total:
+		var extra := _pips.get_child(_pips.get_child_count() - 1)
+		_pips.remove_child(extra)
+		extra.queue_free()
+	while _pips.get_child_count() < _pip_total:
+		_pips.add_child(PanelContainer.new())
+	for i in _pips.get_child_count():
+		_style_pip(_pips.get_child(i) as PanelContainer, i + 1)
+
+
+func _style_pip(pip: PanelContainer, position: int) -> void:
+	if pip == null:
+		return
+	var current := position == _pip_index
+	var px := 13.0 if current else 10.0
+	pip.custom_minimum_size = Vector2(px, px)
+	pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var sb := StyleBoxFlat.new()
+	sb.set_corner_radius_all(99)
+	if position < _pip_index:
+		sb.bg_color = Color(UIFactory.ACCENT.r, UIFactory.ACCENT.g, UIFactory.ACCENT.b, 0.85)
+	elif current:
+		sb.bg_color = Color(1, 1, 1, 0.92)
+		sb.set_border_width_all(2)
+		sb.border_color = UIFactory.ACCENT
+	else:
+		sb.bg_color = Color(1, 1, 1, 0.10)
+	pip.add_theme_stylebox_override("panel", sb)

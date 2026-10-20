@@ -1,7 +1,59 @@
 # Final Status Summary - Fluke Free Kitchen (Fluke Free Fighters)
 
-**Date:** 2026-10-18 · **Updated:** 2026-10-20  
+**Date:** 2026-10-18 · **Updated:** 2026-10-20 (interface pass)  
 **Godot Version:** 4.7.2.stable.official.ed1daf0bf
+
+## Interface and art pass (added this session)
+
+The interface was rebuilt for presence rather than flatness, and two genuine layout bugs
+surfaced and were fixed in the process. Everything below is verified by the eight suites
+(8/8 PASS, 360 layouts, 0 problems) and by the regenerated captures in
+`build/screenshots/visual/` (46) and `build/screenshots/responsive/` (300).
+
+**New drawing, all in code (no external art):**
+
+- `scripts/ui/ui_icon.gd` (`UIIcon`) — a vector icon set drawn from 100 × 100 design
+  space: play, book, compass, chef, sparkle, star, flame, fish, knife, pot, drop, search,
+  check, cross, arrow, lock, leaf, and the five gesture glyphs (hand, stir, hold, flip,
+  tap). Icons are decoration: the word is always beside them, never replaced by them.
+- `scripts/ui/ambient_bg.gd` (`AmbientBackground`) — four drifting warm radial glows
+  behind the menus, on a click-through layer.
+- `DishPreview` now draws a real plate: drop shadow, rim, well, contact shadow, dorsal
+  highlight and tail fin, all still driven by the species in `RecipeDB`.
+- `KitchenProps.fish` is a proper fish now — head, four tapering body segments, dorsal and
+  pectoral fins, a forked tail, gill line and eyes. Flesh parts are tagged `food_surface`
+  (so they brown); the gill line and eyes deliberately are not, so a cooked fish stays
+  readable.
+
+**Interface system (`UIFactory`):** panel and button style boxes gained drop shadows and a
+distinct focus ring; every button answers the pointer with a small scale pulse; screens
+stagger their content in on open; new helpers `icon`, `chip`, `hero`, `entrance`,
+`tag_row`. Menu mastheads are `hero` (title plus accent bar), the mode screen grew five
+drawn emblems, dish cards grew region / real-vs-variation / no-cooking-step capsules, the
+instruction bar grew a gesture emblem and a capsule, and the kitchen HUD shows step
+progress as dots (the step count is kept beside them).
+
+**Motion is gated, not hidden.** `UIFactory.set_motion_enabled(false)` turns off entrance
+and pointer motion for the whole game. `responsive_check`, `visual_capture`, `layout_check`
+and `cook_test` call it, because a capture taken three frames after a screen opens would
+otherwise record a half-faded page. Entrance animation touches only opacity and scale — never
+layout — so measured rectangles and click coordinates are unaffected.
+
+**Two real bugs fixed (causes, not offsets):**
+
+1. *The dish page overflowed a 320 px phone.* Three variable-length Thai capsules in one
+   `HBoxContainer` give that row — and so the card, the grid and the page — a minimum width
+   of all three laid end to end: **343 px asked, 320 px available** (measured, not guessed).
+   The badges now sit in `UIFactory.tag_row()`, a `FlowContainer`, which reports the widest
+   single tag and folds the rest onto another line. The page minimum is 316 px.
+2. *The instruction bar grew past the screen on a phone.* Putting the emblem, the sentence
+   and the gesture capsule in one fixed row squeezed the sentence into a two-word column and
+   the bar reached 452 px tall. The narrow layout now keeps the emblem and the words and
+   drops the capsule, which repeats what the emblem already says.
+
+The same pass also added `RecipeDB.region_of()`, which maps a recipe id to its documented
+region (Central Thai / Northeastern Thai) or to nothing at all — the card shows no capsule
+rather than guessing, and no dish claims a region it is not known for.
 
 ## Test Results (run_all_tests.ps1)
 
@@ -41,6 +93,12 @@ Two test-infrastructure defects were fixed this session so the summary is trustw
 - The cook/press-and-hold panels now size themselves from their content (the existing
   `content_sheet` machinery) and the cook panel stacks its labels instead of forcing a
   385 px row, so both fit a 320 px phone.
+- `responsive_check` no longer measures a page frame or the scroller inside it against the
+  window's bottom edge: a page taller than the frame is a scroll bar, not a layout bug.
+  Width is still checked against the window everywhere, and real overflow is still caught
+  for anything outside a scroller.
+- The interface pass above found and fixed two further overflows (a capsule row and the
+  instruction bar); the matrix was re-run and is clean again.
 
 The same matrix was re-run with a real window on 2026-10-20 (NVIDIA GPU, Forward+; the first
 such run was 2026-10-18), which also writes one PNG per screen per size into
@@ -164,13 +222,16 @@ distinct dishes.
 ✅ 8 test suites integrated into run_all_tests.ps1  
 ✅ Shared animation library (`Anim`) — one rhythm for all kitchen motion  
 ✅ Sustained audio beds synced to the gesture (fry / boil / wash)  
-✅ Windows / Web / Android re-exported and re-verified (2026-10-18)  
+✅ Windows / Web / Android re-exported and re-verified (2026-10-18; re-exported after the
+  interface pass — see `docs/EXPORTS.md`)
+✅ Interface and art pass: drawn icon set, ambient background, plate and fish art, shadows,
+  staggered entrances, instinct-level pointer feedback, and two real overflow bugs fixed  
 
-**Verified state:** the eight suites at the top of this file pass on `main` (re-run 2026-10-20).
-No game code — nothing under `scripts/`, `scenes/` or `autoload/` — has changed since commit
-`e6741f3` ("Give long actions a sustained voice"); everything since then is documentation apart
-from one test-infrastructure commit (`5b2c22d`, capture and log output moved into the project).
-The three working exports were built from that same game source, so they still match what runs.
+**Verified state:** the eight suites at the top of this file pass on `main` (re-run
+2026-10-20 after the interface and art pass). The interface/art pass changed game code under
+`scripts/`, so the three working exports built from `e6741f3` **no longer match what runs**:
+Windows / Web / Android were re-exported and re-verified after this pass — see
+`docs/EXPORTS.md` for the build times and the checks that were run against each.
 
 ## Known Issues
 

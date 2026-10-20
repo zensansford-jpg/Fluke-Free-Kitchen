@@ -20,13 +20,24 @@ func _ready() -> void:
 func _build() -> void:
 	var column := scroll_page(34, 10)
 
-	column.add_child(centred(UIFactory.title(Loc.t("app.title"), 50)))
-	column.add_child(centred(UIFactory.wrap(Loc.t("app.subtitle"), 19, UIFactory.TEXT_DIM)))
+	# The page arrives as a cascade rather than all at once: the masthead first,
+	# then the record, then the way in, then the list.
+	var title := UIFactory.hero(Loc.t("app.title"), 50)
+	column.add_child(centred(title))
+	UIFactory.entrance(title, 0.02)
+
+	var subtitle := UIFactory.wrap(Loc.t("app.subtitle"), 19, UIFactory.TEXT_DIM)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(centred(subtitle))
+	UIFactory.entrance(subtitle, 0.08)
 
 	_star_summary = _build_star_summary()
 	column.add_child(centred(_star_summary))
+	UIFactory.entrance(_star_summary, 0.14)
 
-	column.add_child(centred(make_button(Loc.t("menu.play"), true, func() -> void: Game.go_to_modes())))
+	var play := make_button(Loc.t("menu.play"), true, func() -> void: Game.go_to_modes())
+	column.add_child(centred(play))
+	UIFactory.entrance(play, 0.20)
 
 	# The secondary entries sit two to a row: seven full-width buttons stacked
 	# vertically do not fit a 1280x720 canvas, and a title screen whose last
@@ -44,9 +55,14 @@ func _build() -> void:
 	grid.add_child(grid_button(Loc.t("menu.settings"), func() -> void: show_overlay(_settings_panel())))
 	grid.add_child(grid_button(Loc.t("menu.quit"), func() -> void: Game.quit_game()))
 	column.add_child(centred(grid))
+	UIFactory.entrance(grid, 0.26)
 
-	add_child(_language_button())
-	add_child(_footer())
+	var language := _language_button()
+	add_child(language)
+	var footer := _footer()
+	add_child(footer)
+	UIFactory.entrance(language, 0.34)
+	UIFactory.entrance(footer, 0.38)
 
 
 ## A button inside the two-column grid. It asks for a column's width rather than a

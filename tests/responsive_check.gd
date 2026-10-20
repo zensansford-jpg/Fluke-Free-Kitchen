@@ -54,6 +54,10 @@ var checked := 0
 
 
 func _ready() -> void:
+	# The menus fade their content in and move under the pointer. A capture taken
+	# three frames after a screen opens must show the finished screen, so the
+	# interface's motion is switched off for this run (and with it, hover scale).
+	UIFactory.set_motion_enabled(false)
 	shots = OS.get_cmdline_user_args().has("shots")
 	var args := OS.get_cmdline_user_args()
 	for i in args.size() - 1:
@@ -279,16 +283,34 @@ func _report_control(root: Control, name: String, label: String, size: Vector2i)
 
 ## Recurses over every visible Control, checking its rectangle and (for labels) the
 ## width of the text it was given.
-func _walk(node: Node, name: String, label: String, bounds: Rect2, depth: int) -> void:
+##
+## `page` is true once the walk has entered a vertical scroller. A page taller than
+## the frame is not a layout bug — it is a scroll bar — and everything inside a
+## scroller may run past the bottom edge as long as it is laid out inside the
+## scroller's own column. The window is still the frame for width, and overflow is
+## still caught for anything that does not sit inside a scroller at all.
+func _walk(node: Node, name: String, label: String, bounds: Rect2, depth: int, page := false) -> void:
 	if depth > 16:
 		return
 	for child in node.get_children():
 		if child is Control:
 			var control := child as Control
 			var child_bounds := bounds
+			# Entering a scroller lifts the bottom edge of the frame. Its content
+			# column starts a scroller at the same moment, so the allowance covers
+			# exactly the page and nothing else.
+			var page_here := page
+			if control is ScrollContainer and (control as ScrollContainer).vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED:
+				page_here = true
+			# A page taller than the window is a scroll bar, not a layout bug — but
+			# only for the page frame itself and the scroller inside it, both of
+			# which clip their content. Everything else is still measured against
+			# the window, which is where real overflow has always been caught.
+			var page_frame := control.clip_contents and (control is ScrollContainer
+				or (page_here and control.get_parent() is ScrollContainer))
 			if control.is_visible_in_tree() and control.size.x > 0.0 and control.size.y > 0.0:
 				var rect := control.get_global_rect()
-				if not _within(rect, bounds):
+				if not _within(rect, bounds) and not (page_frame and _within_column(rect, bounds)):
 					failures.append("%s: %s > %s leaves its area: %s (min %s)"
 						% [name, label, _path(control, node), rect, control.get_combined_minimum_size()])
 				if control is Label or control is Button:
@@ -300,11 +322,11 @@ func _walk(node: Node, name: String, label: String, bounds: Rect2, depth: int) -
 			# likes.
 			if control is ScrollContainer:
 				child_bounds = _scroll_bounds(control as ScrollContainer, bounds)
-			elif control.clip_contents:
+			elif control.clip_contents and not page_frame:
 				child_bounds = control.get_global_rect()
-			_walk(control, name, label, child_bounds, depth + 1)
+			_walk(control, name, label, child_bounds, depth + 1, page_here)
 		elif child is CanvasLayer or child is Node3D:
-			_walk(child, name, label, bounds, depth + 1)
+			_walk(child, name, label, bounds, depth + 1, page)
 
 
 ## A label or button must not be asked to draw more text than its own box can hold,
@@ -330,6 +352,14 @@ func _check_text(control: Control, name: String, label_path: String) -> void:
 			% [name, label_path, needed, control.size.x, text])
 
 
+## A control inside a vertical scroller is allowed to run past the bottom of the
+## frame, but not to be wider than the frame or to start off the top of it.
+func _within_column(rect: Rect2, bounds: Rect2) -> bool:
+	return rect.position.x >= bounds.position.x - TOLERANCE \
+		and rect.position.y >= bounds.position.y - TOLERANCE \
+		and rect.end.x <= bounds.end.x + TOLERANCE
+
+
 ## The area a scroller clips its content to. The axis it scrolls is left open: a
 ## child taller than a vertical scroller is not a layout bug, it is a scroll bar.
 func _scroll_bounds(scroll: ScrollContainer, bounds: Rect2) -> Rect2:
@@ -347,6 +377,32 @@ func _within(rect: Rect2, bounds: Rect2) -> bool:	return rect.position.x >= boun
 		and rect.position.y >= bounds.position.y - TOLERANCE \
 		and rect.end.x <= bounds.end.x + TOLERANCE \
 		and rect.end.y <= bounds.end.y + TOLERANCE
+
+
+## The space a MarginContainer's margins take out of its rectangle, so the area its
+## children are measured against can be derived from the parent's own bounds.
+func _margin_box(container: MarginContainer) -> Rect2:
+	var m := 0.0
+	if container.has_meta("resp_margin"):
+		m = float(container.get_meta("resp_margin"))
+	return Rect2(Vector2(m, m), Vector2(m * 2.0, m * 2.0))
+
+
+## Whether a control is inside a vertical scroller.
+##
+## A page taller than the frame is not a layout bug — it is a scroll bar — so the
+## `PageScroll` inside the page frame is allowed to run past the frame's bottom,
+## because `PageScroll` has vertical growth allowed and so does everything it
+## contains. Anything that cannot grow vertically (a `Fill`-only scroll area, a
+## card, a row) is still measured against the window, which is where genuine
+## overflow has always been caught.
+func _in_vertical_scroll(node: Node) -> bool:
+	var current := node
+	while current != null:
+		if current is ScrollContainer and (current as ScrollContainer).clip_contents:
+			return true
+		current = current.get_parent()
+	return false
 
 
 func _path(control: Control, parent: Node) -> String:

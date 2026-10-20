@@ -23,10 +23,10 @@ func _build() -> void:
 	column.add_child(title_block("dishes.title", "dishes.subtitle"))
 
 	var discovered := SaveData.discovered_ids()
-	column.add_child(centred(UIFactory.label(
+	column.add_child(centred(UIFactory.chip(
 		"%s: %d / %d" % [Loc.t("dishes.discovered"), SaveData.discovered_count(),
 			RecipeDB.recipe_count()],
-		18, UIFactory.TEXT_DIM)))
+		UIFactory.ACCENT)))
 
 	_recent_row(column)
 
@@ -41,8 +41,12 @@ func _build() -> void:
 	grid.columns = UIFactory.columns(3)
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 18)
+	var index := 0
 	for recipe in _sorted_recipes():
-		grid.add_child(_recipe_card(recipe, discovered))
+		var card := _recipe_card(recipe, discovered)
+		grid.add_child(card)
+		UIFactory.entrance(card, 0.04 + float(index % 9) * 0.035)
+		index += 1
 	column.add_child(centred(grid))
 
 	column.add_child(centred(back_button(func() -> void: Game.go_to_modes())))
@@ -108,10 +112,23 @@ func _recipe_card(recipe: Dictionary, discovered: Array) -> PanelContainer:
 
 	v.add_child(UIFactory.wrap(RecipeDB.title(recipe), 23, UIFactory.TEXT_BRIGHT, true))
 
-	var tag_colour := UIFactory.ACCENT if bool(recipe.get("real", true)) else Color(0.62, 0.72, 0.92)
-	v.add_child(UIFactory.wrap(
-		Loc.t("dishes.real") if bool(recipe.get("real", true)) else Loc.t("dishes.variation"),
-		15, tag_colour))
+	# The facts that let a player choose: where the dish is from, how it is
+	# cooked, and whether it is a documented dish or a game variation. Each is a
+	# capsule now, so the differences are visible at a glance instead of being
+	# three lines of small grey text in a row. They wrap, because three Thai
+	# capsules on one unbending line are wider than a phone screen.
+	var badges := UIFactory.tag_row(6)
+	badges.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var real := bool(recipe.get("real", true))
+	badges.add_child(UIFactory.chip(
+		Loc.t("dishes.real") if real else Loc.t("dishes.variation_short"),
+		UIFactory.ACCENT if real else Color(0.62, 0.72, 0.92), true))
+	if not real and not _cooked_on_a_stove(recipe):
+		badges.add_child(UIFactory.chip(Loc.t("dishes.no_heat"), Color(0.62, 0.72, 0.92)))
+	var region := RecipeDB.region_of(recipe)
+	if not region.is_empty():
+		badges.add_child(UIFactory.chip(region, Color(0.55, 0.9, 0.8)))
+	v.add_child(badges)
 
 	v.add_child(UIFactory.wrap(RecipeDB.about(recipe), 16, UIFactory.TEXT_DIM))
 
@@ -167,6 +184,16 @@ func _recipe_card(recipe: Dictionary, discovered: Array) -> PanelContainer:
 		v.add_child(centred(UIFactory.wrap(Loc.t("dishes.locked_hint"), 15, UIFactory.TEXT_DIM)))
 
 	return panel
+
+
+## Whether a recipe is cooked over heat at all. A dish that is dressed cold is
+## shown with its own badge, because "no cooking step" is part of what the card
+## has to say — and it is the reason such a dish carries no temperature rule.
+func _cooked_on_a_stove(recipe: Dictionary) -> bool:
+	for step in recipe.get("steps", []):
+		if step is Dictionary and str(step.get("kind", "")) in ["hold", "cook_through", "stir", "flip"]:
+			return true
+	return false
 
 
 func _difficulty_text(difficulty: int) -> String:

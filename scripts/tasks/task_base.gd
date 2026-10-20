@@ -192,20 +192,42 @@ func build_prompt_bar(gesture_key: String = "") -> PanelContainer:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var row := UIFactory.hbox(14)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(row)
+	# Three things want a place on the bar: the movement's emblem, the instruction
+	# itself, and the gesture's name. On a wide window they sit in one row. On a
+	# phone a single row squeezes the instruction to a two-word column and the bar
+	# grows taller than the screen, so the narrow layout keeps only the emblem and
+	# the words: the capsule repeats what the emblem already says, and dropping it
+	# is what buys the sentence its room.
+	var glyph := UIFactory.icon(gesture_icon_for(gesture_key), 34.0, UIFactory.ACCENT)
+
+	if UIFactory.is_compact():
+		var row := UIFactory.hbox(12)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(row)
+		glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(glyph)
+		var narrow_text := UIFactory.wrap(prompt_text(), 21)
+		narrow_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		narrow_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(narrow_text)
+		_prompt_area.add_child(panel)
+		return panel
+
+	var wide_row := UIFactory.hbox(14)
+	wide_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(wide_row)
+	wide_row.add_child(glyph)
 
 	var text := UIFactory.wrap(prompt_text(), 21)
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(text)
+	wide_row.add_child(text)
 
 	if not gesture_key.is_empty():
-		var chip := UIFactory.panel(UIFactory.CARD_COLOR)
+		var chip := UIFactory.chip(Loc.t(gesture_key), UIFactory.ACCENT)
 		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		chip.add_child(UIFactory.label(Loc.t(gesture_key), 17, UIFactory.ACCENT, true))
-		row.add_child(chip)
+		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		wide_row.add_child(chip)
 
 	_prompt_area.add_child(panel)
 	return panel
@@ -356,6 +378,25 @@ static func gesture_hint_for(kind: String) -> String:
 			return "task.hold"
 		"tap_correct", "choose_safer", "checklist", "order_steps":
 			return "task.tap"
+		_:
+			return ""
+
+
+## The icon that goes with a gesture hint: drag, circle, swipe, hold, tap — each
+## one a different shape, so the movement is recognisable before the words on the
+## bar have been read. `""` (a task with no gesture) gets no glyph.
+static func gesture_icon_for(gesture_key: String) -> String:
+	match gesture_key:
+		"task.drag":
+			return "hand"
+		"task.gesture_circle":
+			return "stir"
+		"task.gesture_swipe":
+			return "flip"
+		"task.hold":
+			return "hold"
+		"task.tap":
+			return "tap"
 		_:
 			return ""
 

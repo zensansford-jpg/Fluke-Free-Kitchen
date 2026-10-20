@@ -38,15 +38,17 @@ func _build() -> void:
 	var column := scroll_page(30, 16)
 	column.add_child(title_block("explore.title", "explore.subtitle"))
 	column.add_child(centred(UIFactory.wrap(Loc.t("explore.note"), 16, UIFactory.ACCENT)))
-	column.add_child(centred(UIFactory.label(
-		"%s %d" % [Loc.t("explore.count"), _entries.size()], 18, UIFactory.TEXT_DIM)))
+	column.add_child(centred(UIFactory.chip(
+		"%s %d" % [Loc.t("explore.count"), _entries.size()], UIFactory.TEXT_DIM)))
 
 	var grid := GridContainer.new()
 	grid.columns = UIFactory.columns(3, 1)
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 18)
-	for entry in _entries:
-		grid.add_child(_dish_card(entry))
+	for i in _entries.size():
+		var card := _dish_card(_entries[i])
+		grid.add_child(card)
+		UIFactory.entrance(card, 0.05 + float(i % 6) * 0.045)
 	column.add_child(centred(grid))
 
 	var more := make_button(Loc.t("explore.more"), true, func() -> void:

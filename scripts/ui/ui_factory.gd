@@ -14,6 +14,31 @@ const BAD := Color(1.0, 0.47, 0.42)
 const PANEL_COLOR := Color(0.05, 0.07, 0.11, 0.88)
 const CARD_COLOR := Color(0.09, 0.12, 0.17, 0.94)
 
+## The colour a panel is *pushed* away from the screen with: drop shadows are
+## what stop the interface reading as flat stickers on glass.
+const SHADOW := Color(0, 0, 0, 0.42)
+const SHADOW_SOFT := Color(0, 0, 0, 0.30)
+
+
+## Interface motion, on or off for the whole game.
+##
+## Screens fade their content in and every button answers the pointer with a
+## small move. A screenshot tool captures three frames after a screen opens, so
+## it would record a half-faded page; those tools switch this off and get the
+## finished screen instead. Stored on `Engine` rather than as a static member
+## because the factory is a plain static class.
+const MOTION_KEY := &"ffk_ui_motion"
+
+
+static func motion_enabled() -> bool:
+	if not Engine.has_meta(MOTION_KEY):
+		return true
+	return bool(Engine.get_meta(MOTION_KEY))
+
+
+static func set_motion_enabled(on: bool) -> void:
+	Engine.set_meta(MOTION_KEY, on)
+
 # ---------------------------------------------------------------- responsive ---
 ## Below this many pixels of width the interface swaps to its compact layout:
 ## one-column pages, smaller display type, tighter margins.
@@ -311,6 +336,8 @@ static func button(text: String, size: int = 22, min_width: float = 280.0) -> Bu
 	# Fit the requested width to the window instead of setting it outright, so a
 	# wide button reflows on a phone and is re-fitted if the window is resized.
 	responsive_min_size(b, min_width, 54.0)
+	# Every button answers the pointer the same way, wherever it is built.
+	tap_motion(b)
 	return b
 
 
@@ -384,6 +411,10 @@ static func style_panel(p: PanelContainer, color: Color = PANEL_COLOR, radius: i
 	sb.set_border_width_all(2)
 	sb.border_color = Color(1, 1, 1, 0.14)
 	sb.set_content_margin_all(20)
+	# Depth: the panel sits above the background instead of being printed on it.
+	sb.shadow_size = 12
+	sb.shadow_color = SHADOW
+	sb.shadow_offset = Vector2(0, 7)
 	p.add_theme_stylebox_override("panel", sb)
 
 
@@ -408,6 +439,21 @@ static func hbox(separation: int = 12) -> HBoxContainer:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", separation)
 	return h
+
+
+## A row of tags that wraps onto a second line instead of pushing its card wider.
+##
+## An `HBoxContainer` never wraps, so a card holding three variable-length Thai
+## capsules has a minimum width of all three laid end to end — which is what used
+## to make a dish card 303 pixels wide inside a 311 pixel page and push the whole
+## page off a 320 pixel phone. `FlowContainer` has no such floor: it reports the
+## widest single tag and folds the rest onto following lines.
+static func tag_row(separation: int = 6, alignment: int = FlowContainer.ALIGNMENT_CENTER) -> FlowContainer:
+	var row := FlowContainer.new()
+	row.alignment = alignment
+	row.add_theme_constant_override("h_separation", separation)
+	row.add_theme_constant_override("v_separation", separation)
+	return row
 
 
 static func spacer() -> Control:
@@ -461,6 +507,11 @@ static func callout(text: String, accent: Color = ACCENT, size: int = 19) -> Pan
 
 
 ## Gives a button a coloured, friendly style instead of the flat engine default.
+##
+## Depth and feedback are part of the style, not decoration applied later: a
+## filled button sits on a small shadow, lifts when the pointer arrives, and
+## carries a white ring when it has keyboard focus, so focus is never confused
+## with hover.
 static func style_button(b: Button, accent: Color = ACCENT, filled: bool = true) -> void:
 	var normal := StyleBoxFlat.new()
 	normal.set_corner_radius_all(14)
@@ -472,25 +523,41 @@ static func style_button(b: Button, accent: Color = ACCENT, filled: bool = true)
 		normal.bg_color = Color(1, 1, 1, 0.08)
 		normal.border_color = Color(1, 1, 1, 0.2)
 	normal.set_border_width_all(2)
+	normal.shadow_size = 6
+	normal.shadow_color = SHADOW
+	normal.shadow_offset = Vector2(0, 4)
 
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = accent.lightened(0.12) if filled else Color(1, 1, 1, 0.16)
+	hover.shadow_size = 11
+	hover.shadow_color = SHADOW
 
 	var pressed := normal.duplicate() as StyleBoxFlat
 	pressed.bg_color = accent.darkened(0.18) if filled else Color(1, 1, 1, 0.24)
+	pressed.shadow_size = 2
+	pressed.shadow_color = SHADOW_SOFT
+	pressed.shadow_offset = Vector2(0, 2)
+
+	# Focus has to look different from hover: a reviewer navigating with the
+	# keyboard must be able to tell which control will actually fire.
+	var focus := hover.duplicate() as StyleBoxFlat
+	focus.border_color = Color(1, 1, 1, 0.95) if filled else accent
+	focus.set_border_width_all(3)
 
 	var disabled := normal.duplicate() as StyleBoxFlat
 	disabled.bg_color = Color(0.2, 0.22, 0.26, 0.6)
 	disabled.border_color = Color(1, 1, 1, 0.08)
+	disabled.shadow_size = 0
 
 	b.add_theme_stylebox_override("normal", normal)
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", pressed)
-	b.add_theme_stylebox_override("focus", hover)
+	b.add_theme_stylebox_override("focus", focus)
 	b.add_theme_stylebox_override("disabled", disabled)
 	b.add_theme_color_override("font_color", Color(0.08, 0.09, 0.12) if filled else TEXT_BRIGHT)
 	b.add_theme_color_override("font_hover_color", Color(0.08, 0.09, 0.12) if filled else TEXT_BRIGHT)
 	b.add_theme_color_override("font_pressed_color", Color(0.08, 0.09, 0.12) if filled else TEXT_BRIGHT)
+	b.add_theme_color_override("font_focus_color", Color(0.08, 0.09, 0.12) if filled else TEXT_BRIGHT)
 	b.add_theme_color_override("font_disabled_color", Color(0.7, 0.72, 0.75, 0.8))
 
 
@@ -515,18 +582,32 @@ static func style_overlay_button(b: Button, accent: Color = ACCENT) -> void:
 	pressed.bg_color = Color(0.03, 0.04, 0.07, 0.96)
 	pressed.border_color = accent.darkened(0.2)
 
+	# Over the 3D scene a keyboard-focused control needs a stronger outline than
+	# hover, or the player cannot see where the next Enter will land.
+	var focus := hover.duplicate() as StyleBoxFlat
+	focus.set_border_width_all(3)
+	focus.border_color = Color(1, 1, 1, 0.9)
+
 	var disabled := normal.duplicate() as StyleBoxFlat
 	disabled.bg_color = Color(0.12, 0.13, 0.16, 0.7)
 	disabled.border_color = Color(1, 1, 1, 0.12)
 
+	# A shadow under the HUD controls lifts them off an unpredictable wall or
+	# worktop behind them.
+	for style: StyleBoxFlat in [normal, hover, pressed]:
+		style.shadow_size = 8
+		style.shadow_color = SHADOW
+		style.shadow_offset = Vector2(0, 4)
+
 	b.add_theme_stylebox_override("normal", normal)
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", pressed)
-	b.add_theme_stylebox_override("focus", hover)
+	b.add_theme_stylebox_override("focus", focus)
 	b.add_theme_stylebox_override("disabled", disabled)
 	b.add_theme_color_override("font_color", accent)
 	b.add_theme_color_override("font_hover_color", accent.lightened(0.25))
 	b.add_theme_color_override("font_pressed_color", accent.darkened(0.15))
+	b.add_theme_color_override("font_focus_color", accent.lightened(0.35))
 	b.add_theme_color_override("font_disabled_color", Color(0.7, 0.72, 0.75, 0.7))
 
 
@@ -540,11 +621,165 @@ static func card(title_text: String, body_text: String, accent: Color = ACCENT) 
 	return p
 
 
+# ------------------------------------------------------------- game feel ------
+## An icon: a `UIIcon` glyph drawn in code, sized in pixels and centred in the
+## space its container gives it. Decoration only — the label beside it is what
+## carries the meaning.
+static func icon(kind: String, px: float = 40.0, tint: Color = TEXT_BRIGHT) -> UIIcon:
+	var glyph := UIIcon.new()
+	glyph.kind = kind
+	glyph.colour = tint
+	glyph.custom_minimum_size = Vector2(px, px)
+	glyph.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return glyph
+
+
+## A row of icon + text: how a menu item announces what it opens.
+static func icon_row(kind: String, text: String, tint: Color, size: int = 22) -> HBoxContainer:
+	var row := hbox(10)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(icon(kind, float(mini(size + 14, 40)), tint))
+	row.add_child(label(text, size, TEXT_BRIGHT, true))
+	return row
+
+
+## A small capsule tag: a category, a filter, a status. Rounded enough to read
+## as a label rather than as something with a click behind it.
+static func chip(text: String, tint: Color = ACCENT, filled: bool = false) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(tint.r, tint.g, tint.b, 0.18) if not filled else tint
+	sb.set_corner_radius_all(15)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(tint.r, tint.g, tint.b, 0.5)
+	sb.content_margin_left = 12.0
+	sb.content_margin_right = 12.0
+	sb.content_margin_top = 5.0
+	sb.content_margin_bottom = 5.0
+	p.add_theme_stylebox_override("panel", sb)
+	var text_label := label(text, 15, TEXT_BRIGHT if not filled else Color(0.08, 0.09, 0.12), true)
+	text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	p.add_child(text_label)
+	return p
+
+
+## A title with a short accent bar under it: the one piece of ornament the
+## menus get, so a heading reads as a masthead instead of a line of text.
+static func hero(text: String, size: int = 50, tint: Color = ACCENT) -> Control:
+	var v := vbox(6)
+	var heading := title(text, size)
+	heading.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	v.add_child(centre_row(heading))
+
+	var bar := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = tint
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(3)
+	bar.add_theme_stylebox_override("panel", sb)
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(76, 2)
+	bar.add_child(spacer)
+	v.add_child(centre_row(bar))
+	return v
+
+
+## Pointer feedback shared by every interactive control: a small lift on
+## hover and a press-down when pushed, about the control's own centre.
+##
+## The scale is a draw transform, so it never changes a control's rectangle —
+## layout, container sorting and the tests that measure rects are unaffected.
+static func tap_motion(c: Control) -> void:
+	if c == null:
+		return
+	_keep_centred_pivot(c)
+	if c is BaseButton:
+		var b := c as BaseButton
+		b.mouse_entered.connect(func() -> void: _pulse(b, 1.035, 0.10, Tween.TRANS_BACK))
+		b.mouse_exited.connect(func() -> void: _pulse(b, 1.0, 0.14, Tween.TRANS_CUBIC))
+		b.button_down.connect(func() -> void: _pulse(b, 0.965, 0.07, Tween.TRANS_QUAD))
+		b.button_up.connect(func() -> void: _pulse(b, 1.035, 0.12, Tween.TRANS_BACK))
+		return
+	c.mouse_entered.connect(func() -> void: _pulse(c, 1.03, 0.12, Tween.TRANS_BACK))
+	c.mouse_exited.connect(func() -> void: _pulse(c, 1.0, 0.16, Tween.TRANS_CUBIC))
+
+
+static func _pulse(c: Control, factor: float, dur: float, trans: int) -> void:
+	if not motion_enabled() or not is_instance_valid(c) or not c.is_inside_tree():
+		return
+	var previous: Variant = c.get_meta("ffk_pulse", null)
+	if previous is Tween and (previous as Tween).is_valid():
+		(previous as Tween).kill()
+	var t := Anim.begin(c)
+	if t == null:
+		return
+	c.pivot_offset = c.size * 0.5
+	c.set_meta("ffk_pulse", t)
+	t.set_trans(trans).set_ease(Tween.EASE_OUT)
+	t.tween_property(c, "scale", Vector2.ONE * factor, dur)
+
+
+## Keeps a control's scale pivot on its own centre as it is laid out, so a
+## pulse grows the control in place instead of from its top-left corner.
+static func _keep_centred_pivot(c: Control) -> void:
+	if c.has_meta("ffk_pivot"):
+		return
+	c.set_meta("ffk_pivot", true)
+	c.resized.connect(func() -> void:
+		if is_instance_valid(c):
+			c.pivot_offset = c.size * 0.5)
+
+
+## The way a screen introduces itself: content fades and eases into place with a
+## short stagger, instead of the whole page snapping in behind the black wipe.
+##
+## `delay` is the wait before this particular block starts; pass an increasing
+## value per sibling to cascade them. Nothing here changes layout — only
+## opacity and scale — so measurement, focus and clicks are unaffected, and
+## `set_motion_enabled(false)` (used by the screenshot tools) turns it off.
+static func entrance(c: Control, delay: float = 0.0) -> void:
+	if c == null or not motion_enabled():
+		return
+	if c.is_inside_tree():
+		_start_entrance(c, delay)
+	else:
+		c.tree_entered.connect(func() -> void: _start_entrance(c, delay), CONNECT_ONE_SHOT)
+
+
+static func _start_entrance(c: Control, delay: float) -> void:
+	if not is_instance_valid(c) or not c.is_inside_tree() or not motion_enabled():
+		return
+	_keep_centred_pivot(c)
+	var t := Anim.begin(c)
+	if t == null:
+		return
+	c.pivot_offset = c.size * 0.5
+	c.modulate.a = 0.0
+	c.scale = Vector2(0.96, 0.96)
+	# The interval comes first, then both properties run in parallel: the block
+	# arrives as one movement rather than a fade that pops afterwards.
+	t.tween_interval(maxf(delay, 0.0))
+	t.set_parallel(true)
+	t.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	t.tween_property(c, "modulate:a", 1.0, 0.26)
+	t.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(c, "scale", Vector2.ONE, 0.34)
+	t.set_parallel(false)
+
+
+
 # ---------------------------------------------------------------- background ---
 ## A full-rect warm gradient, used behind every menu so the game has a
 ## consistent cosy village-evening look without shipping any image files.
+##
+## The drifting light layer rides inside the gradient rather than beside it, so a
+## page rebuild (`clear_page`) that replaces the menu's content never disturbs the
+## background, and every screen that shows the gradient also gets the movement.
 static func warm_background() -> TextureRect:
-	return warm_gradient(Color(0.14, 0.10, 0.07), Color(0.30, 0.17, 0.10))
+	var rect := warm_gradient(Color(0.14, 0.10, 0.07), Color(0.30, 0.17, 0.10))
+	rect.add_child(AmbientBackground.new())
+	return rect
 
 
 static func warm_gradient(top: Color, bottom: Color) -> TextureRect:

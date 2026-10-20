@@ -498,6 +498,34 @@ static func title(recipe: Dictionary) -> String:
 	return LessonDB.text(recipe, "name", Loc.language)
 
 
+## Where a dish is from, said in a word, for the capsule on its card.
+##
+## This is the *documented* home of the dish, added here rather than invented:
+## no recipe claims a region it is not known for, an unrecognised id answers with
+## an empty string, and a card simply shows no capsule instead of guessing. It is
+## derived from the recipe id so the catalogue itself stays as it is.
+static func region_of(recipe: Dictionary) -> String:
+	var pair: Variant = REGIONS.get(str(recipe.get("id", "")), "")
+	if pair == null or not (pair is Dictionary):
+		return ""
+	var key: Dictionary = pair
+	if key.is_empty():
+		return ""
+	return LessonDB.local(key)
+
+
+const REGIONS := {
+	"tom_yum_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"pla_neung_manao": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"pla_pao": {"en": "Northeastern Thai", "th": "ภาคอีสาน"},
+	"pla_thot_nam_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"kaeng_som_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"pla_duk_phat_phet": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"thot_man_pla": {"en": "Central Thai", "th": "ภาคกลาง"},
+	"lab_pla": {"en": "Northeastern Thai", "th": "ภาคอีสาน"},
+}
+
+
 static func about(recipe: Dictionary) -> String:
 	return LessonDB.text(recipe, "about", Loc.language)
 
