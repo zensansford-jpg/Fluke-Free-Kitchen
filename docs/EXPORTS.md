@@ -2,9 +2,10 @@
 
 **Engine:** Godot `4.7.2.stable.official.ed1daf0bf`
 **Export templates:** `%APPDATA%\Godot\export_templates\4.7.2.stable` (`version.txt` = `4.7.2.stable`)
-**Last export run:** 2026-10-20 (all three working presets re-exported from the current source
-after the interface and art pass; sizes re-measured, APK signature and manifest re-verified,
-Windows build relaunched headless, Web build re-run in Chrome)
+**Last export run:** 2026-10-20 (all three working presets re-exported twice from the current
+source — once after the interface and art pass, again after the catalogue/search/arrangement
+pass; sizes re-measured, APK signature and manifest re-verified, Windows build relaunched
+headless, Web build re-run in Chrome)
 
 This file records what was actually exported, on what toolchain, with what
 evidence, and what was **not** verified. Nothing here is aspirational: if an
@@ -74,6 +75,21 @@ and re-checked:
 
 The APK remains a debug build and is still **NOT** installed or launched on any device.
 
+### 1.4 Re-export and re-verification — 2026-10-20 (catalogue, search, arrangement)
+
+The catalogue/search pass and the 3D arrangement changed game code under `scripts/`
+(`RecipeDB`, `dish_select.gd`, `ui_factory.gd`, `kitchen_scene.gd`, `kitchen_props.gd`,
+`kitchen_stations.gd`, `explore.gd`, `ui_strings.gd`), so all three working presets were
+re-exported from the current source and re-checked:
+
+| Artefact | Size (2026-10-20, second pass) | Check |
+| --- | --- | --- |
+| `build/FlukeFreeKitchen.exe` | 104.786 MB | export exit 0, no errors; relaunched `--headless --quit-after 300`: engine banner on stdout, **0** error lines |
+| `build/web/` | wasm 37.684 MB · pck 0.579 MB · js 0.267 MB | export exit 0; the re-exported `.pck` then loaded in real headless Chrome over the DevTools protocol (`node tools/web_smoke.mjs`): title *Fluke Free Kitchen*, canvas 754 × 424, `Engine` global present, **0 console errors**, screenshot `build/web_smoke.png` |
+| `build/android/FlukeFreeKitchen.apk` | 55.537 MB | `--export-debug` exit 0 (aligned + signed); `apksigner verify` — v2 **true**, v3 **true**, 1 signer; `aapt2 dump badging` — package `th.ac.kku.flukefreekitchen`, minSdk 24, targetSdk 36, compileSdk 36, **no `<uses-permission>` elements** |
+
+The APK remains a debug build and is still **NOT** installed or launched on any device.
+
 ---
 
 ## 2. What had to change to make the mobile/web exports possible
@@ -128,7 +144,7 @@ godot --headless --path . --export-release "Windows Desktop" build/FlukeFreeKitc
 | Property | Value |
 | --- | --- |
 | File | `build/FlukeFreeKitchen.exe` |
-| Size | 104.775 MB |
+| Size | 104.786 MB |
 | Architecture | x86_64 |
 | PCK | embedded (`binary_format/embed_pck=true`) |
 | Icon | `res://icon.svg` |
@@ -138,7 +154,7 @@ godot --headless --path . --export-release "Windows Desktop" build/FlukeFreeKitc
 contained only the normal `Godot Engine v4.7.2.stable.official.ed1daf0bf` banner,
 and stderr was empty. That proves the export boots and that every autoload and
 resource resolved; it does **not** prove the interactive loop, which is covered by
-the eight test suites run against the project itself.
+the ten test suites run against the project itself.
 
 ---
 
@@ -153,7 +169,7 @@ godot --headless --path . --export-release "Web" build/web/index.html
 | `index.html` | 5 KB | default Godot shell, `canvas_resize_policy=2` (adaptive) |
 | `index.js` | 267 KB | loader |
 | `index.wasm` | 37.684 MB | engine |
-| `index.pck` | 568 KB | the game |
+| `index.pck` | 579 KB | the game |
 | `index.png`, `index.icon.png`, `index.apple-touch-icon.png` | — | page icons |
 | `index.audio.worklet.js`, `index.audio.position.worklet.js` | — | Web Audio worklets |
 
@@ -214,7 +230,7 @@ godot --headless --path . --export-debug "Android" build/android/FlukeFreeKitche
 
 | Property | Value |
 | --- | --- |
-| File | `build/android/FlukeFreeKitchen.apk` (55.525 MB) + `FlukeFreeKitchen.apk.idsig` (0.443 MB) |
+| File | `build/android/FlukeFreeKitchen.apk` (55.537 MB) + `FlukeFreeKitchen.apk.idsig` (0.443 MB) |
 | Package | `th.ac.kku.flukefreekitchen` |
 | Version | versionCode `1`, versionName `1.0` |
 | minSdk / targetSdk / compileSdk | 24 / 36 / 36 |
@@ -394,9 +410,9 @@ Notes that cost time to rediscover:
 ```
 build/
   .gdignore                      # keeps the scanner out of this directory
-  FlukeFreeKitchen.exe           # Windows desktop, 104.78 MB
+  FlukeFreeKitchen.exe           # Windows desktop, 104.79 MB
   android/
-    FlukeFreeKitchen.apk         # Android debug, 55.53 MB
+    FlukeFreeKitchen.apk         # Android debug, 55.54 MB
     FlukeFreeKitchen.apk.idsig   # v4 signature side-file (unused, harmless)
   web/
     index.html index.js index.wasm index.pck
