@@ -810,6 +810,67 @@ static func unlocked_recipes(discovered: Array, max_difficulty: int = 3) -> Arra
 	return out
 
 
+# =================================================================== browsing ===
+## Everything about a dish that a text search should look through, in both
+## languages at once: its name, its description, the fish it can use, every
+## ingredient, its tags and its region.
+##
+## This lives on the catalogue rather than in the browse screen because "which
+## dishes does this query mean" is a fact about the catalogue; the screen only
+## decides how to draw the answer. It matches in both languages whatever the
+## current UI language is, so searching Thai finds the same dishes as searching
+## English.
+static func search_text(recipe: Dictionary) -> String:
+	var parts: Array[String] = [
+		_pair_text(recipe.get("name", {})),
+		_pair_text(recipe.get("about", {})),
+		region_of(recipe),
+	]
+	for fish_id in recipe.get("fish", []):
+		var fish := fish_by_id(str(fish_id))
+		if not fish.is_empty():
+			parts.append(_pair_text(fish.get("name", {})))
+	for ingredient_id in recipe.get("ingredients", []):
+		var spec := ingredient_by_id(str(ingredient_id))
+		if not spec.is_empty():
+			parts.append(_pair_text(spec.get("name", {})))
+	for garnish_id in recipe.get("garnish", []):
+		var spec := garnish_by_id(str(garnish_id))
+		if not spec.is_empty():
+			parts.append(_pair_text(spec.get("name", {})))
+	for tag in recipe.get("tags", []):
+		parts.append(str(tag))
+	return " ".join(parts).to_lower()
+
+
+## Whether a dish answers a query. An empty query matches everything, so the
+## caller does not need a special case for "no search yet".
+static func matches_query(recipe: Dictionary, query: String) -> bool:
+	var needle := query.strip_edges().to_lower()
+	if needle.is_empty():
+		return true
+	return search_text(recipe).contains(needle)
+
+
+## The dishes that answer a query, in catalogue order.
+static func search(query: String) -> Array:
+	var out: Array = []
+	for recipe in recipes():
+		if matches_query(recipe, query):
+			out.append(recipe)
+	return out
+
+
+## Both languages of an `{ "en": ..., "th": ... }` pair, so a query matches either
+## without the caller choosing.
+static func _pair_text(pair: Variant) -> String:
+	if typeof(pair) != TYPE_DICTIONARY:
+		return ""
+	var d: Dictionary = pair
+	return "%s %s" % [str(d.get("en", "")), str(d.get("th", ""))]
+
+
+
 # ============================================================ step builders ===
 ## Turns a recipe into the concrete interactive steps the kitchen runs. The step
 ## dictionaries use the same shape as `LevelDB` and are consumed by `TaskFactory`.

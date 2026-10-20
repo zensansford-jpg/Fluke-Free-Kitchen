@@ -398,6 +398,69 @@ static func text_input(placeholder: String, value: String, max_length: int = 16)
 	return e
 
 
+## A search field: a left-aligned single-line box for filtering a list by typing.
+##
+## Separate from `text_input`, which is centred and short because it exists for a
+## case code. This one is built for reading a query back: left-aligned, roomier,
+## and with a magnifier drawn inside it so the box says what it is for without a
+## label above it taking a whole row of a phone screen.
+static func search_input(placeholder: String) -> LineEdit:
+	var e := LineEdit.new()
+	e.placeholder_text = placeholder
+	e.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	e.caret_blink = true
+	e.clear_button_enabled = true
+	var f := font(false)
+	if f != null:
+		e.add_theme_font_override("font", f)
+	e.add_theme_font_size_override("font_size", 20)
+	e.add_theme_color_override("font_color", TEXT_BRIGHT)
+	e.add_theme_color_override("font_placeholder_color", TEXT_DIM)
+	# The box is flat and warm, with the accent as a focus ring, so it matches the
+	# panels around it instead of arriving as a stock grey widget.
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = CARD_COLOR
+	normal.set_corner_radius_all(14)
+	normal.content_margin_left = 44.0
+	normal.content_margin_right = 14.0
+	normal.content_margin_top = 10.0
+	normal.content_margin_bottom = 10.0
+	normal.border_width_left = 1
+	normal.border_width_right = 1
+	normal.border_width_top = 1
+	normal.border_width_bottom = 1
+	normal.border_color = Color(1, 1, 1, 0.14)
+	var focused := normal.duplicate() as StyleBoxFlat
+	focused.border_color = ACCENT
+	focused.border_width_left = 2
+	focused.border_width_right = 2
+	focused.border_width_top = 2
+	focused.border_width_bottom = 2
+	e.add_theme_stylebox_override("normal", normal)
+	e.add_theme_stylebox_override("focus", focused)
+	responsive_min_size(e, 280.0, 48.0)
+	return e
+
+
+## A search field with the magnifier drawn at its left. Returns the row so the
+## caller can size it; the caller keeps the `LineEdit` from `search_input`.
+static func search_row(placeholder: String) -> Array:
+	var field := search_input(placeholder)
+	var row := Control.new()
+	row.custom_minimum_size = Vector2(0, 48)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	field.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.add_child(field)
+	var glyph := icon("search", 26.0, TEXT_DIM)
+	# Decoration over an interactive box must not eat the click that focuses it.
+	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glyph.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	glyph.position = Vector2(12, 11)
+	row.add_child(glyph)
+	return [row, field]
+
+
+
 static func panel(color: Color = PANEL_COLOR) -> PanelContainer:
 	var p := PanelContainer.new()
 	style_panel(p, color)

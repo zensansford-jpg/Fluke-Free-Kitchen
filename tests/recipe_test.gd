@@ -39,6 +39,7 @@ func _run() -> void:
 	_check_generated()
 	_check_custom()
 	_check_browse()
+	_check_search()
 	_check_save_migration()
 	_check_save_recovery()
 	_check_records_and_achievements()
@@ -522,6 +523,79 @@ func _check_browse() -> void:
 		print("  browse: %d distinct dishes from 60 seeds, de-duplicated by composition" % seen.size())
 	else:
 		failures.append("browse: only %d distinct dishes from 60 seeds" % seen.size())
+
+
+# ================================================================== search ===
+## The Discover/dish browser search. A catalogue that runs from documented
+## tradition to game compositions is only usable if it can be searched, so the
+## matching rules are checked here rather than left to the screen.
+##
+## Nothing here trusts the UI: the search lives on `RecipeDB`, so the exact rule
+## the browser applies is the rule this suite runs.
+func _check_search() -> void:
+	# A dish is findable by its own name, in either language.
+	var by_english := 0
+	var by_thai := 0
+	for recipe in RecipeDB.recipes():
+		var name: Dictionary = recipe.get("name", {})
+		var en := str(name.get("en", "")).strip_edges().to_lower()
+		var th := str(name.get("th", "")).strip_edges()
+		if not en.is_empty() and RecipeDB.matches_query(recipe, en):
+			by_english += 1
+		if not th.is_empty() and RecipeDB.matches_query(recipe, th):
+			by_thai += 1
+	if by_english != RecipeDB.recipe_count():
+		failures.append("search: %d of %d dishes are findable by their English name"
+			% [by_english, RecipeDB.recipe_count()])
+	if by_thai != RecipeDB.recipe_count():
+		failures.append("search: %d of %d dishes are findable by their Thai name"
+			% [by_thai, RecipeDB.recipe_count()])
+
+	# A fish name finds every dish that can use that fish, in either language.
+	var tilapia := RecipeDB.search("tilapia")
+	var tilapia_thai := RecipeDB.search("ปลานิล")
+	if tilapia.is_empty():
+		failures.append("search: 'tilapia' found nothing")
+	elif tilapia.size() != tilapia_thai.size():
+		failures.append("search: 'tilapia' found %d and 'ปลานิล' found %d"
+			% [tilapia.size(), tilapia_thai.size()])
+	else:
+		print("  search: 'tilapia' and 'ปลานิล' both found %d dishes" % tilapia.size())
+
+	# An ingredient name finds the dishes that use it.
+	var lemongrass := RecipeDB.search("lemongrass")
+	if lemongrass.is_empty():
+		failures.append("search: 'lemongrass' found nothing")
+	else:
+		for recipe in lemongrass:
+			if not (recipe.get("ingredients", []) as Array).has("lemongrass"):
+				failures.append("search: '%s' matched lemongrass but does not use it"
+					% str(recipe.get("id", "")))
+		print("  search: 'lemongrass' found %d dishes, all of which use it" % lemongrass.size())
+
+	# A query that matches nothing returns nothing, rather than everything.
+	if not RecipeDB.search("zzzznotadish").is_empty():
+		failures.append("search: nonsense matched something")
+
+	# An empty query matches everything — the browser relies on this instead of a
+	# special case for "no search yet".
+	if RecipeDB.search("   ").size() != RecipeDB.recipe_count():
+		failures.append("search: an empty query did not match the whole catalogue")
+
+	# The search is case-insensitive in both languages.
+	if RecipeDB.search("TILAPIA").size() != tilapia.size():
+		failures.append("search: the query was case-sensitive")
+
+	# Every grade is reachable through the browser, so a filter can never be a
+	# dead end that silently shows nothing.
+	var counts := RecipeDB.provenance_counts()
+	for grade in RecipeDB.PROVENANCE_ORDER:
+		if int(counts.get(grade, 0)) > 0:
+			continue
+		# A grade with nothing behind it is fine, but the *catalogue* grades must
+		# all be present, because the browser offers a filter for each.
+		if grade in [RecipeDB.DOCUMENTED, RecipeDB.REGIONAL]:
+			failures.append("search: the '%s' filter would have nothing behind it" % grade)
 
 
 # ==================================================================== saves ===

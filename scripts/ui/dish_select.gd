@@ -14,6 +14,15 @@ class_name DishSelect
 
 extends MenuScreen
 
+## The active filter. `all` is the default; the others narrow the list without
+## changing the order, so the grid always reads the same way.
+enum Filter { ALL, OPEN, FAVOURITES, DOCUMENTED, REGIONAL, OTHER }
+
+var _filter := Filter.ALL
+## The current query, lower-cased. Kept on the instance so a resize reflows the
+## same set of dishes rather than resetting what the player typed.
+var _query := ""
+
 
 func _ready() -> void:
 	super()
@@ -30,21 +39,35 @@ func _build() -> void:
 			RecipeDB.recipe_count()],
 		UIFactory.ACCENT)))
 
-	_recent_row(column)
-
 	if RecipeDB.recipe_count() == 0:
 		column.add_child(centred(UIFactory.wrap(Loc.t("dishes.none"), 20, UIFactory.TEXT_DIM)))
 		column.add_child(centred(back_button(func() -> void: Game.go_to_modes())))
 		return
 
-	# Real dishes first, then the challenge variations, each in catalogue order and
-	# sorted by difficulty so the grid reads as a menu that opens up.
+	# The browser bar: a search box, a row of filters and a random pick. With a
+	# catalogue that now runs from documented tradition to game compositions, a
+	# flat list stops being navigable — this is what makes it usable.
+	column.add_child(_browse_bar())
+
+	# What you cooked last, kept as a one-line convenience above the grid — the
+	# search box can find these again, but this says it without typing.
+	_recent_row(column)
+
+	var matches := _matching_recipes()
+	if matches.is_empty():
+		column.add_child(centred(UIFactory.wrap(Loc.t("dishes.no_matches"), 19, UIFactory.TEXT_DIM)))
+		column.add_child(centred(back_button(func() -> void: Game.go_to_modes())))
+		return
+
+	column.add_child(centred(UIFactory.chip(
+		"%s: %d" % [Loc.t("dishes.matches"), matches.size()], UIFactory.TEXT_DIM)))
+
 	var grid := GridContainer.new()
 	grid.columns = UIFactory.columns(3)
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 18)
 	var index := 0
-	for recipe in _sorted_recipes():
+	for recipe in matches:
 		var card := _recipe_card(recipe, discovered)
 		grid.add_child(card)
 		UIFactory.entrance(card, 0.04 + float(index % 9) * 0.035)
@@ -52,6 +75,142 @@ func _build() -> void:
 	column.add_child(centred(grid))
 
 	column.add_child(centred(back_button(func() -> void: Game.go_to_modes())))
+
+
+# --------------------------------------------------------------------- browsing ---
+## The search box, the filter row and the random button.
+##
+## Every control rebuilds the page on change rather than mutating the grid, so
+## there is exactly one path that decides what is on screen and a resize cannot
+## disagree with it.
+func _browse_bar() -> VBoxContainer:
+	var v := UIFactory.vbox(10)
+
+	var pair := UIFactory.search_row(Loc.t("dishes.search"))
+	var field: LineEdit = pair[1]
+	field.text = _query
+	field.text_changed.connect(func(text: String) -> void:
+		_query = text.strip_edges().to_lower()
+		rebuild_for_size())
+	v.add_child(pair[0])
+
+	var tags := UIFactory.tag_row(8)
+	for entry in _filter_entries():
+		var spec: Dictionary = entry
+		var id := int(spec["id"])
+		var button := UIFactory.button(str(spec["label"]), 17, 0.0)
+		button.custom_minimum_size = Vector2(0, 42)
+		UIFactory.style_button(button, UIFactory.ACCENT, id == _filter)
+		button.pressed.connect(func() -> void:
+			AudioManager.play_ui("ui_click")
+			_filter = id
+			rebuild_for_size())
+		tags.add_child(button)
+	v.add_child(centred(tags))
+
+	v.add_child(centred(_random_button()))
+	return v
+
+
+## "Surprise me": cooks a dish drawn at random from whatever the current query and
+## filter are showing, preferring one that is already open. A random pick that
+## ignored the search box would be a way to bypass what the player just asked for.
+func _random_button() -> Button:
+	var button := UIFactory.button(Loc.t("dishes.random"), 19, 240.0)
+	UIFactory.style_button(button, UIFactory.GOOD, true)
+	button.pressed.connect(_cook_random)
+	return button
+
+
+## The filter chips that are worth showing. A filter with nothing behind it is not
+## offered, so the row never presents a dead end.
+func _filter_entries() -> Array:
+	var out: Array = [{"id": Filter.ALL, "label": Loc.t("dishes.filter_all")}]
+	var counts := _filter_counts()
+	if int(counts.get(Filter.OPEN, 0)) > 0:
+		out.append({"id": Filter.OPEN, "label": Loc.t("dishes.filter_open")})
+	if int(counts.get(Filter.FAVOURITES, 0)) > 0:
+		out.append({"id": Filter.FAVOURITES, "label": Loc.t("dishes.filter_favourites")})
+	if int(counts.get(Filter.DOCUMENTED, 0)) > 0:
+		out.append({"id": Filter.DOCUMENTED, "label": Loc.t("dishes.filter_documented")})
+	if int(counts.get(Filter.REGIONAL, 0)) > 0:
+		out.append({"id": Filter.REGIONAL, "label": Loc.t("dishes.filter_regional")})
+	if int(counts.get(Filter.OTHER, 0)) > 0:
+		out.append({"id": Filter.OTHER, "label": Loc.t("dishes.filter_other")})
+	return out
+
+
+func _filter_counts() -> Dictionary:
+	var discovered := SaveData.discovered_ids()
+	var counts := {Filter.OPEN: 0, Filter.FAVOURITES: 0, Filter.DOCUMENTED: 0, Filter.REGIONAL: 0, Filter.OTHER: 0}
+	for recipe in RecipeDB.recipes():
+		if RecipeDB.is_unlocked(recipe, discovered):
+			counts[Filter.OPEN] = int(counts[Filter.OPEN]) + 1
+		if SaveData.is_favourite(str(recipe.get("id", ""))):
+			counts[Filter.FAVOURITES] = int(counts[Filter.FAVOURITES]) + 1
+		match RecipeDB.provenance(recipe):
+			RecipeDB.DOCUMENTED:
+				counts[Filter.DOCUMENTED] = int(counts[Filter.DOCUMENTED]) + 1
+			RecipeDB.REGIONAL:
+				counts[Filter.REGIONAL] = int(counts[Filter.REGIONAL]) + 1
+			_:
+				counts[Filter.OTHER] = int(counts[Filter.OTHER]) + 1
+	return counts
+
+
+## The dishes that survive the current query and filter, in catalogue order.
+##
+## The search looks at the dish's name, the fish it uses, its ingredients and its
+## descriptive text, which is what makes "tilapia" or "lemongrass" a way in. It
+## matches in both languages, so a player searching in Thai finds the same dishes
+## as one searching in English.
+func _matching_recipes() -> Array:
+	var discovered := SaveData.discovered_ids()
+	var out: Array = []
+	for recipe in _sorted_recipes():
+		if not _passes_filter(recipe, discovered):
+			continue
+		if not _query.is_empty() and not _matches_query(recipe):
+			continue
+		out.append(recipe)
+	return out
+
+
+func _passes_filter(recipe: Dictionary, discovered: Array) -> bool:
+	var recipe_id := str(recipe.get("id", ""))
+	match _filter:
+		Filter.OPEN:
+			return RecipeDB.is_unlocked(recipe, discovered)
+		Filter.FAVOURITES:
+			return SaveData.is_favourite(recipe_id)
+		Filter.DOCUMENTED:
+			return RecipeDB.provenance(recipe) == RecipeDB.DOCUMENTED
+		Filter.REGIONAL:
+			return RecipeDB.provenance(recipe) == RecipeDB.REGIONAL
+		Filter.OTHER:
+			return not RecipeDB.is_traditional(recipe)
+	return true
+
+
+func _matches_query(recipe: Dictionary) -> bool:
+	return RecipeDB.matches_query(recipe, _query)
+
+
+## Cooks a dish picked at random from what is currently on screen. A random pick
+## that ignored the filter would be a way to bypass the "ready to cook" view.
+func _cook_random() -> void:
+	var pool := _matching_recipes()
+	var open: Array = []
+	for recipe in pool:
+		if RecipeDB.is_unlocked(recipe, SaveData.discovered_ids()):
+			open.append(recipe)
+	var from: Array = open if not open.is_empty() else pool
+	if from.is_empty():
+		return
+	AudioManager.play_ui("ui_click")
+	var pick: Dictionary = from[randi() % from.size()]
+	Game.start_recipe(str(pick.get("id", "")))
+
 
 
 func rebuild_for_size() -> void:

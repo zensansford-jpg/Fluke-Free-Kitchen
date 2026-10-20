@@ -348,6 +348,17 @@ static func table() -> Dictionary:
 		"dishes.recent": {"en": "Recently cooked", "th": "ทำล่าสุด"},
 		"dishes.variation_note": {"en": "This is a game challenge, not a traditional recipe.", "th": "นี่คือด่านในเกม ไม่ใช่สูตรอาหารพื้นบ้าน"},
 		"dishes.none": {"en": "No dishes are available yet.", "th": "ยังไม่มีเมนูที่เล่นได้"},
+		"dishes.search": {"en": "Search dishes, fish or ingredients", "th": "ค้นหาเมนู ปลา หรือเครื่องปรุง"},
+		"dishes.filter_all": {"en": "All", "th": "ทั้งหมด"},
+		"dishes.filter_open": {"en": "Ready to cook", "th": "ทำได้เลย"},
+		"dishes.filter_favourites": {"en": "Favourites", "th": "เมนูโปรด"},
+		"dishes.filter_documented": {"en": "Documented", "th": "มีเอกสารยืนยัน"},
+		"dishes.filter_regional": {"en": "Regional", "th": "สูตรท้องถิ่น"},
+		"dishes.filter_other": {"en": "Game dishes", "th": "เมนูในเกม"},
+		"dishes.random": {"en": "Surprise me", "th": "สุ่มให้หน่อย"},
+		"dishes.matches": {"en": "Matching dishes", "th": "เมนูที่ตรงกับคำค้น"},
+		"dishes.no_matches": {"en": "Nothing matches that search yet. Try a fish or an ingredient.", "th": "ยังไม่พบเมนูที่ตรงกับคำค้น ลองพิมพ์ชื่อปลาหรือเครื่องปรุง"},
+		"dishes.suggestion": {"en": "Try a dish with: %s", "th": "ลองเมนูที่มี: %s"},
 
 		# --------------------------------------------------------- free cook --
 		"free.title": {"en": "Free Cook", "th": "ครัวอิสระ"},
