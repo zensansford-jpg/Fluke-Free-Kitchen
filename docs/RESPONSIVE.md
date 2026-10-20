@@ -92,7 +92,8 @@ godot --headless --path <project> res://tests/responsive_check.tscn
 RESPONSIVE CHECK PASSED (360 layouts checked)
 ```
 
-**PASS — 360/360 layouts, 2026-10-18, Godot 4.7.2 stable.**
+**PASS — 360/360 layouts, latest run 2026-10-20 (headless suite plus a real-window capture
+run), Godot 4.7.2 stable; first verified 2026-10-18.**
 
 The first run of this tool found **157** overflow problems at 320 × 568 and **17** more at
 768 × 1024 and 1024 × 768. The settings modal, added to the tool later, found **14** more on

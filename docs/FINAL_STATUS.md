@@ -1,6 +1,6 @@
 # Final Status Summary - Fluke Free Kitchen (Fluke Free Fighters)
 
-**Date:** 2026-10-18  
+**Date:** 2026-10-18 · **Updated:** 2026-10-20  
 **Godot Version:** 4.7.2.stable.official.ed1daf0bf
 
 ## Test Results (run_all_tests.ps1)
@@ -16,7 +16,8 @@
 | minigame_test | ✅ PASS | Full generated recipe driven with real pointer input; plate finish race guarded |
 | responsive_check | ✅ PASS | 360 layouts across 12 screen sizes, 0 problems |
 
-**Result:** **8/8 suites PASS.**
+**Result:** **8/8 suites PASS** (re-run 2026-10-20 from `tools/run_all_tests.ps1`, which now
+writes its verdict logs to `build/test_runs/`).
 
 Two test-infrastructure defects were fixed this session so the summary is trustworthy:
 
@@ -41,9 +42,11 @@ Two test-infrastructure defects were fixed this session so the summary is trustw
   `content_sheet` machinery) and the cook panel stacks its labels instead of forcing a
   385 px row, so both fit a 320 px phone.
 
-The same matrix was re-run with a real window on 2026-10-18 (NVIDIA GPU, Forward+), which also
-writes one PNG per screen per size: **360/360 layouts, 0 problems, 300 screenshots** across the
-12 sizes from 320 × 568 to 3840 × 2160.
+The same matrix was re-run with a real window on 2026-10-20 (NVIDIA GPU, Forward+; the first
+such run was 2026-10-18), which also writes one PNG per screen per size into
+`build/screenshots/responsive/`: **360/360 layouts, 0 problems, 300 screenshots** across the
+12 sizes from 320 × 568 to 3840 × 2160. The cooking and screen captures live beside them in
+`build/screenshots/cook/` (4) and `build/screenshots/visual/` (46).
 
 ## Animation library (added this session)
 
@@ -163,10 +166,11 @@ distinct dishes.
 ✅ Sustained audio beds synced to the gesture (fry / boil / wash)  
 ✅ Windows / Web / Android re-exported and re-verified (2026-10-18)  
 
-**Verified state:** the eight suites at the top of this file pass on `main`. The last change to any
-game code was commit `e6741f3` ("Give long actions a sustained voice"); the two commits after it
-touch documentation only. The suite was re-run on the final tree (2026-10-18) and the three
-working exports were rebuilt from that same source.
+**Verified state:** the eight suites at the top of this file pass on `main` (re-run 2026-10-20).
+No game code — nothing under `scripts/`, `scenes/` or `autoload/` — has changed since commit
+`e6741f3` ("Give long actions a sustained voice"); everything since then is documentation apart
+from one test-infrastructure commit (`5b2c22d`, capture and log output moved into the project).
+The three working exports were built from that same game source, so they still match what runs.
 
 ## Known Issues
 
