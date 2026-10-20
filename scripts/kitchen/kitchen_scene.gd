@@ -13,6 +13,9 @@ const ITEM_Z := 0.82
 const ZONE_Z := 0.16
 ## How big the fish in the wok starts out.
 const FISH_BASE_SCALE := Vector3(0.82, 0.72, 0.82)
+## Where the chopping board stands. Read from the station table so the prep
+## station and the board can never drift apart.
+const BOARD_ANCHOR := Vector3(-0.75, KitchenProps.BENCH_Y, 0.40)
 
 var camera: Camera3D
 ## Everything a step spawns goes here and is wiped between steps.
@@ -25,7 +28,7 @@ var _wok: Node3D = null
 var _wok_glow: MeshInstance3D = null
 var _wok_heat_material: StandardMaterial3D = null
 var _sink: Node3D = null
-var _board_anchor := Vector3(-0.45, KitchenProps.BENCH_Y, 0.55)
+var _board_anchor := BOARD_ANCHOR
 var _shake := 0.0
 var _camera_home := Vector3.ZERO
 var _steam_cooldown := 0.0
@@ -85,20 +88,24 @@ func setup(level_data: Dictionary) -> void:
 
 
 func _dress_level_one() -> void:
-	_sink = KitchenProps.sink(_decor, -2.2)
-	KitchenProps.vegetable_pile(_decor, Vector3(1.45, KitchenProps.BENCH_Y, 0.35))
-	KitchenProps.knife(_decor, Vector3(1.15, KitchenProps.BENCH_Y, 0.75))
-	KitchenProps.basket(_decor, Vector3(2.45, KitchenProps.BENCH_Y, 0.3))
-	KitchenProps.soap(_decor, Vector3(-1.55, KitchenProps.BENCH_Y, 0.85))
-	KitchenProps.cloth(_decor, Vector3(2.9, KitchenProps.BENCH_Y + 0.03, 0.6), "cloth_blue")
+	_sink = KitchenProps.sink(_decor, KitchenStations.at("wash").x)
+	# Prep station: vegetables staged at the back of the board, the knife at the
+	# board's right-hand edge, both clear of the board's footprint so nothing sits
+	# on top of the thing the fish is cut on.
+	KitchenProps.vegetable_pile(_decor, KitchenStations.spot("prep", -0.28, -0.32))
+	KitchenProps.knife(_decor, KitchenStations.spot("prep", 0.60, 0.20))
+	KitchenProps.basket(_decor, KitchenStations.spot("rest", -0.10, -0.10))
+	KitchenProps.soap(_decor, KitchenStations.spot("wash", 0.55, 0.42))
+	KitchenProps.cloth(_decor, KitchenStations.spot("rest", 0.42, 0.30))
 
 
-# The cooking station. Everything is arranged around one workflow: the board in the
-# middle where the fish is cut, staging and seasonings to its left, the pan on its
-# own stove to the right with the handle pointing away from the board, and the cloth
-# at the far right for wiping down. Nothing is scattered across the bench any more.
+# The cooking station. Everything is arranged around one workflow: washing on the
+# left, the board in the middle where the fish is cut with staging and seasonings
+# beside it, the pan on its own stove to the right with the handle pointing away
+# from the board, and the cloth at the far right for wiping down. Nothing is
+# scattered across the bench, and nothing shares worktop with anything else.
 func _dress_level_two() -> void:
-	_wok = KitchenProps.stove(_decor, 1.55)
+	_wok = KitchenProps.stove(_decor, KitchenStations.at("heat").x)
 	_wok_glow = MeshInstance3D.new()
 	_wok_glow.mesh = PropFactory.unit_cyl(20)
 	_wok_heat_material = GameMaterials.glow("wok_heat", Color(1.0, 0.42, 0.18), 1.0).duplicate() as StandardMaterial3D
@@ -109,19 +116,22 @@ func _dress_level_two() -> void:
 	_wok_glow.visible = false
 	# Parented to the stove so it sits under the wok wherever the stove is.
 	_wok.get_parent().add_child(_wok_glow)
-	KitchenProps.water_jar(_decor, Vector3(-2.6, KitchenProps.BENCH_Y, 0.30))
-	KitchenProps.herb_bunch(_decor, Vector3(-1.8, KitchenProps.BENCH_Y, 0.45))
-	KitchenProps.rice_bowl(_decor, Vector3(-1.25, KitchenProps.BENCH_Y, 0.80))
-	KitchenProps.cloth(_decor, Vector3(2.5, KitchenProps.BENCH_Y, 0.75), "cloth_blue")
+	KitchenProps.water_jar(_decor, KitchenStations.spot("wash", 0.0, 0.46))
+	KitchenProps.herb_bunch(_decor, KitchenStations.spot("prep", -0.02, -0.52))
+	KitchenProps.rice_bowl(_decor, KitchenStations.spot("prep", -0.66, -0.30))
+	KitchenProps.cloth(_decor, KitchenStations.spot("rest", 0.38, 0.18))
 
 
 func _dress_level_three() -> void:
-	var model := KitchenProps.village_corner(_decor, Vector3(-1.9, KitchenProps.BENCH_Y, 0.5))
+	# The village model is a whole illustrated scene — pond, hut, fish — so it gets
+	# its own station to the left rather than sharing the washing-up area, which is
+	# what made the village huts and the water jar stand inside one another.
+	var model := KitchenProps.village_corner(_decor, KitchenStations.at("village"))
 	model.scale = Vector3(0.72, 0.72, 0.72)
-	KitchenProps.plate(_decor, Vector3(1.0, KitchenProps.BENCH_Y, 0.45))
-	KitchenProps.rice_bowl(_decor, Vector3(1.9, KitchenProps.BENCH_Y, 0.35))
-	KitchenProps.water_jar(_decor, Vector3(2.6, KitchenProps.BENCH_Y, 0.30))
-	KitchenProps.herb_bunch(_decor, Vector3(0.1, KitchenProps.BENCH_Y, 0.85))
+	KitchenProps.plate(_decor, KitchenStations.spot("rest", -0.38, -0.14))
+	KitchenProps.rice_bowl(_decor, KitchenStations.spot("rest", 0.34, -0.06))
+	KitchenProps.water_jar(_decor, KitchenStations.spot("wash", 0.0, 0.46))
+	KitchenProps.herb_bunch(_decor, KitchenStations.spot("prep", -0.02, -0.52))
 
 
 ## Empties the per-step content.

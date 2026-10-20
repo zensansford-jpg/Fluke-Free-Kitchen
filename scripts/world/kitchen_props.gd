@@ -121,7 +121,12 @@ static func room(root: Node3D, warmth: float = 1.0) -> void:
 	for i in 3:
 		PropFactory.cyl(root, 0.12, 0.34, "sign_white", Vector3(2.7 + i * 0.45, 2.38, WALL_Z + 0.2))
 	PropFactory.box(root, Vector3(1.6, 0.1, 0.28), "wood_light", Vector3(-4.6, 2.05, WALL_Z + 0.2))
-	herb_bunch(root, Vector3(-4.7, 1.95, WALL_Z + 0.2))
+	# A *named* node rather than the unnamed mesh every other room prop is: the
+	# bench probe classifies props by name, and an unnamed mesh could not be told
+	# apart from something dropped on the worktop. Standing on the wall shelf, it is
+	# explicitly dressing and is not measured against `BENCH_Y`.
+	var wall_herbs := herb_bunch(root, Vector3(-4.7, 1.95, WALL_Z + 0.2))
+	wall_herbs.name = "HerbsWall"
 
 
 static func lantern(parent: Node3D, pos: Vector3, energy: float = 1.0) -> OmniLight3D:
@@ -376,10 +381,19 @@ static func herb_bunch(parent: Node3D, pos: Vector3) -> Node3D:
 	parent.add_child(node)
 	# Sits on its anchor: the sprigs rest on the bench and the stem stands up from it,
 	# instead of the whole bunch being modelled below the point it is placed at.
+	#
+	# The sprigs are built in a *flat fan* in the bench plane, not stacked upwards.
+	# Stacking them put the bunch about 14 cm above the point it was placed at, which
+	# is what made a bunch standing on the worktop read as levitating next to it.
+	#
+	# The `y` lift is chosen so the *lowest corner* of a sprig stays at or above the
+	# anchor even after its 12° tilt: a thinner lift sank the bunch 22 mm into the
+	# worktop, which is exactly the class of defect the 3D probe now catches.
 	for i in 4:
+		var offset := Vector3(0.09 * (float(i) - 1.5), 0.048, 0.05 * float(i) - 0.075)
 		PropFactory.box(node, Vector3(0.24, 0.03, 0.10), "leaf_dark",
-			Vector3(0.02 * i, 0.02 + 0.02 * i, 0.03 * i), Vector3(0, 20 * i, 12))
-	PropFactory.cyl(node, 0.02, 0.20, "leaf", Vector3(0, 0.10, 0))
+			offset, Vector3(0, 28.0 * float(i) - 42.0, 12))
+	PropFactory.cyl(node, 0.02, 0.16, "leaf", Vector3(0, 0.11, 0))
 	return node
 
 
