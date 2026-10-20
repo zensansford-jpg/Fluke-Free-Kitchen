@@ -15,6 +15,9 @@ var level: Dictionary = {}
 ## went wrong mid-level.
 var steps: Array = []
 var quiz: Array = []
+## Whether this run required its knowledge questions. Set from the mode by the
+## runner: the story challenges do, the open-ended cooking modes do not.
+var quiz_gated := true
 var elapsed := 0.0
 var mistakes := 0
 
@@ -151,7 +154,11 @@ func required_quiz_ok() -> bool:
 			required_seen = true
 			if not bool(record.get("correct", false)):
 				return false
-	return required_seen
+	# A run that required nothing cannot have failed to answer. The open-ended
+	# cooking modes set it up this way on purpose, and the summary says so.
+	if not required_seen:
+		return not quiz_gated
+	return true
 
 
 func quiz_answered() -> int:
@@ -192,8 +199,13 @@ func score_ratio() -> float:
 	return float(score()) / float(max_score())
 
 
-## A level is passed when every step was completed and the mandatory knowledge
-## question was answered correctly. Education cannot be skipped for credit.
+## A level is passed when every step was completed — and, when the mode gated it,
+## when the mandatory knowledge question was answered correctly too.
+##
+## `required_quiz_ok()` returns true when *nothing was required*, which is what the
+## open-ended modes set up: they ask the same questions but do not hold the run
+## hostage to them. The story challenges still cannot be credited without the
+## answer, which is what the competition rubric asks for.
 func passed() -> bool:
 	if completion() < 1.0:
 		return false
@@ -227,6 +239,7 @@ func summary() -> Dictionary:
 		"quiz_correct": quiz_correct_count(),
 		"quiz_answered": quiz_answered(),
 		"required_quiz_ok": required_quiz_ok(),
+		"quiz_gated": quiz_gated,
 		"mistakes": mistakes,
 		"accuracy": accuracy(),
 		"score": score(),

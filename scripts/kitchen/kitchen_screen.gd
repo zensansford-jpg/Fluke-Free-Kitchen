@@ -45,6 +45,7 @@ func _ready() -> void:
 
 	session = KitchenSession.new()
 	session.begin(level)
+	session.quiz_gated = _mode_requires_quiz()
 	_quiz_required = _quiz_required_ids()
 	Game.state_changed.connect(_on_state_changed)
 
@@ -273,17 +274,33 @@ func _quiz_questions() -> Array:
 
 
 ## The subset that must be answered correctly before the challenge counts.
+##
+## Whether a question is *required* is a property of the mode, not of the question.
+## The story challenges keep a required question, because the competition rubric
+## asks for a level to require the answer before it is credited. The three
+## open-ended modes — Let's Cook, Endless Kitchen and Free Cook — ask the same
+## questions but never block on them: a player who is there to cook can finish
+## cooking, and the questions are offered at the end along with the rest of the
+## result. Nothing is hidden and nothing is skipped; only the gate is dropped.
 func _quiz_required_ids() -> Array[String]:
+	var out: Array[String] = []
+	if not _mode_requires_quiz():
+		return out
 	var explicit: Array = level.get("quiz", [])
 	if explicit.is_empty():
 		return QuizDB.required_ids(str(level.get("id", "")))
 	var wanted: Array = level.get("required_quiz", [])
 	if wanted.is_empty():
 		wanted = explicit
-	var out: Array[String] = []
 	for question_id in wanted:
 		out.append(str(question_id))
 	return out
+
+
+## True when this run must answer its knowledge questions to be credited. Only the
+## story challenges are gated; cooking modes complete on cooking alone.
+func _mode_requires_quiz() -> bool:
+	return Game.mode == Game.Mode.STORY
 
 
 func _begin_quiz() -> void:

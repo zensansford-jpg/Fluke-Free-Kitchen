@@ -101,6 +101,7 @@ $suites = @(
     'res://tests/cook_test.tscn',
     'res://tests/recipe_test.tscn',
     'res://tests/minigame_test.tscn',
+    'res://tests/quiz_gate_test.tscn',
     'res://tests/kitchen_probe.tscn',
     'res://tests/responsive_check.tscn'
 )
