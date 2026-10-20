@@ -66,9 +66,9 @@ godot --path . res://tests/responsive_check.tscn -- 320 568 shots
 godot --path . res://tests/responsive_check.tscn -- 3840 2160 shots
 ```
 
-- [ ] Open the screenshots the run writes to `%TEMP%\opencode\responsive` and confirm nothing is
+- [ ] Open the screenshots the run writes to `build\screenshots\responsive` and confirm nothing is
       squeezed to a sliver, clipped, or overlapping (the full 12-size set was regenerated on
-      2026-10-18 with a real GPU: 360/360 layouts, 300 PNGs)
+      2026-10-20 with a real GPU: 360/360 layouts, 300 PNGs)
 - [ ] Rotate the window from landscape to portrait while a challenge is running: the panel reflows
       and the wok stays framed
 - [ ] Increase the OS text size / display scaling and repeat step 2's "nothing overlaps" line

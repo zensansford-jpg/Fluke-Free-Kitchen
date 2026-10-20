@@ -10,10 +10,13 @@ extends Node
 ## Run with:
 ##   godot --path <project> res://tests/visual_capture.tscn -- l1
 ##   godot --path <project> res://tests/visual_capture.tscn -- screens
-
-const OUT_DIR := "C:/Users/ASUS/AppData/Local/Temp/opencode/captures"
+##
+## Images and quiz traces land in `build/screenshots/visual`.
 
 const TestWindow := preload("res://tests/test_window.gd")
+const Captures := preload("res://tests/captures.gd")
+
+var out_dir := ""
 
 
 func _ready() -> void:
@@ -21,7 +24,7 @@ func _ready() -> void:
 	# stated pixel size, not whenever the desktop window happens to be.
 	TestWindow.use(1280, 720)
 	await TestWindow.settle(2)
-	DirAccess.make_dir_recursive_absolute(OUT_DIR)
+	out_dir = Captures.open("visual")
 	print("--- visual capture ---")
 	SaveData.suspend_disk_writes(true)
 	# The game fades in from black over the first ~0.6 s. Let that finish before
@@ -208,7 +211,7 @@ func _all_buttons(root: Node) -> Array[Button]:
 
 
 func _write_trace(level_id: String, lines: Array[String]) -> void:
-	var file := FileAccess.open("%s/%s_quiz_trace.txt" % [OUT_DIR, level_id], FileAccess.WRITE)
+	var file := FileAccess.open("%s/%s_quiz_trace.txt" % [out_dir, level_id], FileAccess.WRITE)
 	if file == null:
 		return
 	file.store_string("\n".join(lines))
@@ -248,7 +251,7 @@ func _wait(seconds: float) -> void:
 func _save(name: String) -> void:
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	var path := "%s/%s.png" % [OUT_DIR, name]
+	var path := "%s/%s.png" % [out_dir, name]
 	var err := image.save_png(path)
 	if err == OK:
 		print("  saved %s.png (%dx%d)" % [name, image.get_width(), image.get_height()])

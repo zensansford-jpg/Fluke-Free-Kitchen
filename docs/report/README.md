@@ -46,7 +46,10 @@ The Markdown here is the source of truth for wording. To produce the word-proces
 each chapter into Word/WPS, set the style to TH SarabunPSK 16 pt, single line spacing, A4 margins,
 and headings in TH SarabunPSK bold. Screenshots referenced in Chapter 4 are produced by
 `tests/visual_capture.tscn` and the responsive checker (see `docs/RESPONSIVE.md` and
-`docs/EXPORTS.md` for the exact commands and where the images land).
+`docs/EXPORTS.md` for the exact commands). The images land in `build/screenshots/visual/`
+(menus and each step of all three challenges, 46 PNGs), `build/screenshots/cook/` (the browning
+and outcome states) and `build/screenshots/responsive/` (the 12-size matrix, 300 PNGs) — all
+inside the project, gitignored, regenerated 2026-10-20.
 
 ## The one rule for Chapter 4 and Chapter 5
 

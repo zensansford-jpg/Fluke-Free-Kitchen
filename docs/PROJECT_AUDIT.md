@@ -245,6 +245,8 @@ scenes/              main/main_menu · main/mode_select · main/level_select ·
 tests/               smoke_test · anim_test · flow_test · behaviour_test · cook_test ·
                      recipe_test · minigame_test · responsive_check
                      (eight pass/fail suites) + layout_check · visual_capture (capture tools)
+                     + test_window (window sizing for every suite) · captures (where images
+                     are written: `build/screenshots/<name>`)
 ```
 
 Rules carried over from the existing codebase because they work: typed GDScript; signals over

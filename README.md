@@ -60,6 +60,12 @@ Every suite exits non-zero on failure, so they can be wired into a check script.
 that uses a window must call `TestWindow.use(w, h)` first: the project runs with
 `stretch/mode = "disabled"`, so a headless run otherwise gets a 64 × 64 viewport.
 
+Captures and logs stay with the project instead of in a temp folder: images go to
+`build/screenshots/<tool>` (`responsive`, `cook`, `visual`) and suite output to
+`build/test_runs/`. Both are gitignored and in every export preset's exclude filter.
+`tools\run_all_tests.ps1` finds Godot from `$env:GODOT`, the PATH or a portable unpack under
+your home directory — no absolute path is baked into it.
+
 ## How to play
 
 The mode screen is the front door; every mode runs the same validated cooking engine.
@@ -142,10 +148,12 @@ scripts/world/  procedural materials, props, and the shared motion library
 scenes/         main_menu · mode_select · dish_select · free_cook · custom_cook ·
                 cookbook · explore · kitchen · journal · assessment
 tests/          eight pass/fail suites (smoke · anim · flow · behaviour · cook ·
-                recipe · minigame · responsive) plus layout_check and visual_capture
+                recipe · minigame · responsive) plus layout_check and visual_capture,
+                with the shared test_window and captures helpers
 tools/          serve_web.py · web_smoke.mjs · run_all_tests.ps1 · study/analyse_export.py
 docs/           the education and competition documents; docs/study/ holds the paper forms
-build/          export output (.exe, .apk, web/) — ignored by the asset scanner
+build/          export output (.exe, .apk, web/), captured images (build/screenshots/) and
+                test logs (build/test_runs/) — ignored by the asset scanner
 ```
 
 **Health content is data, not code.** No gameplay script states a health fact; gameplay asks for

@@ -24,9 +24,10 @@ extends Node
 
 const TestWindow := preload("res://tests/test_window.gd")
 
-## Where `-- shots` writes its images. A real window is needed to render one, so the
-## capture only happens on a windowed run; the checks run either way.
-const SHOT_DIR := "C:/Users/ASUS/AppData/Local/Temp/opencode/captures"
+## Where `-- shots` writes its images (`build/screenshots/cook`). A real window is
+## needed to render one, so the capture only happens on a windowed run; the checks
+## run either way.
+const Captures := preload("res://tests/captures.gd")
 
 ## A point over bare bench: no Control covers it, so the cooking task's
 ## `_unhandled_input` is the only thing that can see a press there.
@@ -36,12 +37,13 @@ const HOLD_LONG_ENOUGH := 16.0
 
 var failures: Array[String] = []
 var shots := false
+var shot_dir := ""
 
 
 func _ready() -> void:
 	shots = OS.get_cmdline_user_args().has("shots")
 	if shots:
-		DirAccess.make_dir_recursive_absolute(SHOT_DIR)
+		shot_dir = Captures.open("cook")
 	TestWindow.use(1280, 720)
 	await TestWindow.settle(3)
 	await _run()
@@ -205,7 +207,7 @@ func _shot(name: String) -> void:
 		return
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	image.save_png("%s/%s.png" % [SHOT_DIR, name])
+	image.save_png("%s/%s.png" % [shot_dir, name])
 
 
 ## The colour of the fish surface in the pan, or null when there is no fish.

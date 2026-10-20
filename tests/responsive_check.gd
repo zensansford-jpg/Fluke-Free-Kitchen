@@ -13,12 +13,11 @@ extends Node
 ##   godot --headless --path <project> res://tests/responsive_check.tscn -- 390 844
 ##
 ## With a real window (`godot --path <project> res://tests/responsive_check.tscn --
-## shots`) it also writes one PNG per size into the capture folder, so the reflow
-## can be looked at rather than only measured.
+## shots`) it also writes one PNG per size into `build/screenshots/responsive`, so
+## the reflow can be looked at rather than only measured.
 
 const TestWindow := preload("res://tests/test_window.gd")
-
-const SHOT_DIR := "C:/Users/ASUS/AppData/Local/Temp/opencode/responsive"
+const Captures := preload("res://tests/captures.gd")
 
 ## The viewport matrix the interface has to survive: two small phones in portrait,
 ## two modern phones, a small tablet portrait and landscape, two laptop sizes, a
@@ -49,6 +48,7 @@ const TOLERANCE := 2.0
 
 var failures: Array[String] = []
 var shots := false
+var shot_dir := ""
 var only_size := Vector2i.ZERO
 var checked := 0
 
@@ -62,7 +62,7 @@ func _ready() -> void:
 			break
 
 	if shots:
-		DirAccess.make_dir_recursive_absolute(SHOT_DIR)
+		shot_dir = Captures.open("responsive")
 
 	SaveData.suspend_disk_writes(true)
 	print("--- Fluke Free Kitchen responsive check ---")
@@ -370,7 +370,7 @@ func _shot(size_name: String, label: String) -> void:
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var safe := label.replace("/", "_")
-	image.save_png("%s/%s_%s.png" % [SHOT_DIR, size_name, safe])
+	image.save_png("%s/%s_%s.png" % [shot_dir, size_name, safe])
 
 
 # ---------------------------------------------------------------------- report ---

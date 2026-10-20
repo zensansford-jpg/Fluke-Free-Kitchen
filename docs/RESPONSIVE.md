@@ -1,8 +1,9 @@
 # Responsive layout — *Fluke Free Kitchen* (ครัวปลอดพยาธิ)
 
-**Version:** 2.0.0 · **Updated:** 2026-10-16
+**Version:** 2.0.0 · **Updated:** 2026-10-20
 **Verification tool:** `tests/responsive_check.tscn` (`.gd`)
-**Screenshots:** `%TEMP%\opencode\responsive\*.png` on this machine, produced by
+**Screenshots:** `build/screenshots/responsive/*.png` — inside the project (gitignored, excluded
+from every export), produced by
 `godot --path <project> res://tests/responsive_check.tscn -- <w> <h> shots`
 
 ---

@@ -4,22 +4,50 @@
 #   powershell -ExecutionPolicy Bypass -File tools\run_all_tests.ps1
 #
 # It imports the project first, then runs each suite headless, captures stdout/stderr
-# to %TEMP%\opencode\test_runs\<suite>.out.txt, and prints PASS/FAIL per suite.
+# to <project>\build\test_runs\<suite>.out.txt, and prints PASS/FAIL per suite.
 # The word "PASSED"/"FAILED" in the suite's own output decides the verdict, because
 # the Godot console build always reports exit code 0 on Windows.
 
 param(
-    [string]$Project = "C:\Users\ASUS\river-dash-safe-feast-run",
-    [string]$Godot   = "C:\Users\ASUS\godot-tools\Godot_v4.7.2-stable_win64_console.exe",
+    [string]$Project = "",
+    [string]$Godot   = "",
     [int]$TimeoutMs  = 900000
 )
 
 $ErrorActionPreference = 'Continue'
-$tmp = Join-Path $env:TEMP 'opencode\test_runs'
-New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 
-if (-not (Test-Path $Godot)) { Write-Host "Godot not found: $Godot" -ForegroundColor Red; exit 2 }
-if (-not (Test-Path $Project)) { Write-Host "Project not found: $Project" -ForegroundColor Red; exit 2 }
+# The project is where this script lives; Godot comes from the environment, the PATH
+# or a portable unpack under the current user. Nothing is written out as one
+# developer's absolute path, so the command in the README works on any machine.
+if (-not $Project) { $Project = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path }
+if (-not $Godot)   { $Godot = $env:GODOT }
+if (-not $Godot) {
+    $onPath = Get-Command 'Godot*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($onPath) { $Godot = $onPath.Source }
+}
+if (-not $Godot) {
+    # The console binary is the one that can be captured at all, so it is preferred
+    # over the windowed executable sitting next to it.
+    $roots = @(
+        (Join-Path $HOME 'godot-tools'),
+        (Join-Path $HOME 'Godot'),
+        (Join-Path $HOME 'Downloads'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\Godot'),
+        (Join-Path $env:ProgramFiles 'Godot')
+    )
+    $unpacked = Get-ChildItem -Path $roots -Filter 'Godot*console*.exe' -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($unpacked) { $Godot = $unpacked.FullName }
+}
+
+if (-not $Godot)    { Write-Host "Godot console build not found. Pass -Godot <path> or set `$env:GODOT." -ForegroundColor Red; exit 2 }
+if (-not (Test-Path $Godot))    { Write-Host "Godot not found: $Godot" -ForegroundColor Red; exit 2 }
+if (-not (Test-Path $Project))  { Write-Host "Project not found: $Project" -ForegroundColor Red; exit 2 }
+
+# Verdicts stay with the project that produced them (gitignored, next to the captures)
+# instead of being thrown away with the temp folder.
+$tmp = Join-Path $Project 'build\test_runs'
+New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 
 function Invoke-Suite {
     param([string]$Scene, [string[]]$Extra = @())
